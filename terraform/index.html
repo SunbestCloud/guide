@@ -1,0 +1,2913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terraform Mastery Guide — Beginner to Expert</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #0f1629;
+  --surface2: #151c35;
+  --border: #1e2d5a;
+  --accent: #7c6af4;
+  --accent2: #4fc3f7;
+  --accent3: #f472b6;
+  --accent4: #34d399;
+  --text: #e2e8f0;
+  --text-dim: #8892b0;
+  --text-bright: #ffffff;
+  --code-bg: #060b14;
+  --beginner: #34d399;
+  --intermediate: #fbbf24;
+  --advanced: #f87171;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+/* HEADER */
+.hero {
+  background: linear-gradient(135deg, #060b14 0%, #0a0e1a 40%, #0d1530 100%);
+  padding: 80px 40px 60px;
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(124,106,244,0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 30%, rgba(79,195,247,0.06) 0%, transparent 40%);
+  animation: drift 20s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { transform: translate(0,0); }
+  to { transform: translate(20px, -20px); }
+}
+
+.tf-logo {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.hero h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 800;
+  color: var(--text-bright);
+  line-height: 1.1;
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.hero h1 span { color: var(--accent); }
+
+.hero-sub {
+  font-size: 17px;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin: 0 auto 40px;
+  position: relative;
+}
+
+.badges {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.badge {
+  padding: 6px 18px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.badge-b { background: rgba(52,211,153,0.15); color: var(--beginner); border: 1px solid rgba(52,211,153,0.3); }
+.badge-i { background: rgba(251,191,36,0.15); color: var(--intermediate); border: 1px solid rgba(251,191,36,0.3); }
+.badge-a { background: rgba(248,113,113,0.15); color: var(--advanced); border: 1px solid rgba(248,113,113,0.3); }
+
+/* LAYOUT */
+.container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px 0;
+}
+
+.sidebar-section {
+  margin-bottom: 8px;
+}
+
+.sidebar-heading {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  padding: 8px 20px 4px;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 20px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+
+.sidebar a:hover {
+  color: var(--text);
+  background: rgba(124,106,244,0.08);
+  border-left-color: var(--accent);
+}
+
+.sidebar a .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-b { background: var(--beginner); }
+.dot-i { background: var(--intermediate); }
+.dot-a { background: var(--advanced); }
+.dot-p { background: var(--accent3); }
+
+/* MAIN CONTENT */
+.main {
+  padding: 48px 48px 100px;
+  max-width: 960px;
+}
+
+/* SECTIONS */
+.section {
+  margin-bottom: 72px;
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.section h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.section h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin: 32px 0 12px;
+}
+
+.section h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent2);
+  margin: 24px 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.section p { margin-bottom: 14px; color: var(--text); }
+
+/* CODE BLOCKS */
+.code-block {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 20px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(30,45,90,0.4);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-filename {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.code-filename::before {
+  content: '';
+  display: inline-block;
+  width: 8px; height: 8px;
+  background: var(--accent4);
+  border-radius: 50%;
+}
+
+.code-lang {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+pre {
+  padding: 20px 20px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  tab-size: 2;
+}
+
+/* SYNTAX HIGHLIGHTING */
+.k { color: #c792ea; } /* keywords */
+.s { color: #c3e88d; } /* strings */
+.n { color: #4fc3f7; } /* names/refs */
+.v { color: #f78c6c; } /* values */
+.c { color: #546e7a; font-style: italic; } /* comments */
+.fn { color: #82aaff; } /* functions */
+.b { color: #7c6af4; } /* blocks */
+.attr { color: #ffcb6b; } /* attributes */
+.num { color: #f78c6c; } /* numbers */
+
+/* INFO BOXES */
+.info-box {
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 20px 0;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.info-box .icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.info-box .content { flex: 1; }
+.info-box strong { display: block; margin-bottom: 4px; font-size: 14px; }
+.info-box p { margin: 0; font-size: 13px; }
+
+.tip { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); }
+.tip strong { color: var(--beginner); }
+
+.warn { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); }
+.warn strong { color: var(--intermediate); }
+
+.danger { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); }
+.danger strong { color: var(--advanced); }
+
+.note { background: rgba(124,106,244,0.08); border: 1px solid rgba(124,106,244,0.2); }
+.note strong { color: var(--accent); }
+
+/* TABLES */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 13px;
+}
+
+th {
+  background: rgba(124,106,244,0.15);
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(30,45,90,0.5);
+  vertical-align: top;
+}
+
+tr:hover td { background: rgba(124,106,244,0.04); }
+
+code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: rgba(124,106,244,0.12);
+  color: var(--accent2);
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* PROJECT CARDS */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin: 24px 0;
+}
+
+.project-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 3px;
+}
+
+.project-card.beginner::before { background: linear-gradient(90deg, var(--beginner), transparent); }
+.project-card.intermediate::before { background: linear-gradient(90deg, var(--intermediate), transparent); }
+.project-card.advanced::before { background: linear-gradient(90deg, var(--advanced), transparent); }
+
+.project-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(124,106,244,0.15);
+}
+
+.project-card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin: 0 0 8px;
+}
+
+.project-card p { font-size: 13px; color: var(--text-dim); margin: 0 0 12px; }
+
+.project-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.project-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(79,195,247,0.1);
+  color: var(--accent2);
+  border: 1px solid rgba(79,195,247,0.2);
+}
+
+/* COMMAND BLOCKS */
+.cmd-block {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  margin: 12px 0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.cmd-block .prompt { color: var(--accent4); user-select: none; }
+.cmd-block .cmd { color: #e2e8f0; }
+.cmd-block .comment { color: #546e7a; }
+
+/* DIVIDER */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 48px 0;
+}
+
+/* LEVEL HEADER */
+.level-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 32px;
+}
+
+.level-header.beginner { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.15); }
+.level-header.intermediate { background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15); }
+.level-header.advanced { background: rgba(248,113,113,0.06); border: 1px solid rgba(248,113,113,0.15); }
+
+.level-icon { font-size: 36px; }
+.level-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+.level-desc { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+.level-header.beginner .level-title { color: var(--beginner); }
+.level-header.intermediate .level-title { color: var(--intermediate); }
+.level-header.advanced .level-title { color: var(--advanced); }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: 24px 20px 60px; }
+  .hero { padding: 48px 20px 40px; }
+}
+
+/* TOC */
+.toc-section-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 14px 20px 6px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+.toc-section-title:first-child { border-top: none; margin-top: 0; }
+
+/* CHECKLIST */
+.checklist { list-style: none; margin: 16px 0; }
+.checklist li {
+  padding: 6px 0;
+  padding-left: 24px;
+  position: relative;
+  font-size: 14px;
+  color: var(--text);
+}
+.checklist li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* INLINE HIGHLIGHT */
+.hl { color: var(--accent); font-weight: 600; }
+.hl2 { color: var(--accent2); font-weight: 600; }
+.hl3 { color: var(--accent4); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="tf-logo">⬡ Infrastructure as Code</div>
+  <h1>Master <span>Terraform</span><br>From Zero to Expert</h1>
+  <p class="hero-sub">A complete, hands-on guide with real-world projects, syntax deep dives, and production-ready patterns.</p>
+  <div class="badges">
+    <span class="badge badge-b">🌱 Beginner</span>
+    <span class="badge badge-i">⚡ Intermediate</span>
+    <span class="badge badge-a">🔥 Advanced</span>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="container">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="toc-section-title">Getting Started</div>
+  <div class="sidebar-section">
+    <a href="#what-is-tf"><span class="dot dot-b"></span>What is Terraform?</a>
+    <a href="#install"><span class="dot dot-b"></span>Installation</a>
+    <a href="#core-concepts"><span class="dot dot-b"></span>Core Concepts</a>
+    <a href="#syntax"><span class="dot dot-b"></span>HCL Syntax Deep Dive</a>
+    <a href="#first-tf"><span class="dot dot-b"></span>Your First Config</a>
+  </div>
+  <div class="toc-section-title">Beginner</div>
+  <div class="sidebar-section">
+    <a href="#providers"><span class="dot dot-b"></span>Providers</a>
+    <a href="#resources"><span class="dot dot-b"></span>Resources</a>
+    <a href="#variables"><span class="dot dot-b"></span>Variables</a>
+    <a href="#outputs"><span class="dot dot-b"></span>Outputs</a>
+    <a href="#state"><span class="dot dot-b"></span>State Management</a>
+    <a href="#commands"><span class="dot dot-b"></span>CLI Commands</a>
+  </div>
+  <div class="toc-section-title">Intermediate</div>
+  <div class="sidebar-section">
+    <a href="#modules"><span class="dot dot-i"></span>Modules</a>
+    <a href="#data-sources"><span class="dot dot-i"></span>Data Sources</a>
+    <a href="#loops"><span class="dot dot-i"></span>Loops & Conditionals</a>
+    <a href="#locals"><span class="dot dot-i"></span>Locals</a>
+    <a href="#backends"><span class="dot dot-i"></span>Remote Backends</a>
+    <a href="#workspaces"><span class="dot dot-i"></span>Workspaces</a>
+  </div>
+  <div class="toc-section-title">Advanced</div>
+  <div class="sidebar-section">
+    <a href="#dynamic-blocks"><span class="dot dot-a"></span>Dynamic Blocks</a>
+    <a href="#lifecycle"><span class="dot dot-a"></span>Lifecycle Rules</a>
+    <a href="#provisioners"><span class="dot dot-a"></span>Provisioners</a>
+    <a href="#functions"><span class="dot dot-a"></span>Built-in Functions</a>
+    <a href="#custom-providers"><span class="dot dot-a"></span>Custom Providers</a>
+    <a href="#cicd"><span class="dot dot-a"></span>CI/CD Integration</a>
+  </div>
+  <div class="toc-section-title">Projects</div>
+  <div class="sidebar-section">
+    <a href="#projects-beginner"><span class="dot dot-p"></span>Beginner Projects</a>
+    <a href="#projects-intermediate"><span class="dot dot-p"></span>Intermediate Projects</a>
+    <a href="#projects-advanced"><span class="dot dot-p"></span>Advanced Projects</a>
+    <a href="#best-practices"><span class="dot dot-p"></span>Best Practices</a>
+    <a href="#cheatsheet"><span class="dot dot-p"></span>Cheatsheet</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ============================================================ -->
+<!-- WHAT IS TERRAFORM -->
+<!-- ============================================================ -->
+<section class="section" id="what-is-tf">
+  <div class="section-label"><span class="badge badge-b">Beginner</span></div>
+  <h2>What is Terraform?</h2>
+  <p>Terraform is an open-source <span class="hl">Infrastructure as Code (IaC)</span> tool created by HashiCorp. It allows you to define, provision, and manage cloud infrastructure using a declarative configuration language called <span class="hl2">HCL (HashiCorp Configuration Language)</span>.</p>
+  <p>Instead of clicking around in a cloud console, you write code that describes <em>what</em> infrastructure you want, and Terraform figures out <em>how</em> to create it.</p>
+
+  <div class="info-box tip">
+    <div class="icon">💡</div>
+    <div class="content">
+      <strong>Why Terraform?</strong>
+      <p>Terraform works with 3000+ providers (AWS, Azure, GCP, Kubernetes, GitHub, Datadog, etc.). Write once, deploy anywhere — with a consistent workflow regardless of provider.</p>
+    </div>
+  </div>
+
+  <h3>How Terraform Works</h3>
+  <table>
+    <tr><th>Phase</th><th>Command</th><th>What Happens</th></tr>
+    <tr><td>Write</td><td>—</td><td>Author .tf files describing desired infrastructure</td></tr>
+    <tr><td>Init</td><td><code>terraform init</code></td><td>Download providers & initialize backend</td></tr>
+    <tr><td>Plan</td><td><code>terraform plan</code></td><td>Preview changes (no actual changes)</td></tr>
+    <tr><td>Apply</td><td><code>terraform apply</code></td><td>Execute changes to reach desired state</td></tr>
+    <tr><td>Destroy</td><td><code>terraform destroy</code></td><td>Tear down all managed infrastructure</td></tr>
+  </table>
+
+  <h3>Terraform vs Other Tools</h3>
+  <table>
+    <tr><th>Tool</th><th>Type</th><th>Language</th><th>Multi-Cloud</th></tr>
+    <tr><td>Terraform</td><td>IaC (declarative)</td><td>HCL</td><td>✅ Yes</td></tr>
+    <tr><td>AWS CloudFormation</td><td>IaC (declarative)</td><td>YAML/JSON</td><td>❌ AWS only</td></tr>
+    <tr><td>Ansible</td><td>Config management</td><td>YAML</td><td>✅ Yes</td></tr>
+    <tr><td>Pulumi</td><td>IaC (imperative)</td><td>Python/TS/Go</td><td>✅ Yes</td></tr>
+    <tr><td>Chef/Puppet</td><td>Config management</td><td>DSL/Ruby</td><td>Partial</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- INSTALLATION -->
+<!-- ============================================================ -->
+<section class="section" id="install">
+  <h2>Installation</h2>
+  <h3>macOS (Homebrew)</h3>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">brew tap hashicorp/tap && brew install hashicorp/tap/terraform</span></div>
+
+  <h3>Linux (Ubuntu/Debian)</h3>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">sudo apt update && sudo apt install terraform</span></div>
+
+  <h3>Windows (Chocolatey)</h3>
+  <div class="cmd-block"><span class="prompt">></span><span class="cmd">choco install terraform</span></div>
+
+  <h3>Verify Installation</h3>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform version</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform -help</span></div>
+
+  <div class="info-box note">
+    <div class="icon">📌</div>
+    <div class="content">
+      <strong>Recommended: Use tfenv</strong>
+      <p>Use <code>tfenv</code> (Terraform Version Manager) to switch between Terraform versions easily — especially important in team environments where different projects use different versions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CORE CONCEPTS -->
+<!-- ============================================================ -->
+<section class="section" id="core-concepts">
+  <h2>Core Concepts</h2>
+  <table>
+    <tr><th>Concept</th><th>Description</th></tr>
+    <tr><td><strong>Provider</strong></td><td>Plugin that lets Terraform interact with an API (AWS, GCP, Azure, etc.)</td></tr>
+    <tr><td><strong>Resource</strong></td><td>A specific piece of infrastructure (EC2 instance, S3 bucket, VPC...)</td></tr>
+    <tr><td><strong>Data Source</strong></td><td>Read-only reference to existing infrastructure not managed by this config</td></tr>
+    <tr><td><strong>Variable</strong></td><td>Input parameter to make configs reusable and dynamic</td></tr>
+    <tr><td><strong>Output</strong></td><td>Expose values after apply (IP addresses, IDs, etc.)</td></tr>
+    <tr><td><strong>Module</strong></td><td>Reusable group of Terraform resources with inputs/outputs</td></tr>
+    <tr><td><strong>State</strong></td><td>JSON file mapping your config to real-world resources</td></tr>
+    <tr><td><strong>Backend</strong></td><td>Where state is stored (local, S3, Terraform Cloud, etc.)</td></tr>
+    <tr><td><strong>Workspace</strong></td><td>Isolated state environments (dev/staging/prod)</td></tr>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- HCL SYNTAX DEEP DIVE -->
+<!-- ============================================================ -->
+<section class="section" id="syntax">
+  <h2>HCL Syntax Deep Dive</h2>
+  <p>HCL (HashiCorp Configuration Language) is the language used to write Terraform configurations. It's designed to be both human-readable and machine-parseable.</p>
+
+  <h3>Basic Structure</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># This is a comment</span>
+
+<span class="c"># BLOCK SYNTAX: block_type "label1" "label2" { ... }</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"web_server"</span> {
+  <span class="attr">ami</span>           = <span class="s">"ami-0c55b159cbfafe1f0"</span>  <span class="c"># string value</span>
+  <span class="attr">instance_type</span> = <span class="s">"t3.micro"</span>
+
+  <span class="c"># Number value</span>
+  <span class="attr">count</span> = <span class="num">2</span>
+
+  <span class="c"># Boolean value</span>
+  <span class="attr">monitoring</span> = <span class="k">true</span>
+
+  <span class="c"># List value</span>
+  <span class="attr">security_groups</span> = [<span class="s">"sg-12345"</span>, <span class="s">"sg-67890"</span>]
+
+  <span class="c"># Map value</span>
+  <span class="attr">tags</span> = {
+    Name        = <span class="s">"WebServer"</span>
+    Environment = <span class="s">"production"</span>
+    Team        = <span class="s">"backend"</span>
+  }
+
+  <span class="c"># Nested block</span>
+  <span class="b">root_block_device</span> {
+    <span class="attr">volume_size</span> = <span class="num">20</span>
+    <span class="attr">volume_type</span> = <span class="s">"gp3"</span>
+    <span class="attr">encrypted</span>   = <span class="k">true</span>
+  }
+}</pre>
+  </div>
+
+  <h3>Data Types</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">types.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── PRIMITIVE TYPES ───────────────────────────────────────────</span>
+
+<span class="b">variable</span> <span class="s">"a_string"</span> {
+  <span class="attr">type</span>    = <span class="k">string</span>
+  <span class="attr">default</span> = <span class="s">"hello world"</span>
+}
+
+<span class="b">variable</span> <span class="s">"a_number"</span> {
+  <span class="attr">type</span>    = <span class="k">number</span>
+  <span class="attr">default</span> = <span class="num">42</span>
+}
+
+<span class="b">variable</span> <span class="s">"a_bool"</span> {
+  <span class="attr">type</span>    = <span class="k">bool</span>
+  <span class="attr">default</span> = <span class="k">true</span>
+}
+
+<span class="c"># ─── COMPLEX TYPES ─────────────────────────────────────────────</span>
+
+<span class="b">variable</span> <span class="s">"a_list"</span> {
+  <span class="attr">type</span>    = <span class="k">list</span>(<span class="k">string</span>)
+  <span class="attr">default</span> = [<span class="s">"us-east-1a"</span>, <span class="s">"us-east-1b"</span>, <span class="s">"us-east-1c"</span>]
+}
+
+<span class="b">variable</span> <span class="s">"a_set"</span> {
+  <span class="attr">type</span>    = <span class="k">set</span>(<span class="k">string</span>)
+  <span class="attr">default</span> = [<span class="s">"admin"</span>, <span class="s">"viewer"</span>, <span class="s">"editor"</span>]
+}
+
+<span class="b">variable</span> <span class="s">"a_map"</span> {
+  <span class="attr">type</span> = <span class="k">map</span>(<span class="k">string</span>)
+  <span class="attr">default</span> = {
+    dev  = <span class="s">"t3.micro"</span>
+    stg  = <span class="s">"t3.medium"</span>
+    prod = <span class="s">"t3.large"</span>
+  }
+}
+
+<span class="b">variable</span> <span class="s">"a_tuple"</span> {
+  <span class="attr">type</span>    = <span class="k">tuple</span>([<span class="k">string</span>, <span class="k">number</span>, <span class="k">bool</span>])
+  <span class="attr">default</span> = [<span class="s">"us-east-1"</span>, <span class="num">3</span>, <span class="k">true</span>]
+}
+
+<span class="b">variable</span> <span class="s">"an_object"</span> {
+  <span class="attr">type</span> = <span class="k">object</span>({
+    name       = <span class="k">string</span>
+    port       = <span class="k">number</span>
+    enabled    = <span class="k">bool</span>
+    tags       = <span class="k">map</span>(<span class="k">string</span>)
+  })
+  <span class="attr">default</span> = {
+    name    = <span class="s">"api-server"</span>
+    port    = <span class="num">8080</span>
+    enabled = <span class="k">true</span>
+    tags    = { team = <span class="s">"platform"</span> }
+  }
+}</pre>
+  </div>
+
+  <h3>String Interpolation & Expressions</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">expressions.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Basic interpolation: ${expression}</span>
+<span class="attr">name</span> = <span class="s">"${var.project}-${var.environment}-server"</span>
+
+<span class="c"># Multi-line string (heredoc)</span>
+<span class="attr">user_data</span> = <span class="k">&lt;&lt;-EOT</span>
+  <span class="s">#!/bin/bash
+  apt-get update -y
+  apt-get install -y nginx
+  systemctl start nginx
+  echo "Hello from ${var.environment}" > /var/www/html/index.html</span>
+<span class="k">EOT</span>
+
+<span class="c"># Ternary / conditional expression</span>
+<span class="attr">instance_type</span> = <span class="n">var.environment</span> == <span class="s">"prod"</span> ? <span class="s">"t3.large"</span> : <span class="s">"t3.micro"</span>
+
+<span class="c"># Reference another resource attribute</span>
+<span class="attr">subnet_id</span> = <span class="n">aws_subnet.main.id</span>
+
+<span class="c"># Reference a module output</span>
+<span class="attr">vpc_id</span> = <span class="n">module.vpc.vpc_id</span>
+
+<span class="c"># Splat expression — get all IDs from a list of resources</span>
+<span class="attr">subnet_ids</span> = <span class="n">aws_subnet.public[*].id</span>
+
+<span class="c"># For expression — transform a list</span>
+<span class="attr">upper_names</span> = <span class="fn">[for</span> name <span class="fn">in</span> <span class="n">var.names</span> : <span class="fn">upper</span>(name)]
+
+<span class="c"># For expression — transform a map</span>
+<span class="attr">tagged_amis</span> = <span class="fn">{for</span> id, ami <span class="fn">in</span> <span class="n">var.ami_ids</span> : id => <span class="fn">upper</span>(ami) <span class="fn">if</span> ami != <span class="s">""</span>}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- YOUR FIRST TERRAFORM CONFIG -->
+<!-- ============================================================ -->
+<section class="section" id="first-tf">
+  <h2>Your First Terraform Config</h2>
+  <p>Let's create a simple AWS S3 bucket — a perfect first resource to understand the Terraform workflow.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── TERRAFORM SETTINGS ────────────────────────────────────────</span>
+<span class="b">terraform</span> {
+  <span class="attr">required_version</span> = <span class="s">">= 1.5.0"</span>
+
+  <span class="b">required_providers</span> {
+    <span class="b">aws</span> = {
+      <span class="attr">source</span>  = <span class="s">"hashicorp/aws"</span>
+      <span class="attr">version</span> = <span class="s">"~> 5.0"</span>  <span class="c"># ~> means >= 5.0, < 6.0</span>
+    }
+  }
+}
+
+<span class="c"># ─── PROVIDER CONFIGURATION ────────────────────────────────────</span>
+<span class="b">provider</span> <span class="s">"aws"</span> {
+  <span class="attr">region</span> = <span class="s">"us-east-1"</span>
+}
+
+<span class="c"># ─── RESOURCE ──────────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"my_bucket"</span> {
+  <span class="attr">bucket</span> = <span class="s">"my-first-terraform-bucket-12345"</span>
+
+  <span class="attr">tags</span> = {
+    Name        = <span class="s">"MyFirstBucket"</span>
+    Environment = <span class="s">"learning"</span>
+    ManagedBy   = <span class="s">"terraform"</span>
+  }
+}
+
+<span class="c"># ─── OUTPUT ────────────────────────────────────────────────────</span>
+<span class="b">output</span> <span class="s">"bucket_name"</span> {
+  <span class="attr">description</span> = <span class="s">"The name of the S3 bucket"</span>
+  <span class="attr">value</span>       = <span class="n">aws_s3_bucket.my_bucket.bucket</span>
+}
+
+<span class="b">output</span> <span class="s">"bucket_arn"</span> {
+  <span class="attr">description</span> = <span class="s">"The ARN of the S3 bucket"</span>
+  <span class="attr">value</span>       = <span class="n">aws_s3_bucket.my_bucket.arn</span>
+}</pre>
+  </div>
+
+  <h4>Run it:</h4>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform init</span><span class="comment">   # download AWS provider</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform fmt</span><span class="comment">    # format code</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform validate</span><span class="comment"># check syntax</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform plan</span><span class="comment">   # preview changes</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform apply</span><span class="comment">  # create the bucket</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform destroy</span><span class="comment"># delete everything</span></div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- PROVIDERS -->
+<!-- ============================================================ -->
+<section class="section" id="providers">
+  <div class="level-header beginner">
+    <div class="level-icon">🌱</div>
+    <div>
+      <div class="level-title">Beginner Level</div>
+      <div class="level-desc">Core building blocks you must master</div>
+    </div>
+  </div>
+  <h2>Providers</h2>
+  <p>Providers are plugins that allow Terraform to interact with APIs. Each provider exposes resources and data sources.</p>
+
+  <h3>Configuring Multiple Providers</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">providers.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">terraform</span> {
+  <span class="b">required_providers</span> {
+    <span class="b">aws</span> = {
+      <span class="attr">source</span>  = <span class="s">"hashicorp/aws"</span>
+      <span class="attr">version</span> = <span class="s">"~> 5.0"</span>
+    }
+    <span class="b">azurerm</span> = {
+      <span class="attr">source</span>  = <span class="s">"hashicorp/azurerm"</span>
+      <span class="attr">version</span> = <span class="s">"~> 3.0"</span>
+    }
+    <span class="b">google</span> = {
+      <span class="attr">source</span>  = <span class="s">"hashicorp/google"</span>
+      <span class="attr">version</span> = <span class="s">"~> 4.0"</span>
+    }
+    <span class="b">kubernetes</span> = {
+      <span class="attr">source</span>  = <span class="s">"hashicorp/kubernetes"</span>
+      <span class="attr">version</span> = <span class="s">"~> 2.0"</span>
+    }
+  }
+}
+
+<span class="c"># AWS Provider — multiple regions using alias</span>
+<span class="b">provider</span> <span class="s">"aws"</span> {
+  <span class="attr">region</span>  = <span class="s">"us-east-1"</span>
+  <span class="attr">profile</span> = <span class="s">"default"</span>
+}
+
+<span class="b">provider</span> <span class="s">"aws"</span> {
+  <span class="attr">alias</span>  = <span class="s">"west"</span>
+  <span class="attr">region</span> = <span class="s">"us-west-2"</span>
+}
+
+<span class="c"># Use the aliased provider in a resource</span>
+<span class="b">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"west_bucket"</span> {
+  <span class="attr">provider</span> = <span class="n">aws.west</span>
+  <span class="attr">bucket</span>   = <span class="s">"my-west-bucket"</span>
+}
+
+<span class="c"># Azure Provider</span>
+<span class="b">provider</span> <span class="s">"azurerm"</span> {
+  <span class="b">features</span> {}
+  <span class="attr">subscription_id</span> = <span class="n">var.azure_subscription_id</span>
+}
+
+<span class="c"># GCP Provider</span>
+<span class="b">provider</span> <span class="s">"google"</span> {
+  <span class="attr">project</span> = <span class="n">var.gcp_project</span>
+  <span class="attr">region</span>  = <span class="s">"us-central1"</span>
+  <span class="attr">zone</span>    = <span class="s">"us-central1-a"</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- RESOURCES -->
+<!-- ============================================================ -->
+<section class="section" id="resources">
+  <h2>Resources</h2>
+  <p>Resources are the fundamental building blocks. Each resource block describes one or more infrastructure objects.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">resources.tf — Common AWS Resources</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── VPC ───────────────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_vpc"</span> <span class="s">"main"</span> {
+  <span class="attr">cidr_block</span>           = <span class="s">"10.0.0.0/16"</span>
+  <span class="attr">enable_dns_hostnames</span> = <span class="k">true</span>
+  <span class="attr">enable_dns_support</span>   = <span class="k">true</span>
+  <span class="attr">tags</span> = { Name = <span class="s">"main-vpc"</span> }
+}
+
+<span class="c"># ─── SUBNET ────────────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"public"</span> {
+  <span class="attr">vpc_id</span>                  = <span class="n">aws_vpc.main.id</span>
+  <span class="attr">cidr_block</span>              = <span class="s">"10.0.1.0/24"</span>
+  <span class="attr">availability_zone</span>       = <span class="s">"us-east-1a"</span>
+  <span class="attr">map_public_ip_on_launch</span> = <span class="k">true</span>
+  <span class="attr">tags</span> = { Name = <span class="s">"public-subnet-1a"</span>, Tier = <span class="s">"Public"</span> }
+}
+
+<span class="c"># ─── INTERNET GATEWAY ──────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_internet_gateway"</span> <span class="s">"igw"</span> {
+  <span class="attr">vpc_id</span> = <span class="n">aws_vpc.main.id</span>
+  <span class="attr">tags</span>   = { Name = <span class="s">"main-igw"</span> }
+}
+
+<span class="c"># ─── SECURITY GROUP ────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_security_group"</span> <span class="s">"web"</span> {
+  <span class="attr">name</span>        = <span class="s">"web-sg"</span>
+  <span class="attr">description</span> = <span class="s">"Allow HTTP and HTTPS traffic"</span>
+  <span class="attr">vpc_id</span>      = <span class="n">aws_vpc.main.id</span>
+
+  <span class="b">ingress</span> {
+    <span class="attr">description</span> = <span class="s">"HTTP"</span>
+    <span class="attr">from_port</span>   = <span class="num">80</span>
+    <span class="attr">to_port</span>     = <span class="num">80</span>
+    <span class="attr">protocol</span>    = <span class="s">"tcp"</span>
+    <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>]
+  }
+
+  <span class="b">ingress</span> {
+    <span class="attr">description</span> = <span class="s">"HTTPS"</span>
+    <span class="attr">from_port</span>   = <span class="num">443</span>
+    <span class="attr">to_port</span>     = <span class="num">443</span>
+    <span class="attr">protocol</span>    = <span class="s">"tcp"</span>
+    <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>]
+  }
+
+  <span class="b">egress</span> {
+    <span class="attr">from_port</span>   = <span class="num">0</span>
+    <span class="attr">to_port</span>     = <span class="num">0</span>
+    <span class="attr">protocol</span>    = <span class="s">"-1"</span>
+    <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>]
+  }
+}
+
+<span class="c"># ─── EC2 INSTANCE ──────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"web"</span> {
+  <span class="attr">ami</span>                    = <span class="s">"ami-0c55b159cbfafe1f0"</span>
+  <span class="attr">instance_type</span>          = <span class="s">"t3.micro"</span>
+  <span class="attr">subnet_id</span>              = <span class="n">aws_subnet.public.id</span>
+  <span class="attr">vpc_security_group_ids</span> = [<span class="n">aws_security_group.web.id</span>]
+  <span class="attr">key_name</span>               = <span class="n">var.key_pair_name</span>
+
+  <span class="b">root_block_device</span> {
+    <span class="attr">volume_size</span> = <span class="num">20</span>
+    <span class="attr">volume_type</span> = <span class="s">"gp3"</span>
+    <span class="attr">encrypted</span>   = <span class="k">true</span>
+  }
+
+  <span class="attr">user_data</span> = <span class="k">&lt;&lt;-EOF</span>
+    <span class="s">#!/bin/bash
+    yum update -y
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd</span>
+  <span class="k">EOF</span>
+
+  <span class="attr">tags</span> = {
+    Name = <span class="s">"web-server"</span>
+    Role = <span class="s">"web"</span>
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIABLES -->
+<!-- ============================================================ -->
+<section class="section" id="variables">
+  <h2>Variables</h2>
+  <p>Variables make your configurations reusable. There are three kinds: <span class="hl">input variables</span>, <span class="hl2">output variables</span>, and <span class="hl3">local values</span>.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">variables.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── BASIC VARIABLE ────────────────────────────────────────────</span>
+<span class="b">variable</span> <span class="s">"region"</span> {
+  <span class="attr">description</span> = <span class="s">"AWS region to deploy into"</span>
+  <span class="attr">type</span>        = <span class="k">string</span>
+  <span class="attr">default</span>     = <span class="s">"us-east-1"</span>
+}
+
+<span class="c"># ─── VARIABLE WITH VALIDATION ──────────────────────────────────</span>
+<span class="b">variable</span> <span class="s">"environment"</span> {
+  <span class="attr">description</span> = <span class="s">"Deployment environment"</span>
+  <span class="attr">type</span>        = <span class="k">string</span>
+
+  <span class="b">validation</span> {
+    <span class="attr">condition</span>     = <span class="fn">contains</span>([<span class="s">"dev"</span>, <span class="s">"staging"</span>, <span class="s">"prod"</span>], <span class="n">var.environment</span>)
+    <span class="attr">error_message</span> = <span class="s">"Environment must be dev, staging, or prod."</span>
+  }
+}
+
+<span class="c"># ─── SENSITIVE VARIABLE ────────────────────────────────────────</span>
+<span class="b">variable</span> <span class="s">"db_password"</span> {
+  <span class="attr">description</span> = <span class="s">"Database password"</span>
+  <span class="attr">type</span>        = <span class="k">string</span>
+  <span class="attr">sensitive</span>   = <span class="k">true</span>  <span class="c"># won't show in plan/apply output</span>
+}
+
+<span class="c"># ─── COMPLEX VARIABLE ──────────────────────────────────────────</span>
+<span class="b">variable</span> <span class="s">"vpc_config"</span> {
+  <span class="attr">description</span> = <span class="s">"VPC configuration"</span>
+  <span class="attr">type</span> = <span class="k">object</span>({
+    cidr_block          = <span class="k">string</span>
+    enable_dns_support  = <span class="k">bool</span>
+    public_subnet_cidrs = <span class="k">list</span>(<span class="k">string</span>)
+  })
+  <span class="attr">default</span> = {
+    cidr_block          = <span class="s">"10.0.0.0/16"</span>
+    enable_dns_support  = <span class="k">true</span>
+    public_subnet_cidrs = [<span class="s">"10.0.1.0/24"</span>, <span class="s">"10.0.2.0/24"</span>]
+  }
+}
+
+<span class="c"># ─── INSTANCE TYPE MAP ─────────────────────────────────────────</span>
+<span class="b">variable</span> <span class="s">"instance_type_map"</span> {
+  <span class="attr">type</span> = <span class="k">map</span>(<span class="k">string</span>)
+  <span class="attr">default</span> = {
+    dev     = <span class="s">"t3.micro"</span>
+    staging = <span class="s">"t3.medium"</span>
+    prod    = <span class="s">"t3.xlarge"</span>
+  }
+}
+
+<span class="c"># Usage: var.instance_type_map[var.environment]</span></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">terraform.tfvars</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Default variable values file — auto-loaded</span>
+<span class="attr">region</span>      = <span class="s">"us-east-1"</span>
+<span class="attr">environment</span> = <span class="s">"dev"</span>
+<span class="attr">db_password</span> = <span class="s">"super-secret-password"</span>  <span class="c"># use secrets manager in real life!</span>
+
+<span class="attr">vpc_config</span> = {
+  cidr_block          = <span class="s">"10.0.0.0/16"</span>
+  enable_dns_support  = <span class="k">true</span>
+  public_subnet_cidrs = [<span class="s">"10.0.1.0/24"</span>, <span class="s">"10.0.2.0/24"</span>, <span class="s">"10.0.3.0/24"</span>]
+}</pre>
+  </div>
+
+  <h4>Ways to provide variable values:</h4>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform apply -var="environment=prod"</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform apply -var-file="prod.tfvars"</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">export TF_VAR_environment=prod && terraform apply</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- OUTPUTS -->
+<!-- ============================================================ -->
+<section class="section" id="outputs">
+  <h2>Outputs</h2>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">outputs.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">output</span> <span class="s">"vpc_id"</span> {
+  <span class="attr">description</span> = <span class="s">"The ID of the VPC"</span>
+  <span class="attr">value</span>       = <span class="n">aws_vpc.main.id</span>
+}
+
+<span class="b">output</span> <span class="s">"public_subnet_ids"</span> {
+  <span class="attr">description</span> = <span class="s">"List of public subnet IDs"</span>
+  <span class="attr">value</span>       = <span class="n">aws_subnet.public[*].id</span>
+}
+
+<span class="b">output</span> <span class="s">"load_balancer_dns"</span> {
+  <span class="attr">description</span> = <span class="s">"DNS name of the ALB"</span>
+  <span class="attr">value</span>       = <span class="n">aws_lb.main.dns_name</span>
+}
+
+<span class="c"># Sensitive output — masked in terminal</span>
+<span class="b">output</span> <span class="s">"db_connection_string"</span> {
+  <span class="attr">description</span> = <span class="s">"Database connection string"</span>
+  <span class="attr">value</span>       = <span class="s">"postgresql://${var.db_user}:${var.db_password}@${aws_db_instance.main.endpoint}/app"</span>
+  <span class="attr">sensitive</span>   = <span class="k">true</span>
+}
+
+<span class="c"># Complex output object</span>
+<span class="b">output</span> <span class="s">"ec2_info"</span> {
+  <span class="attr">description</span> = <span class="s">"EC2 instance details"</span>
+  <span class="attr">value</span> = {
+    id         = <span class="n">aws_instance.web.id</span>
+    public_ip  = <span class="n">aws_instance.web.public_ip</span>
+    private_ip = <span class="n">aws_instance.web.private_ip</span>
+    az         = <span class="n">aws_instance.web.availability_zone</span>
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- STATE -->
+<!-- ============================================================ -->
+<section class="section" id="state">
+  <h2>State Management</h2>
+  <p>Terraform state is how Terraform knows what infrastructure it manages. The state file (<code>terraform.tfstate</code>) is critical — lose it and Terraform loses track of all resources.</p>
+
+  <div class="info-box warn">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>Never commit terraform.tfstate to git!</strong>
+      <p>Add <code>*.tfstate</code> and <code>*.tfstate.backup</code> to your <code>.gitignore</code>. State files often contain sensitive data like passwords and private keys.</p>
+    </div>
+  </div>
+
+  <h3>Useful State Commands</h3>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform state list</span><span class="comment">                 # list all resources in state</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform state show aws_instance.web</span><span class="comment">  # show resource details</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform state mv aws_instance.old aws_instance.new</span><span class="comment"> # rename resource</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform state rm aws_instance.web</span><span class="comment">    # remove from state (keeps real resource)</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform import aws_instance.web i-1234567890abcdef</span><span class="comment"> # import existing</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform refresh</span><span class="comment">                    # sync state with real infrastructure</span></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CLI COMMANDS -->
+<!-- ============================================================ -->
+<section class="section" id="commands">
+  <h2>CLI Commands Reference</h2>
+  <table>
+    <tr><th>Command</th><th>Description</th><th>Common Flags</th></tr>
+    <tr><td><code>terraform init</code></td><td>Initialize working directory</td><td><code>-upgrade</code>, <code>-reconfigure</code></td></tr>
+    <tr><td><code>terraform validate</code></td><td>Validate configuration files</td><td>—</td></tr>
+    <tr><td><code>terraform fmt</code></td><td>Format code to canonical style</td><td><code>-recursive</code>, <code>-check</code></td></tr>
+    <tr><td><code>terraform plan</code></td><td>Preview changes</td><td><code>-out=plan.tfplan</code>, <code>-target=</code></td></tr>
+    <tr><td><code>terraform apply</code></td><td>Apply changes</td><td><code>-auto-approve</code>, <code>plan.tfplan</code></td></tr>
+    <tr><td><code>terraform destroy</code></td><td>Destroy all managed infra</td><td><code>-auto-approve</code>, <code>-target=</code></td></tr>
+    <tr><td><code>terraform output</code></td><td>Show output values</td><td><code>-json</code>, <code>-raw</code></td></tr>
+    <tr><td><code>terraform show</code></td><td>Show state or plan file</td><td><code>-json</code></td></tr>
+    <tr><td><code>terraform graph</code></td><td>Create dependency graph</td><td>—</td></tr>
+    <tr><td><code>terraform workspace</code></td><td>Manage workspaces</td><td><code>new</code>, <code>list</code>, <code>select</code></td></tr>
+    <tr><td><code>terraform taint</code></td><td>Mark resource for recreation</td><td>—</td></tr>
+    <tr><td><code>terraform untaint</code></td><td>Remove taint from resource</td><td>—</td></tr>
+  </table>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- MODULES -->
+<!-- ============================================================ -->
+<section class="section" id="modules">
+  <div class="level-header intermediate">
+    <div class="level-icon">⚡</div>
+    <div>
+      <div class="level-title">Intermediate Level</div>
+      <div class="level-desc">Reusability, scalability & team patterns</div>
+    </div>
+  </div>
+  <h2>Modules</h2>
+  <p>Modules are containers for multiple resources that are used together. They're the primary way to package and reuse Terraform code.</p>
+
+  <h3>Module Directory Structure</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project structure</span>
+      <span class="code-lang">TREE</span>
+    </div>
+    <pre><span class="c">my-terraform-project/
+├── main.tf            # root module
+├── variables.tf
+├── outputs.tf
+├── terraform.tfvars
+└── modules/
+    ├── vpc/
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    ├── ec2/
+    │   ├── main.tf
+    │   ├── variables.tf
+    │   └── outputs.tf
+    └── rds/
+        ├── main.tf
+        ├── variables.tf
+        └── outputs.tf</span></pre>
+  </div>
+
+  <h3>Writing a VPC Module</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">modules/vpc/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">resource</span> <span class="s">"aws_vpc"</span> <span class="s">"this"</span> {
+  <span class="attr">cidr_block</span>           = <span class="n">var.cidr_block</span>
+  <span class="attr">enable_dns_hostnames</span> = <span class="k">true</span>
+  <span class="attr">tags</span> = <span class="fn">merge</span>(<span class="n">var.tags</span>, { Name = <span class="s">"${var.name}-vpc"</span> })
+}
+
+<span class="b">resource</span> <span class="s">"aws_internet_gateway"</span> <span class="s">"this"</span> {
+  <span class="attr">vpc_id</span> = <span class="n">aws_vpc.this.id</span>
+  <span class="attr">tags</span>   = <span class="fn">merge</span>(<span class="n">var.tags</span>, { Name = <span class="s">"${var.name}-igw"</span> })
+}
+
+<span class="b">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"public"</span> {
+  <span class="attr">count</span>             = <span class="fn">length</span>(<span class="n">var.public_subnet_cidrs</span>)
+  <span class="attr">vpc_id</span>            = <span class="n">aws_vpc.this.id</span>
+  <span class="attr">cidr_block</span>        = <span class="n">var.public_subnet_cidrs[count.index]</span>
+  <span class="attr">availability_zone</span> = <span class="n">var.azs[count.index]</span>
+  <span class="attr">map_public_ip_on_launch</span> = <span class="k">true</span>
+  <span class="attr">tags</span> = <span class="fn">merge</span>(<span class="n">var.tags</span>, { Name = <span class="s">"${var.name}-public-${count.index + 1}"</span> })
+}
+
+<span class="b">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"private"</span> {
+  <span class="attr">count</span>             = <span class="fn">length</span>(<span class="n">var.private_subnet_cidrs</span>)
+  <span class="attr">vpc_id</span>            = <span class="n">aws_vpc.this.id</span>
+  <span class="attr">cidr_block</span>        = <span class="n">var.private_subnet_cidrs[count.index]</span>
+  <span class="attr">availability_zone</span> = <span class="n">var.azs[count.index]</span>
+  <span class="attr">tags</span> = <span class="fn">merge</span>(<span class="n">var.tags</span>, { Name = <span class="s">"${var.name}-private-${count.index + 1}"</span> })
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">modules/vpc/variables.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">variable</span> <span class="s">"name"</span> { <span class="attr">type</span> = <span class="k">string</span> }
+<span class="b">variable</span> <span class="s">"cidr_block"</span> { <span class="attr">type</span> = <span class="k">string</span> }
+<span class="b">variable</span> <span class="s">"azs"</span> { <span class="attr">type</span> = <span class="k">list</span>(<span class="k">string</span>) }
+<span class="b">variable</span> <span class="s">"public_subnet_cidrs"</span> { <span class="attr">type</span> = <span class="k">list</span>(<span class="k">string</span>) }
+<span class="b">variable</span> <span class="s">"private_subnet_cidrs"</span> { <span class="attr">type</span> = <span class="k">list</span>(<span class="k">string</span>); <span class="attr">default</span> = [] }
+<span class="b">variable</span> <span class="s">"tags"</span> { <span class="attr">type</span> = <span class="k">map</span>(<span class="k">string</span>); <span class="attr">default</span> = {} }</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">modules/vpc/outputs.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">output</span> <span class="s">"vpc_id"</span>             { <span class="attr">value</span> = <span class="n">aws_vpc.this.id</span> }
+<span class="b">output</span> <span class="s">"public_subnet_ids"</span>  { <span class="attr">value</span> = <span class="n">aws_subnet.public[*].id</span> }
+<span class="b">output</span> <span class="s">"private_subnet_ids"</span> { <span class="attr">value</span> = <span class="n">aws_subnet.private[*].id</span> }</pre>
+  </div>
+
+  <h3>Calling the Module (Root)</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">main.tf — root module</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">module</span> <span class="s">"vpc"</span> {
+  <span class="attr">source</span> = <span class="s">"./modules/vpc"</span>
+
+  <span class="attr">name</span>                 = <span class="s">"production"</span>
+  <span class="attr">cidr_block</span>           = <span class="s">"10.0.0.0/16"</span>
+  <span class="attr">azs</span>                  = [<span class="s">"us-east-1a"</span>, <span class="s">"us-east-1b"</span>, <span class="s">"us-east-1c"</span>]
+  <span class="attr">public_subnet_cidrs</span>  = [<span class="s">"10.0.1.0/24"</span>, <span class="s">"10.0.2.0/24"</span>, <span class="s">"10.0.3.0/24"</span>]
+  <span class="attr">private_subnet_cidrs</span> = [<span class="s">"10.0.11.0/24"</span>, <span class="s">"10.0.12.0/24"</span>, <span class="s">"10.0.13.0/24"</span>]
+  <span class="attr">tags</span> = { Environment = <span class="s">"prod"</span>, Team = <span class="s">"platform"</span> }
+}
+
+<span class="c"># Use module outputs</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"app"</span> {
+  <span class="attr">subnet_id</span> = <span class="n">module.vpc.private_subnet_ids[0]</span>
+  <span class="c"># ...</span>
+}
+
+<span class="c"># Using a public Terraform Registry module</span>
+<span class="b">module</span> <span class="s">"eks"</span> {
+  <span class="attr">source</span>  = <span class="s">"terraform-aws-modules/eks/aws"</span>
+  <span class="attr">version</span> = <span class="s">"~> 20.0"</span>
+
+  <span class="attr">cluster_name</span>    = <span class="s">"my-eks-cluster"</span>
+  <span class="attr">cluster_version</span> = <span class="s">"1.29"</span>
+  <span class="attr">vpc_id</span>          = <span class="n">module.vpc.vpc_id</span>
+  <span class="attr">subnet_ids</span>      = <span class="n">module.vpc.private_subnet_ids</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- DATA SOURCES -->
+<!-- ============================================================ -->
+<section class="section" id="data-sources">
+  <h2>Data Sources</h2>
+  <p>Data sources allow you to fetch information about existing infrastructure. They're read-only — Terraform won't manage or destroy them.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">data-sources.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Get latest Amazon Linux 2 AMI</span>
+<span class="b">data</span> <span class="s">"aws_ami"</span> <span class="s">"amazon_linux"</span> {
+  <span class="attr">most_recent</span> = <span class="k">true</span>
+  <span class="attr">owners</span>      = [<span class="s">"amazon"</span>]
+
+  <span class="b">filter</span> {
+    <span class="attr">name</span>   = <span class="s">"name"</span>
+    <span class="attr">values</span> = [<span class="s">"amzn2-ami-hvm-*-x86_64-gp2"</span>]
+  }
+}
+
+<span class="c"># Get current AWS account info</span>
+<span class="b">data</span> <span class="s">"aws_caller_identity"</span> <span class="s">"current"</span> {}
+
+<span class="c"># Get available AZs in the current region</span>
+<span class="b">data</span> <span class="s">"aws_availability_zones"</span> <span class="s">"available"</span> {
+  <span class="attr">state</span> = <span class="s">"available"</span>
+}
+
+<span class="c"># Look up an existing VPC by tag</span>
+<span class="b">data</span> <span class="s">"aws_vpc"</span> <span class="s">"existing"</span> {
+  <span class="b">filter</span> {
+    <span class="attr">name</span>   = <span class="s">"tag:Name"</span>
+    <span class="attr">values</span> = [<span class="s">"production-vpc"</span>]
+  }
+}
+
+<span class="c"># Get a secret from AWS Secrets Manager</span>
+<span class="b">data</span> <span class="s">"aws_secretsmanager_secret_version"</span> <span class="s">"db_password"</span> {
+  <span class="attr">secret_id</span> = <span class="s">"prod/db/password"</span>
+}
+
+<span class="c"># Get SSM Parameter</span>
+<span class="b">data</span> <span class="s">"aws_ssm_parameter"</span> <span class="s">"db_host"</span> {
+  <span class="attr">name</span> = <span class="s">"/prod/database/host"</span>
+}
+
+<span class="c"># ─── USING DATA SOURCES ────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"app"</span> {
+  <span class="attr">ami</span>           = <span class="n">data.aws_ami.amazon_linux.id</span>        <span class="c"># latest AMI</span>
+  <span class="attr">instance_type</span> = <span class="s">"t3.micro"</span>
+  <span class="attr">subnet_id</span>     = <span class="n">data.aws_vpc.existing.id</span>
+
+  <span class="attr">tags</span> = {
+    AccountId = <span class="n">data.aws_caller_identity.current.account_id</span>
+    AZ        = <span class="n">data.aws_availability_zones.available.names[0]</span>
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- LOOPS & CONDITIONALS -->
+<!-- ============================================================ -->
+<section class="section" id="loops">
+  <h2>Loops &amp; Conditionals</h2>
+  <p>Terraform provides several mechanisms for creating multiple resources and conditional logic.</p>
+
+  <h3>count — Simple Repetition</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">count.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Create 3 subnets</span>
+<span class="b">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"public"</span> {
+  <span class="attr">count</span>             = <span class="num">3</span>
+  <span class="attr">vpc_id</span>            = <span class="n">aws_vpc.main.id</span>
+  <span class="attr">cidr_block</span>        = <span class="s">"10.0.${count.index}.0/24"</span>
+  <span class="attr">availability_zone</span> = <span class="n">data.aws_availability_zones.available.names[count.index]</span>
+  <span class="attr">tags</span> = { Name = <span class="s">"public-subnet-${count.index + 1}"</span> }
+}
+
+<span class="c"># Conditional resource (create only in prod)</span>
+<span class="b">resource</span> <span class="s">"aws_cloudwatch_log_group"</span> <span class="s">"app"</span> {
+  <span class="attr">count</span>             = <span class="n">var.environment</span> == <span class="s">"prod"</span> ? <span class="num">1</span> : <span class="num">0</span>
+  <span class="attr">name</span>              = <span class="s">"/app/logs"</span>
+  <span class="attr">retention_in_days</span> = <span class="num">30</span>
+}</pre>
+  </div>
+
+  <h3>for_each — Map/Set Iteration (Preferred)</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">for_each.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Create IAM users from a set</span>
+<span class="b">variable</span> <span class="s">"iam_users"</span> {
+  <span class="attr">type</span>    = <span class="k">set</span>(<span class="k">string</span>)
+  <span class="attr">default</span> = [<span class="s">"alice"</span>, <span class="s">"bob"</span>, <span class="s">"charlie"</span>]
+}
+
+<span class="b">resource</span> <span class="s">"aws_iam_user"</span> <span class="s">"team"</span> {
+  <span class="attr">for_each</span> = <span class="n">var.iam_users</span>
+  <span class="attr">name</span>     = <span class="n">each.value</span>
+  <span class="attr">tags</span>     = { User = <span class="n">each.value</span> }
+}
+
+<span class="c"># Create S3 buckets from a map</span>
+<span class="b">variable</span> <span class="s">"s3_buckets"</span> {
+  <span class="attr">type</span> = <span class="k">map</span>(<span class="k">object</span>({
+    versioning = <span class="k">bool</span>
+    region     = <span class="k">string</span>
+  }))
+  <span class="attr">default</span> = {
+    logs = { versioning = <span class="k">false</span>, region = <span class="s">"us-east-1"</span> }
+    data = { versioning = <span class="k">true</span>,  region = <span class="s">"us-west-2"</span> }
+  }
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"buckets"</span> {
+  <span class="attr">for_each</span> = <span class="n">var.s3_buckets</span>
+  <span class="attr">bucket</span>   = <span class="s">"my-app-${each.key}-bucket"</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket_versioning"</span> <span class="s">"buckets"</span> {
+  <span class="attr">for_each</span> = <span class="n">var.s3_buckets</span>
+  <span class="attr">bucket</span>   = <span class="n">aws_s3_bucket.buckets[each.key].id</span>
+
+  <span class="b">versioning_configuration</span> {
+    <span class="attr">status</span> = <span class="n">each.value.versioning</span> ? <span class="s">"Enabled"</span> : <span class="s">"Suspended"</span>
+  }
+}
+
+<span class="c"># for expressions — build new collections</span>
+<span class="b">locals</span> {
+  <span class="c"># List all bucket names</span>
+  <span class="attr">bucket_names</span> = [<span class="fn">for</span> key, bucket <span class="fn">in</span> <span class="n">aws_s3_bucket.buckets</span> : bucket.bucket]
+
+  <span class="c"># Map of bucket key to ARN</span>
+  <span class="attr">bucket_arns</span>  = {<span class="fn">for</span> key, bucket <span class="fn">in</span> <span class="n">aws_s3_bucket.buckets</span> : key => bucket.arn}
+
+  <span class="c"># Filter — only versioned buckets</span>
+  <span class="attr">versioned_keys</span> = [<span class="fn">for</span> key, cfg <span class="fn">in</span> <span class="n">var.s3_buckets</span> : key <span class="fn">if</span> cfg.versioning]
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- LOCALS -->
+<!-- ============================================================ -->
+<section class="section" id="locals">
+  <h2>Local Values</h2>
+  <p>Locals are named expressions you compute once and reuse across your configuration. They reduce repetition and make complex expressions readable.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">locals.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">locals</span> {
+  <span class="c"># Build consistent name prefix</span>
+  <span class="attr">name_prefix</span> = <span class="s">"${var.project}-${var.environment}"</span>
+
+  <span class="c"># Common tags applied to all resources</span>
+  <span class="attr">common_tags</span> = {
+    Project     = <span class="n">var.project</span>
+    Environment = <span class="n">var.environment</span>
+    ManagedBy   = <span class="s">"terraform"</span>
+    Owner       = <span class="n">var.owner</span>
+    CreatedAt   = <span class="fn">timestamp</span>()
+  }
+
+  <span class="c"># Select instance type based on environment</span>
+  <span class="attr">instance_type</span> = <span class="fn">lookup</span>({
+    dev     = <span class="s">"t3.micro"</span>
+    staging = <span class="s">"t3.medium"</span>
+    prod    = <span class="s">"m5.large"</span>
+  }, <span class="n">var.environment</span>, <span class="s">"t3.micro"</span>)
+
+  <span class="c"># Compute CIDR blocks dynamically</span>
+  <span class="attr">public_subnets</span>  = [<span class="fn">for</span> i <span class="fn">in range</span>(<span class="n">var.az_count</span>) : <span class="fn">cidrsubnet</span>(<span class="n">var.vpc_cidr</span>, <span class="num">8</span>, i)]
+  <span class="attr">private_subnets</span> = [<span class="fn">for</span> i <span class="fn">in range</span>(<span class="n">var.az_count</span>) : <span class="fn">cidrsubnet</span>(<span class="n">var.vpc_cidr</span>, <span class="num">8</span>, i + <span class="num">10</span>)]
+
+  <span class="c"># Build an IAM policy document as a string</span>
+  <span class="attr">account_id</span> = <span class="n">data.aws_caller_identity.current.account_id</span>
+  <span class="attr">region</span>     = <span class="n">data.aws_region.current.name</span>
+}
+
+<span class="c"># Usage</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"app"</span> {
+  <span class="attr">ami</span>           = <span class="n">data.aws_ami.latest.id</span>
+  <span class="attr">instance_type</span> = <span class="n">local.instance_type</span>
+  <span class="attr">tags</span>          = <span class="fn">merge</span>(<span class="n">local.common_tags</span>, { Name = <span class="s">"${local.name_prefix}-app"</span> })
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- BACKENDS -->
+<!-- ============================================================ -->
+<section class="section" id="backends">
+  <h2>Remote Backends</h2>
+  <p>Backends determine where Terraform stores state. Remote backends enable team collaboration, state locking, and versioning.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">backend-s3.tf — S3 Backend (AWS)</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">terraform</span> {
+  <span class="b">backend</span> <span class="s">"s3"</span> {
+    <span class="attr">bucket</span>         = <span class="s">"my-company-terraform-state"</span>
+    <span class="attr">key</span>            = <span class="s">"production/vpc/terraform.tfstate"</span>
+    <span class="attr">region</span>         = <span class="s">"us-east-1"</span>
+    <span class="attr">encrypt</span>        = <span class="k">true</span>
+    <span class="attr">dynamodb_table</span> = <span class="s">"terraform-locks"</span>  <span class="c"># for state locking</span>
+  }
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">create-state-bucket.tf — Bootstrap State Infrastructure</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Run this ONCE manually to create the S3 bucket + DynamoDB for state</span>
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"terraform_state"</span> {
+  <span class="attr">bucket</span> = <span class="s">"my-company-terraform-state"</span>
+  <span class="b">lifecycle</span> { <span class="attr">prevent_destroy</span> = <span class="k">true</span> }
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket_versioning"</span> <span class="s">"state"</span> {
+  <span class="attr">bucket</span> = <span class="n">aws_s3_bucket.terraform_state.id</span>
+  <span class="b">versioning_configuration</span> { <span class="attr">status</span> = <span class="s">"Enabled"</span> }
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket_server_side_encryption_configuration"</span> <span class="s">"state"</span> {
+  <span class="attr">bucket</span> = <span class="n">aws_s3_bucket.terraform_state.id</span>
+  <span class="b">rule</span> {
+    <span class="b">apply_server_side_encryption_by_default</span> {
+      <span class="attr">sse_algorithm</span> = <span class="s">"AES256"</span>
+    }
+  }
+}
+
+<span class="b">resource</span> <span class="s">"aws_dynamodb_table"</span> <span class="s">"terraform_locks"</span> {
+  <span class="attr">name</span>         = <span class="s">"terraform-locks"</span>
+  <span class="attr">billing_mode</span> = <span class="s">"PAY_PER_REQUEST"</span>
+  <span class="attr">hash_key</span>     = <span class="s">"LockID"</span>
+
+  <span class="b">attribute</span> {
+    <span class="attr">name</span> = <span class="s">"LockID"</span>
+    <span class="attr">type</span> = <span class="s">"S"</span>
+  }
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">backend-gcs.tf — GCS Backend (GCP)</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">terraform</span> {
+  <span class="b">backend</span> <span class="s">"gcs"</span> {
+    <span class="attr">bucket</span> = <span class="s">"my-company-terraform-state"</span>
+    <span class="attr">prefix</span> = <span class="s">"production/gke"</span>
+  }
+}</pre>
+  </div>
+
+  <h3>Remote State Data Source</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">remote-state.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Read outputs from another Terraform state</span>
+<span class="b">data</span> <span class="s">"terraform_remote_state"</span> <span class="s">"vpc"</span> {
+  <span class="attr">backend</span> = <span class="s">"s3"</span>
+  <span class="b">config</span> = {
+    <span class="attr">bucket</span> = <span class="s">"my-company-terraform-state"</span>
+    <span class="attr">key</span>    = <span class="s">"production/vpc/terraform.tfstate"</span>
+    <span class="attr">region</span> = <span class="s">"us-east-1"</span>
+  }
+}
+
+<span class="c"># Use the remote state output</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"app"</span> {
+  <span class="attr">subnet_id</span> = <span class="n">data.terraform_remote_state.vpc.outputs.private_subnet_ids[0]</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- WORKSPACES -->
+<!-- ============================================================ -->
+<section class="section" id="workspaces">
+  <h2>Workspaces</h2>
+  <p>Workspaces allow you to manage multiple environments (dev/staging/prod) from the same configuration with isolated state files.</p>
+
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform workspace new dev</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform workspace new staging</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform workspace new prod</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform workspace list</span></div>
+  <div class="cmd-block"><span class="prompt">$</span><span class="cmd">terraform workspace select prod</span></div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">workspace-usage.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">locals</span> {
+  <span class="attr">workspace_config</span> = {
+    dev = {
+      instance_type = <span class="s">"t3.micro"</span>
+      min_size      = <span class="num">1</span>
+      max_size      = <span class="num">2</span>
+      db_class      = <span class="s">"db.t3.micro"</span>
+    }
+    staging = {
+      instance_type = <span class="s">"t3.medium"</span>
+      min_size      = <span class="num">2</span>
+      max_size      = <span class="num">4</span>
+      db_class      = <span class="s">"db.t3.small"</span>
+    }
+    prod = {
+      instance_type = <span class="s">"m5.xlarge"</span>
+      min_size      = <span class="num">3</span>
+      max_size      = <span class="num">10</span>
+      db_class      = <span class="s">"db.r5.large"</span>
+    }
+  }
+
+  <span class="attr">config</span> = <span class="n">local.workspace_config[terraform.workspace]</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_db_instance"</span> <span class="s">"main"</span> {
+  <span class="attr">instance_class</span> = <span class="n">local.config.db_class</span>
+  <span class="c"># ...</span>
+}</pre>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- DYNAMIC BLOCKS -->
+<!-- ============================================================ -->
+<section class="section" id="dynamic-blocks">
+  <div class="level-header advanced">
+    <div class="level-icon">🔥</div>
+    <div>
+      <div class="level-title">Advanced Level</div>
+      <div class="level-desc">Production patterns, performance & expert techniques</div>
+    </div>
+  </div>
+  <h2>Dynamic Blocks</h2>
+  <p>Dynamic blocks let you generate nested block configurations programmatically — perfect when the number of nested blocks depends on a variable.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">dynamic-blocks.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">variable</span> <span class="s">"ingress_rules"</span> {
+  <span class="attr">type</span> = <span class="k">list</span>(<span class="k">object</span>({
+    description = <span class="k">string</span>
+    from_port   = <span class="k">number</span>
+    to_port     = <span class="k">number</span>
+    protocol    = <span class="k">string</span>
+    cidr_blocks = <span class="k">list</span>(<span class="k">string</span>)
+  }))
+  <span class="attr">default</span> = [
+    { description = <span class="s">"HTTP"</span>,  from_port = <span class="num">80</span>,  to_port = <span class="num">80</span>,  protocol = <span class="s">"tcp"</span>, cidr_blocks = [<span class="s">"0.0.0.0/0"</span>] },
+    { description = <span class="s">"HTTPS"</span>, from_port = <span class="num">443</span>, to_port = <span class="num">443</span>, protocol = <span class="s">"tcp"</span>, cidr_blocks = [<span class="s">"0.0.0.0/0"</span>] },
+    { description = <span class="s">"SSH"</span>,   from_port = <span class="num">22</span>,  to_port = <span class="num">22</span>,  protocol = <span class="s">"tcp"</span>, cidr_blocks = [<span class="s">"10.0.0.0/8"</span>] },
+  ]
+}
+
+<span class="b">resource</span> <span class="s">"aws_security_group"</span> <span class="s">"dynamic"</span> {
+  <span class="attr">name</span>   = <span class="s">"dynamic-sg"</span>
+  <span class="attr">vpc_id</span> = <span class="n">aws_vpc.main.id</span>
+
+  <span class="c"># Dynamic block generates one ingress block per rule</span>
+  <span class="b">dynamic</span> <span class="s">"ingress"</span> {
+    <span class="attr">for_each</span> = <span class="n">var.ingress_rules</span>
+    <span class="b">content</span> {
+      <span class="attr">description</span> = <span class="n">ingress.value.description</span>
+      <span class="attr">from_port</span>   = <span class="n">ingress.value.from_port</span>
+      <span class="attr">to_port</span>     = <span class="n">ingress.value.to_port</span>
+      <span class="attr">protocol</span>    = <span class="n">ingress.value.protocol</span>
+      <span class="attr">cidr_blocks</span> = <span class="n">ingress.value.cidr_blocks</span>
+    }
+  }
+
+  <span class="b">egress</span> {
+    <span class="attr">from_port</span>   = <span class="num">0</span>
+    <span class="attr">to_port</span>     = <span class="num">0</span>
+    <span class="attr">protocol</span>    = <span class="s">"-1"</span>
+    <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>]
+  }
+}
+
+<span class="c"># Nested dynamic blocks</span>
+<span class="b">resource</span> <span class="s">"aws_elastic_beanstalk_environment"</span> <span class="s">"app"</span> {
+  <span class="attr">name</span> = <span class="s">"my-app"</span>
+
+  <span class="b">dynamic</span> <span class="s">"setting"</span> {
+    <span class="attr">for_each</span> = <span class="n">var.settings</span>
+    <span class="b">content</span> {
+      <span class="attr">namespace</span> = <span class="n">setting.value.namespace</span>
+      <span class="attr">name</span>      = <span class="n">setting.value.name</span>
+      <span class="attr">value</span>     = <span class="n">setting.value.value</span>
+    }
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- LIFECYCLE RULES -->
+<!-- ============================================================ -->
+<section class="section" id="lifecycle">
+  <h2>Lifecycle Rules</h2>
+  <p>Lifecycle meta-arguments control how Terraform creates, updates, and destroys resources.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">lifecycle.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── PREVENT ACCIDENTAL DESTROY ────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_db_instance"</span> <span class="s">"production"</span> {
+  <span class="attr">identifier</span>     = <span class="s">"prod-db"</span>
+  <span class="attr">engine</span>         = <span class="s">"postgres"</span>
+  <span class="attr">instance_class</span> = <span class="s">"db.r5.large"</span>
+
+  <span class="b">lifecycle</span> {
+    <span class="attr">prevent_destroy</span> = <span class="k">true</span>  <span class="c"># terraform destroy will error!</span>
+  }
+}
+
+<span class="c"># ─── CREATE BEFORE DESTROY ─────────────────────────────────────</span>
+<span class="c"># Creates new resource first, then destroys old — zero downtime</span>
+<span class="b">resource</span> <span class="s">"aws_launch_template"</span> <span class="s">"app"</span> {
+  <span class="attr">name_prefix</span>   = <span class="s">"app-"</span>
+  <span class="attr">image_id</span>      = <span class="n">var.ami_id</span>
+  <span class="attr">instance_type</span> = <span class="s">"t3.medium"</span>
+
+  <span class="b">lifecycle</span> {
+    <span class="attr">create_before_destroy</span> = <span class="k">true</span>
+  }
+}
+
+<span class="c"># ─── IGNORE CHANGES ─────────────────────────────────────────────</span>
+<span class="c"># Ignore changes made outside Terraform (manual changes)</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"app"</span> {
+  <span class="attr">ami</span>           = <span class="n">var.ami_id</span>
+  <span class="attr">instance_type</span> = <span class="s">"t3.medium"</span>
+
+  <span class="b">lifecycle</span> {
+    <span class="attr">ignore_changes</span> = [
+      <span class="n">ami</span>,             <span class="c"># ignore AMI changes (e.g., patching done externally)</span>
+      <span class="n">tags["LastPatch"]</span> <span class="c"># ignore a specific tag</span>
+    ]
+  }
+}
+
+<span class="c"># ─── REPLACE TRIGGERED BY ───────────────────────────────────────</span>
+<span class="c"># Force recreation when another resource changes</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"web"</span> {
+  <span class="attr">ami</span>           = <span class="n">data.aws_ami.latest.id</span>
+  <span class="attr">instance_type</span> = <span class="s">"t3.micro"</span>
+
+  <span class="b">lifecycle</span> {
+    <span class="attr">replace_triggered_by</span> = [
+      <span class="n">aws_launch_template.app.latest_version</span>
+    ]
+  }
+}
+
+<span class="c"># ─── PRECONDITION / POSTCONDITION (Terraform >= 1.2) ───────────</span>
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"validated"</span> {
+  <span class="attr">ami</span>           = <span class="n">var.ami_id</span>
+  <span class="attr">instance_type</span> = <span class="n">var.instance_type</span>
+
+  <span class="b">lifecycle</span> {
+    <span class="b">precondition</span> {
+      <span class="attr">condition</span>     = <span class="fn">startswith</span>(<span class="n">var.instance_type</span>, <span class="s">"t3."</span>) || <span class="fn">startswith</span>(<span class="n">var.instance_type</span>, <span class="s">"m5."</span>)
+      <span class="attr">error_message</span> = <span class="s">"Only t3 and m5 instance families are approved."</span>
+    }
+    <span class="b">postcondition</span> {
+      <span class="attr">condition</span>     = <span class="fn">self.public_ip</span> != <span class="s">""</span>
+      <span class="attr">error_message</span> = <span class="s">"Instance must have a public IP."</span>
+    }
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- BUILT-IN FUNCTIONS -->
+<!-- ============================================================ -->
+<section class="section" id="functions">
+  <h2>Built-in Functions</h2>
+  <p>Terraform has 100+ built-in functions for string manipulation, math, encoding, file operations, and more.</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">functions.tf — Essential Functions</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">locals</span> {
+  <span class="c"># ─── STRING FUNCTIONS ──────────────────────────────────────────</span>
+  <span class="attr">upper_env</span>    = <span class="fn">upper</span>(<span class="s">"production"</span>)       <span class="c"># "PRODUCTION"</span>
+  <span class="attr">lower_env</span>    = <span class="fn">lower</span>(<span class="s">"PRODUCTION"</span>)       <span class="c"># "production"</span>
+  <span class="attr">trimmed</span>      = <span class="fn">trimspace</span>(<span class="s">"  hello  "</span>)    <span class="c"># "hello"</span>
+  <span class="attr">replaced</span>     = <span class="fn">replace</span>(<span class="s">"a-b-c"</span>, <span class="s">"-"</span>, <span class="s">"_"</span>) <span class="c"># "a_b_c"</span>
+  <span class="attr">split_list</span>   = <span class="fn">split</span>(<span class="s">","</span>, <span class="s">"a,b,c"</span>)       <span class="c"># ["a","b","c"]</span>
+  <span class="attr">joined</span>       = <span class="fn">join</span>(<span class="s">"-"</span>, [<span class="s">"us"</span>, <span class="s">"east"</span>, <span class="s">"1"</span>]) <span class="c"># "us-east-1"</span>
+  <span class="attr">contains_str</span> = <span class="fn">strcontains</span>(<span class="s">"hello world"</span>, <span class="s">"world"</span>) <span class="c"># true</span>
+  <span class="attr">formatted</span>    = <span class="fn">format</span>(<span class="s">"Hello, %s! You are %d"</span>, <span class="s">"Alice"</span>, <span class="num">30</span>)
+  <span class="attr">padded</span>       = <span class="fn">formatlist</span>(<span class="s">"subnet-%s"</span>, [<span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span>]) <span class="c"># ["subnet-a",...]</span>
+
+  <span class="c"># ─── NUMBER FUNCTIONS ──────────────────────────────────────────</span>
+  <span class="attr">max_val</span>  = <span class="fn">max</span>(<span class="num">1</span>, <span class="num">5</span>, <span class="num">3</span>)    <span class="c"># 5</span>
+  <span class="attr">min_val</span>  = <span class="fn">min</span>(<span class="num">1</span>, <span class="num">5</span>, <span class="num">3</span>)    <span class="c"># 1</span>
+  <span class="attr">abs_val</span>  = <span class="fn">abs</span>(-<span class="num">42</span>)        <span class="c"># 42</span>
+  <span class="attr">ceil_val</span> = <span class="fn">ceil</span>(<span class="num">1.2</span>)        <span class="c"># 2</span>
+  <span class="attr">floor_val</span>= <span class="fn">floor</span>(<span class="num">1.9</span>)       <span class="c"># 1</span>
+
+  <span class="c"># ─── COLLECTION FUNCTIONS ──────────────────────────────────────</span>
+  <span class="attr">list_len</span>   = <span class="fn">length</span>([<span class="s">"a"</span>, <span class="s">"b"</span>, <span class="s">"c"</span>])          <span class="c"># 3</span>
+  <span class="attr">flat</span>       = <span class="fn">flatten</span>([[<span class="s">"a"</span>,<span class="s">"b"</span>],[<span class="s">"c"</span>]])          <span class="c"># ["a","b","c"]</span>
+  <span class="attr">unique_lst</span> = <span class="fn">distinct</span>([<span class="s">"a"</span>,<span class="s">"b"</span>,<span class="s">"a"</span>])            <span class="c"># ["a","b"]</span>
+  <span class="attr">sorted</span>     = <span class="fn">sort</span>([<span class="s">"c"</span>,<span class="s">"a"</span>,<span class="s">"b"</span>])                 <span class="c"># ["a","b","c"]</span>
+  <span class="attr">reversed</span>   = <span class="fn">reverse</span>([<span class="s">"a"</span>,<span class="s">"b"</span>,<span class="s">"c"</span>])             <span class="c"># ["c","b","a"]</span>
+  <span class="attr">merged_map</span> = <span class="fn">merge</span>({a=<span class="s">"1"</span>},{b=<span class="s">"2"</span>})               <span class="c"># {a="1",b="2"}</span>
+  <span class="attr">lookup_val</span> = <span class="fn">lookup</span>({a=<span class="s">"x"</span>}, <span class="s">"a"</span>, <span class="s">"default"</span>)   <span class="c"># "x"</span>
+  <span class="attr">keys_list</span>  = <span class="fn">keys</span>({a=<span class="s">"1"</span>, b=<span class="s">"2"</span>})               <span class="c"># ["a","b"]</span>
+  <span class="attr">values_lst</span> = <span class="fn">values</span>({a=<span class="s">"1"</span>, b=<span class="s">"2"</span>})             <span class="c"># ["1","2"]</span>
+  <span class="attr">zipped</span>     = <span class="fn">zipmap</span>([<span class="s">"a"</span>,<span class="s">"b"</span>],[<span class="s">"1"</span>,<span class="s">"2"</span>])        <span class="c"># {a="1",b="2"}</span>
+  <span class="attr">sliced</span>     = <span class="fn">slice</span>([<span class="s">"a"</span>,<span class="s">"b"</span>,<span class="s">"c"</span>,<span class="s">"d"</span>], <span class="num">1</span>, <span class="num">3</span>)     <span class="c"># ["b","c"]</span>
+  <span class="attr">in_list</span>    = <span class="fn">contains</span>([<span class="s">"a"</span>,<span class="s">"b"</span>], <span class="s">"a"</span>)           <span class="c"># true</span>
+  <span class="attr">transposed</span> = <span class="fn">transpose</span>({a=[<span class="s">"1"</span>,<span class="s">"2"</span>], b=[<span class="s">"1"</span>]}) <span class="c"># {1=["a","b"], 2=["a"]}</span>
+
+  <span class="c"># ─── IP / CIDR FUNCTIONS ───────────────────────────────────────</span>
+  <span class="attr">subnet</span>     = <span class="fn">cidrsubnet</span>(<span class="s">"10.0.0.0/16"</span>, <span class="num">8</span>, <span class="num">1</span>)  <span class="c"># "10.0.1.0/24"</span>
+  <span class="attr">host_ip</span>    = <span class="fn">cidrhost</span>(<span class="s">"10.0.1.0/24"</span>, <span class="num">5</span>)       <span class="c"># "10.0.1.5"</span>
+  <span class="attr">netmask</span>    = <span class="fn">cidrnetmask</span>(<span class="s">"10.0.0.0/16"</span>)        <span class="c"># "255.255.0.0"</span>
+
+  <span class="c"># ─── ENCODING FUNCTIONS ────────────────────────────────────────</span>
+  <span class="attr">b64encoded</span> = <span class="fn">base64encode</span>(<span class="s">"hello world"</span>)
+  <span class="attr">b64decoded</span> = <span class="fn">base64decode</span>(<span class="s">"aGVsbG8gd29ybGQ="</span>)
+  <span class="attr">json_str</span>   = <span class="fn">jsonencode</span>({ name = <span class="s">"Alice"</span>, age = <span class="num">30</span> })
+  <span class="attr">from_json</span>  = <span class="fn">jsondecode</span>(<span class="s">"{\"key\":\"val\"}"</span>)
+  <span class="attr">sha256_hash</span>= <span class="fn">sha256</span>(<span class="s">"secret"</span>)
+
+  <span class="c"># ─── FILE FUNCTIONS ────────────────────────────────────────────</span>
+  <span class="attr">file_contents</span> = <span class="fn">file</span>(<span class="s">"${path.module}/scripts/init.sh"</span>)
+  <span class="attr">file_b64</span>      = <span class="fn">filebase64</span>(<span class="s">"${path.module}/scripts/init.sh"</span>)
+  <span class="attr">tmpl_rendered</span> = <span class="fn">templatefile</span>(<span class="s">"${path.module}/user_data.tpl"</span>, {
+    app_name = <span class="n">var.app_name</span>
+    env      = <span class="n">var.environment</span>
+  })
+
+  <span class="c"># ─── TYPE FUNCTIONS ────────────────────────────────────────────</span>
+  <span class="attr">to_num</span>   = <span class="fn">tonumber</span>(<span class="s">"42"</span>)   <span class="c"># 42</span>
+  <span class="attr">to_str</span>   = <span class="fn">tostring</span>(<span class="num">42</span>)     <span class="c"># "42"</span>
+  <span class="attr">to_list</span>  = <span class="fn">tolist</span>({<span class="s">"a"</span>, <span class="s">"b"</span>}) <span class="c"># ["a","b"]</span>
+  <span class="attr">try_safe</span> = <span class="fn">try</span>(<span class="n">var.map_var.missing_key</span>, <span class="s">"fallback"</span>)
+  <span class="attr">can_val</span>  = <span class="fn">can</span>(<span class="fn">tonumber</span>(<span class="n">var.input</span>))  <span class="c"># true/false</span>
+  <span class="attr">coalesce_val</span> = <span class="fn">coalesce</span>(<span class="k">null</span>, <span class="s">""</span>, <span class="s">"first-valid"</span>) <span class="c"># "first-valid"</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- PROVISIONERS -->
+<!-- ============================================================ -->
+<section class="section" id="provisioners">
+  <h2>Provisioners</h2>
+  <div class="info-box warn">
+    <div class="icon">⚠️</div>
+    <div class="content">
+      <strong>Use provisioners as a last resort</strong>
+      <p>Prefer cloud-init, user_data, or configuration management tools (Ansible, Chef) over provisioners. Provisioners make state unpredictable and are hard to debug.</p>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">provisioners.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"web"</span> {
+  <span class="attr">ami</span>           = <span class="n">data.aws_ami.amazon_linux.id</span>
+  <span class="attr">instance_type</span> = <span class="s">"t3.micro"</span>
+  <span class="attr">key_name</span>      = <span class="n">var.key_pair_name</span>
+
+  <span class="c"># Copy file to remote instance</span>
+  <span class="b">provisioner</span> <span class="s">"file"</span> {
+    <span class="attr">source</span>      = <span class="s">"scripts/setup.sh"</span>
+    <span class="attr">destination</span> = <span class="s">"/tmp/setup.sh"</span>
+
+    <span class="b">connection</span> {
+      <span class="attr">type</span>        = <span class="s">"ssh"</span>
+      <span class="attr">user</span>        = <span class="s">"ec2-user"</span>
+      <span class="attr">private_key</span> = <span class="fn">file</span>(<span class="n">var.private_key_path</span>)
+      <span class="attr">host</span>        = <span class="fn">self.public_ip</span>
+    }
+  }
+
+  <span class="c"># Run commands remotely (after creation)</span>
+  <span class="b">provisioner</span> <span class="s">"remote-exec"</span> {
+    <span class="attr">inline</span> = [
+      <span class="s">"chmod +x /tmp/setup.sh"</span>,
+      <span class="s">"/tmp/setup.sh"</span>,
+    ]
+    <span class="b">connection</span> {
+      <span class="attr">type</span>        = <span class="s">"ssh"</span>
+      <span class="attr">user</span>        = <span class="s">"ec2-user"</span>
+      <span class="attr">private_key</span> = <span class="fn">file</span>(<span class="n">var.private_key_path</span>)
+      <span class="attr">host</span>        = <span class="fn">self.public_ip</span>
+    }
+  }
+
+  <span class="c"># Run commands locally (when resource is destroyed)</span>
+  <span class="b">provisioner</span> <span class="s">"local-exec"</span> {
+    <span class="attr">when</span>    = <span class="k">destroy</span>
+    <span class="attr">command</span> = <span class="s">"echo 'Destroying ${self.id}' >> destroyed.log"</span>
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CI/CD -->
+<!-- ============================================================ -->
+<section class="section" id="cicd">
+  <h2>CI/CD Integration</h2>
+
+  <h3>GitHub Actions</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">.github/workflows/terraform.yml</span>
+      <span class="code-lang">YAML</span>
+    </div>
+    <pre><span class="attr">name</span>: <span class="s">Terraform CI/CD</span>
+
+<span class="attr">on</span>:
+  <span class="attr">push</span>:
+    <span class="attr">branches</span>: [<span class="s">main</span>]
+  <span class="attr">pull_request</span>:
+    <span class="attr">branches</span>: [<span class="s">main</span>]
+
+<span class="attr">env</span>:
+  <span class="attr">AWS_ACCESS_KEY_ID</span>: <span class="s">${{ secrets.AWS_ACCESS_KEY_ID }}</span>
+  <span class="attr">AWS_SECRET_ACCESS_KEY</span>: <span class="s">${{ secrets.AWS_SECRET_ACCESS_KEY }}</span>
+  <span class="attr">TF_VERSION</span>: <span class="s">"1.6.0"</span>
+
+<span class="attr">jobs</span>:
+  <span class="attr">terraform</span>:
+    <span class="attr">runs-on</span>: <span class="s">ubuntu-latest</span>
+    <span class="attr">steps</span>:
+      - <span class="attr">uses</span>: <span class="s">actions/checkout@v4</span>
+
+      - <span class="attr">name</span>: <span class="s">Setup Terraform</span>
+        <span class="attr">uses</span>: <span class="s">hashicorp/setup-terraform@v3</span>
+        <span class="attr">with</span>:
+          <span class="attr">terraform_version</span>: <span class="s">${{ env.TF_VERSION }}</span>
+
+      - <span class="attr">name</span>: <span class="s">Terraform Init</span>
+        <span class="attr">run</span>: <span class="s">terraform init</span>
+
+      - <span class="attr">name</span>: <span class="s">Terraform Format Check</span>
+        <span class="attr">run</span>: <span class="s">terraform fmt -check -recursive</span>
+
+      - <span class="attr">name</span>: <span class="s">Terraform Validate</span>
+        <span class="attr">run</span>: <span class="s">terraform validate</span>
+
+      - <span class="attr">name</span>: <span class="s">Terraform Plan</span>
+        <span class="attr">run</span>: <span class="s">terraform plan -no-color -out=tfplan</span>
+        <span class="attr">if</span>: <span class="s">github.event_name == 'pull_request'</span>
+
+      - <span class="attr">name</span>: <span class="s">Terraform Apply</span>
+        <span class="attr">run</span>: <span class="s">terraform apply -auto-approve tfplan</span>
+        <span class="attr">if</span>: <span class="s">github.ref == 'refs/heads/main' && github.event_name == 'push'</span></pre>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ============================================================ -->
+<!-- BEGINNER PROJECTS -->
+<!-- ============================================================ -->
+<section class="section" id="projects-beginner">
+  <h2>🌱 Beginner Projects</h2>
+  <p>Build these to solidify your Terraform fundamentals.</p>
+
+  <div class="projects-grid">
+    <div class="project-card beginner">
+      <h4>01 — Static Website on S3</h4>
+      <p>Host a static HTML/CSS website on S3 with public access and website hosting enabled.</p>
+      <div class="project-tags"><span class="project-tag">S3</span><span class="project-tag">IAM</span></div>
+    </div>
+    <div class="project-card beginner">
+      <h4>02 — Single EC2 Web Server</h4>
+      <p>Launch an EC2 instance with NGINX installed via user_data, behind a security group.</p>
+      <div class="project-tags"><span class="project-tag">EC2</span><span class="project-tag">VPC</span><span class="project-tag">SG</span></div>
+    </div>
+    <div class="project-card beginner">
+      <h4>03 — IAM Users & Groups</h4>
+      <p>Create IAM users, groups, policies, and attach policies — using for_each for all users.</p>
+      <div class="project-tags"><span class="project-tag">IAM</span></div>
+    </div>
+    <div class="project-card beginner">
+      <h4>04 — Route53 DNS Zone</h4>
+      <p>Create a hosted zone, add A records, CNAME records, and MX records for a domain.</p>
+      <div class="project-tags"><span class="project-tag">Route53</span><span class="project-tag">DNS</span></div>
+    </div>
+    <div class="project-card beginner">
+      <h4>05 — RDS Database Instance</h4>
+      <p>Provision a PostgreSQL RDS instance with parameter groups and subnet groups.</p>
+      <div class="project-tags"><span class="project-tag">RDS</span><span class="project-tag">VPC</span></div>
+    </div>
+    <div class="project-card beginner">
+      <h4>06 — SNS + SQS Messaging</h4>
+      <p>Create an SNS topic, SQS queue, and subscribe the queue to the topic.</p>
+      <div class="project-tags"><span class="project-tag">SNS</span><span class="project-tag">SQS</span></div>
+    </div>
+  </div>
+
+  <h3>Project 01: Static Website on S3 — Full Code</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project01-s3-website/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">terraform</span> {
+  <span class="b">required_providers</span> {
+    <span class="b">aws</span> = { <span class="attr">source</span> = <span class="s">"hashicorp/aws"</span>, <span class="attr">version</span> = <span class="s">"~> 5.0"</span> }
+  }
+}
+
+<span class="b">provider</span> <span class="s">"aws"</span> { <span class="attr">region</span> = <span class="s">"us-east-1"</span> }
+
+<span class="b">variable</span> <span class="s">"bucket_name"</span> { <span class="attr">type</span> = <span class="k">string</span> }
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"website"</span> {
+  <span class="attr">bucket</span> = <span class="n">var.bucket_name</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket_public_access_block"</span> <span class="s">"website"</span> {
+  <span class="attr">bucket</span>                  = <span class="n">aws_s3_bucket.website.id</span>
+  <span class="attr">block_public_acls</span>       = <span class="k">false</span>
+  <span class="attr">block_public_policy</span>     = <span class="k">false</span>
+  <span class="attr">ignore_public_acls</span>      = <span class="k">false</span>
+  <span class="attr">restrict_public_buckets</span> = <span class="k">false</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket_website_configuration"</span> <span class="s">"website"</span> {
+  <span class="attr">bucket</span> = <span class="n">aws_s3_bucket.website.id</span>
+  <span class="b">index_document</span> { <span class="attr">suffix</span> = <span class="s">"index.html"</span> }
+  <span class="b">error_document</span> { <span class="attr">key</span>    = <span class="s">"error.html"</span> }
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_bucket_policy"</span> <span class="s">"website"</span> {
+  <span class="attr">bucket</span>     = <span class="n">aws_s3_bucket.website.id</span>
+  <span class="attr">depends_on</span> = [<span class="n">aws_s3_bucket_public_access_block.website</span>]
+
+  <span class="attr">policy</span> = <span class="fn">jsonencode</span>({
+    Version = <span class="s">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="s">"Allow"</span>
+      Principal = <span class="s">"*"</span>
+      Action    = <span class="s">"s3:GetObject"</span>
+      Resource  = <span class="s">"${aws_s3_bucket.website.arn}/*"</span>
+    }]
+  })
+}
+
+<span class="b">resource</span> <span class="s">"aws_s3_object"</span> <span class="s">"index"</span> {
+  <span class="attr">bucket</span>       = <span class="n">aws_s3_bucket.website.id</span>
+  <span class="attr">key</span>          = <span class="s">"index.html"</span>
+  <span class="attr">content</span>      = <span class="s">"&lt;h1&gt;Hello from Terraform!&lt;/h1&gt;"</span>
+  <span class="attr">content_type</span> = <span class="s">"text/html"</span>
+}
+
+<span class="b">output</span> <span class="s">"website_url"</span> {
+  <span class="attr">value</span> = <span class="n">aws_s3_bucket_website_configuration.website.website_endpoint</span>
+}</pre>
+  </div>
+
+  <h3>Project 02: EC2 Web Server — Full Code</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project02-ec2-webserver/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">terraform</span> {
+  <span class="b">required_providers</span> {
+    <span class="b">aws</span> = { <span class="attr">source</span> = <span class="s">"hashicorp/aws"</span>, <span class="attr">version</span> = <span class="s">"~> 5.0"</span> }
+  }
+}
+
+<span class="b">provider</span> <span class="s">"aws"</span> { <span class="attr">region</span> = <span class="n">var.region</span> }
+
+<span class="b">variable</span> <span class="s">"region"</span>    { <span class="attr">default</span> = <span class="s">"us-east-1"</span> }
+<span class="b">variable</span> <span class="s">"key_name"</span>  { <span class="attr">type</span> = <span class="k">string</span> }
+
+<span class="b">data</span> <span class="s">"aws_ami"</span> <span class="s">"al2"</span> {
+  <span class="attr">most_recent</span> = <span class="k">true</span>
+  <span class="attr">owners</span>      = [<span class="s">"amazon"</span>]
+  <span class="b">filter</span> { <span class="attr">name</span> = <span class="s">"name"</span>;  <span class="attr">values</span> = [<span class="s">"amzn2-ami-hvm-*-x86_64-gp2"</span>] }
+}
+
+<span class="b">resource</span> <span class="s">"aws_vpc"</span> <span class="s">"main"</span> {
+  <span class="attr">cidr_block</span>           = <span class="s">"10.0.0.0/16"</span>
+  <span class="attr">enable_dns_hostnames</span> = <span class="k">true</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_internet_gateway"</span> <span class="s">"igw"</span> {
+  <span class="attr">vpc_id</span> = <span class="n">aws_vpc.main.id</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"public"</span> {
+  <span class="attr">vpc_id</span>                  = <span class="n">aws_vpc.main.id</span>
+  <span class="attr">cidr_block</span>              = <span class="s">"10.0.1.0/24"</span>
+  <span class="attr">map_public_ip_on_launch</span> = <span class="k">true</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_route_table"</span> <span class="s">"public"</span> {
+  <span class="attr">vpc_id</span> = <span class="n">aws_vpc.main.id</span>
+  <span class="b">route</span> { <span class="attr">cidr_block</span> = <span class="s">"0.0.0.0/0"</span>; <span class="attr">gateway_id</span> = <span class="n">aws_internet_gateway.igw.id</span> }
+}
+
+<span class="b">resource</span> <span class="s">"aws_route_table_association"</span> <span class="s">"public"</span> {
+  <span class="attr">subnet_id</span>      = <span class="n">aws_subnet.public.id</span>
+  <span class="attr">route_table_id</span> = <span class="n">aws_route_table.public.id</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_security_group"</span> <span class="s">"web"</span> {
+  <span class="attr">vpc_id</span> = <span class="n">aws_vpc.main.id</span>
+  <span class="b">ingress</span> { <span class="attr">from_port</span> = <span class="num">80</span>;  <span class="attr">to_port</span> = <span class="num">80</span>;  <span class="attr">protocol</span> = <span class="s">"tcp"</span>; <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>] }
+  <span class="b">ingress</span> { <span class="attr">from_port</span> = <span class="num">22</span>;  <span class="attr">to_port</span> = <span class="num">22</span>;  <span class="attr">protocol</span> = <span class="s">"tcp"</span>; <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>] }
+  <span class="b">egress</span>  { <span class="attr">from_port</span> = <span class="num">0</span>;   <span class="attr">to_port</span> = <span class="num">0</span>;   <span class="attr">protocol</span> = <span class="s">"-1"</span>; <span class="attr">cidr_blocks</span> = [<span class="s">"0.0.0.0/0"</span>] }
+}
+
+<span class="b">resource</span> <span class="s">"aws_instance"</span> <span class="s">"web"</span> {
+  <span class="attr">ami</span>                    = <span class="n">data.aws_ami.al2.id</span>
+  <span class="attr">instance_type</span>          = <span class="s">"t3.micro"</span>
+  <span class="attr">subnet_id</span>              = <span class="n">aws_subnet.public.id</span>
+  <span class="attr">vpc_security_group_ids</span> = [<span class="n">aws_security_group.web.id</span>]
+  <span class="attr">key_name</span>               = <span class="n">var.key_name</span>
+
+  <span class="attr">user_data</span> = <span class="k">&lt;&lt;-EOF</span>
+    <span class="s">#!/bin/bash
+    yum update -y
+    yum install -y httpd
+    echo "&lt;h1&gt;Deployed by Terraform&lt;/h1&gt;" > /var/www/html/index.html
+    systemctl start httpd && systemctl enable httpd</span>
+  <span class="k">EOF</span>
+
+  <span class="attr">tags</span> = { Name = <span class="s">"terraform-web-server"</span> }
+}
+
+<span class="b">output</span> <span class="s">"public_ip"</span> { <span class="attr">value</span> = <span class="n">aws_instance.web.public_ip</span> }
+<span class="b">output</span> <span class="s">"url"</span>       { <span class="attr">value</span> = <span class="s">"http://${aws_instance.web.public_ip}"</span> }</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- INTERMEDIATE PROJECTS -->
+<!-- ============================================================ -->
+<section class="section" id="projects-intermediate">
+  <h2>⚡ Intermediate Projects</h2>
+  <p>These projects will challenge your module and architecture skills.</p>
+
+  <div class="projects-grid">
+    <div class="project-card intermediate">
+      <h4>07 — Three-Tier VPC Architecture</h4>
+      <p>Multi-AZ VPC with public, private, and database tiers using NAT Gateways.</p>
+      <div class="project-tags"><span class="project-tag">VPC</span><span class="project-tag">NAT</span><span class="project-tag">Multi-AZ</span></div>
+    </div>
+    <div class="project-card intermediate">
+      <h4>08 — ALB + Auto Scaling Group</h4>
+      <p>Load balancer with target group health checks, launch templates, and ASG policies.</p>
+      <div class="project-tags"><span class="project-tag">ALB</span><span class="project-tag">ASG</span><span class="project-tag">CloudWatch</span></div>
+    </div>
+    <div class="project-card intermediate">
+      <h4>09 — Lambda + API Gateway</h4>
+      <p>Serverless REST API with Lambda functions, API Gateway, and IAM roles.</p>
+      <div class="project-tags"><span class="project-tag">Lambda</span><span class="project-tag">API GW</span><span class="project-tag">IAM</span></div>
+    </div>
+    <div class="project-card intermediate">
+      <h4>10 — ECS Fargate App</h4>
+      <p>Containerized app on ECS Fargate with ECR, task definitions, and service auto-scaling.</p>
+      <div class="project-tags"><span class="project-tag">ECS</span><span class="project-tag">Fargate</span><span class="project-tag">ECR</span></div>
+    </div>
+    <div class="project-card intermediate">
+      <h4>11 — CloudFront CDN + S3</h4>
+      <p>Global CDN distribution with S3 origin, custom domain, SSL, and cache policies.</p>
+      <div class="project-tags"><span class="project-tag">CloudFront</span><span class="project-tag">ACM</span><span class="project-tag">Route53</span></div>
+    </div>
+    <div class="project-card intermediate">
+      <h4>12 — Multi-Environment Deploy</h4>
+      <p>Same config deployed to dev/staging/prod using workspaces and .tfvars files.</p>
+      <div class="project-tags"><span class="project-tag">Workspaces</span><span class="project-tag">tfvars</span></div>
+    </div>
+  </div>
+
+  <h3>Project 08: ALB + Auto Scaling Group</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project08-alb-asg/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── LAUNCH TEMPLATE ───────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_launch_template"</span> <span class="s">"app"</span> {
+  <span class="attr">name_prefix</span>   = <span class="s">"app-lt-"</span>
+  <span class="attr">image_id</span>      = <span class="n">data.aws_ami.al2.id</span>
+  <span class="attr">instance_type</span> = <span class="n">var.instance_type</span>
+
+  <span class="b">vpc_security_group_ids</span> = [<span class="n">aws_security_group.app.id</span>]
+
+  <span class="attr">user_data</span> = <span class="fn">base64encode</span>(<span class="k">&lt;&lt;-EOF</span>
+    <span class="s">#!/bin/bash
+    yum install -y httpd
+    echo "Hello from $(hostname)" > /var/www/html/index.html
+    systemctl start httpd && systemctl enable httpd</span>
+  <span class="k">EOF</span>)
+
+  <span class="b">tag_specifications</span> {
+    <span class="attr">resource_type</span> = <span class="s">"instance"</span>
+    <span class="attr">tags</span>          = { Name = <span class="s">"asg-instance"</span> }
+  }
+
+  <span class="b">lifecycle</span> { <span class="attr">create_before_destroy</span> = <span class="k">true</span> }
+}
+
+<span class="c"># ─── APPLICATION LOAD BALANCER ─────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_lb"</span> <span class="s">"app"</span> {
+  <span class="attr">name</span>               = <span class="s">"app-alb"</span>
+  <span class="attr">internal</span>           = <span class="k">false</span>
+  <span class="attr">load_balancer_type</span> = <span class="s">"application"</span>
+  <span class="attr">security_groups</span>    = [<span class="n">aws_security_group.alb.id</span>]
+  <span class="attr">subnets</span>            = <span class="n">module.vpc.public_subnet_ids</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_lb_target_group"</span> <span class="s">"app"</span> {
+  <span class="attr">name</span>     = <span class="s">"app-tg"</span>
+  <span class="attr">port</span>     = <span class="num">80</span>
+  <span class="attr">protocol</span> = <span class="s">"HTTP"</span>
+  <span class="attr">vpc_id</span>   = <span class="n">module.vpc.vpc_id</span>
+
+  <span class="b">health_check</span> {
+    <span class="attr">path</span>                = <span class="s">"/"</span>
+    <span class="attr">healthy_threshold</span>   = <span class="num">2</span>
+    <span class="attr">unhealthy_threshold</span> = <span class="num">2</span>
+    <span class="attr">interval</span>            = <span class="num">30</span>
+  }
+}
+
+<span class="b">resource</span> <span class="s">"aws_lb_listener"</span> <span class="s">"http"</span> {
+  <span class="attr">load_balancer_arn</span> = <span class="n">aws_lb.app.arn</span>
+  <span class="attr">port</span>              = <span class="s">"80"</span>
+  <span class="attr">protocol</span>          = <span class="s">"HTTP"</span>
+
+  <span class="b">default_action</span> {
+    <span class="attr">type</span>             = <span class="s">"forward"</span>
+    <span class="attr">target_group_arn</span> = <span class="n">aws_lb_target_group.app.arn</span>
+  }
+}
+
+<span class="c"># ─── AUTO SCALING GROUP ────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_autoscaling_group"</span> <span class="s">"app"</span> {
+  <span class="attr">name</span>                = <span class="s">"app-asg"</span>
+  <span class="attr">min_size</span>            = <span class="n">var.asg_min_size</span>
+  <span class="attr">max_size</span>            = <span class="n">var.asg_max_size</span>
+  <span class="attr">desired_capacity</span>    = <span class="n">var.asg_desired</span>
+  <span class="attr">vpc_zone_identifier</span> = <span class="n">module.vpc.private_subnet_ids</span>
+  <span class="attr">target_group_arns</span>   = [<span class="n">aws_lb_target_group.app.arn</span>]
+  <span class="attr">health_check_type</span>   = <span class="s">"ELB"</span>
+
+  <span class="b">launch_template</span> {
+    <span class="attr">id</span>      = <span class="n">aws_launch_template.app.id</span>
+    <span class="attr">version</span> = <span class="s">"$Latest"</span>
+  }
+}
+
+<span class="c"># ─── CPU SCALING POLICY ────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_autoscaling_policy"</span> <span class="s">"cpu"</span> {
+  <span class="attr">name</span>                   = <span class="s">"cpu-tracking"</span>
+  <span class="attr">autoscaling_group_name</span> = <span class="n">aws_autoscaling_group.app.name</span>
+  <span class="attr">policy_type</span>            = <span class="s">"TargetTrackingScaling"</span>
+
+  <span class="b">target_tracking_configuration</span> {
+    <span class="b">predefined_metric_specification</span> {
+      <span class="attr">predefined_metric_type</span> = <span class="s">"ASGAverageCPUUtilization"</span>
+    }
+    <span class="attr">target_value</span> = <span class="num">50.0</span>
+  }
+}</pre>
+  </div>
+
+  <h3>Project 09: Lambda + API Gateway</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project09-lambda-api/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── IAM ROLE FOR LAMBDA ───────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_iam_role"</span> <span class="s">"lambda"</span> {
+  <span class="attr">name</span> = <span class="s">"lambda-execution-role"</span>
+  <span class="attr">assume_role_policy</span> = <span class="fn">jsonencode</span>({
+    Version = <span class="s">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="s">"sts:AssumeRole"</span>
+      Effect    = <span class="s">"Allow"</span>
+      Principal = { Service = <span class="s">"lambda.amazonaws.com"</span> }
+    }]
+  })
+}
+
+<span class="b">resource</span> <span class="s">"aws_iam_role_policy_attachment"</span> <span class="s">"lambda_basic"</span> {
+  <span class="attr">role</span>       = <span class="n">aws_iam_role.lambda.name</span>
+  <span class="attr">policy_arn</span> = <span class="s">"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"</span>
+}
+
+<span class="c"># ─── LAMBDA FUNCTION ───────────────────────────────────────────</span>
+<span class="b">data</span> <span class="s">"archive_file"</span> <span class="s">"lambda_zip"</span> {
+  <span class="attr">type</span>        = <span class="s">"zip"</span>
+  <span class="attr">source_file</span> = <span class="s">"${path.module}/src/handler.py"</span>
+  <span class="attr">output_path</span> = <span class="s">"${path.module}/lambda.zip"</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_lambda_function"</span> <span class="s">"api"</span> {
+  <span class="attr">function_name</span>    = <span class="s">"my-api-handler"</span>
+  <span class="attr">role</span>             = <span class="n">aws_iam_role.lambda.arn</span>
+  <span class="attr">handler</span>          = <span class="s">"handler.lambda_handler"</span>
+  <span class="attr">runtime</span>          = <span class="s">"python3.11"</span>
+  <span class="attr">filename</span>         = <span class="n">data.archive_file.lambda_zip.output_path</span>
+  <span class="attr">source_code_hash</span> = <span class="n">data.archive_file.lambda_zip.output_base64sha256</span>
+  <span class="attr">timeout</span>          = <span class="num">30</span>
+
+  <span class="attr">environment</span> {
+    <span class="attr">variables</span> = { ENV = <span class="n">var.environment</span> }
+  }
+}
+
+<span class="c"># ─── API GATEWAY ───────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_apigatewayv2_api"</span> <span class="s">"main"</span> {
+  <span class="attr">name</span>          = <span class="s">"my-http-api"</span>
+  <span class="attr">protocol_type</span> = <span class="s">"HTTP"</span>
+  <span class="attr">cors_configuration</span> {
+    <span class="attr">allow_origins</span> = [<span class="s">"*"</span>]
+    <span class="attr">allow_methods</span> = [<span class="s">"GET"</span>, <span class="s">"POST"</span>, <span class="s">"PUT"</span>, <span class="s">"DELETE"</span>]
+    <span class="attr">allow_headers</span> = [<span class="s">"Content-Type"</span>, <span class="s">"Authorization"</span>]
+  }
+}
+
+<span class="b">resource</span> <span class="s">"aws_apigatewayv2_integration"</span> <span class="s">"lambda"</span> {
+  <span class="attr">api_id</span>             = <span class="n">aws_apigatewayv2_api.main.id</span>
+  <span class="attr">integration_type</span>   = <span class="s">"AWS_PROXY"</span>
+  <span class="attr">integration_uri</span>    = <span class="n">aws_lambda_function.api.invoke_arn</span>
+  <span class="attr">payload_format_version</span> = <span class="s">"2.0"</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_apigatewayv2_route"</span> <span class="s">"default"</span> {
+  <span class="attr">api_id</span>    = <span class="n">aws_apigatewayv2_api.main.id</span>
+  <span class="attr">route_key</span> = <span class="s">"$default"</span>
+  <span class="attr">target</span>    = <span class="s">"integrations/${aws_apigatewayv2_integration.lambda.id}"</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_apigatewayv2_stage"</span> <span class="s">"prod"</span> {
+  <span class="attr">api_id</span>      = <span class="n">aws_apigatewayv2_api.main.id</span>
+  <span class="attr">name</span>        = <span class="s">"$default"</span>
+  <span class="attr">auto_deploy</span> = <span class="k">true</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_lambda_permission"</span> <span class="s">"apigw"</span> {
+  <span class="attr">action</span>        = <span class="s">"lambda:InvokeFunction"</span>
+  <span class="attr">function_name</span> = <span class="n">aws_lambda_function.api.function_name</span>
+  <span class="attr">principal</span>     = <span class="s">"apigateway.amazonaws.com"</span>
+  <span class="attr">source_arn</span>    = <span class="s">"${aws_apigatewayv2_api.main.execution_arn}/*/*"</span>
+}
+
+<span class="b">output</span> <span class="s">"api_url"</span> { <span class="attr">value</span> = <span class="n">aws_apigatewayv2_api.main.api_endpoint</span> }</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ADVANCED PROJECTS -->
+<!-- ============================================================ -->
+<section class="section" id="projects-advanced">
+  <h2>🔥 Advanced Projects</h2>
+  <p>Production-grade infrastructure patterns used at scale.</p>
+
+  <div class="projects-grid">
+    <div class="project-card advanced">
+      <h4>13 — EKS Kubernetes Cluster</h4>
+      <p>Full EKS cluster with managed node groups, IRSA, cluster autoscaler, and AWS Load Balancer Controller.</p>
+      <div class="project-tags"><span class="project-tag">EKS</span><span class="project-tag">K8s</span><span class="project-tag">IAM</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>14 — Multi-Region DR</h4>
+      <p>Active-passive disaster recovery across two AWS regions with Route53 failover routing.</p>
+      <div class="project-tags"><span class="project-tag">Multi-Region</span><span class="project-tag">Route53</span><span class="project-tag">RDS</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>15 — Data Lake on AWS</h4>
+      <p>S3 data lake with Glue catalog, Athena queries, Lake Formation permissions, and Kinesis ingestion.</p>
+      <div class="project-tags"><span class="project-tag">S3</span><span class="project-tag">Glue</span><span class="project-tag">Kinesis</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>16 — MSK Kafka Cluster</h4>
+      <p>Managed Kafka cluster with 3 broker nodes, TLS encryption, SASL auth, and monitoring.</p>
+      <div class="project-tags"><span class="project-tag">MSK</span><span class="project-tag">Kafka</span><span class="project-tag">VPC</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>17 — Terraform Module Registry</h4>
+      <p>Build and publish a reusable Terraform module to the public registry with full CI/CD.</p>
+      <div class="project-tags"><span class="project-tag">Modules</span><span class="project-tag">Registry</span><span class="project-tag">CI/CD</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>18 — Multi-Cloud (AWS + GCP)</h4>
+      <p>Deploy the same application on both AWS and GCP from a single Terraform configuration.</p>
+      <div class="project-tags"><span class="project-tag">AWS</span><span class="project-tag">GCP</span><span class="project-tag">Multi-Cloud</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>19 — Zero-Trust Network</h4>
+      <p>PrivateLink, VPC endpoints, no-internet architecture with AWS Systems Manager for access.</p>
+      <div class="project-tags"><span class="project-tag">PrivateLink</span><span class="project-tag">SSM</span><span class="project-tag">Security</span></div>
+    </div>
+    <div class="project-card advanced">
+      <h4>20 — GitOps Pipeline</h4>
+      <p>Full GitOps workflow: PR triggers plan, merge triggers apply, with Atlantis or TFC automation.</p>
+      <div class="project-tags"><span class="project-tag">GitOps</span><span class="project-tag">Atlantis</span><span class="project-tag">CI/CD</span></div>
+    </div>
+  </div>
+
+  <h3>Project 13: EKS Cluster (Core)</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project13-eks/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── EKS CLUSTER ───────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_eks_cluster"</span> <span class="s">"main"</span> {
+  <span class="attr">name</span>     = <span class="s">"${var.project}-${var.environment}"</span>
+  <span class="attr">role_arn</span> = <span class="n">aws_iam_role.eks_cluster.arn</span>
+  <span class="attr">version</span>  = <span class="n">var.k8s_version</span>
+
+  <span class="b">vpc_config</span> {
+    <span class="attr">subnet_ids</span>              = <span class="fn">concat</span>(<span class="n">module.vpc.public_subnet_ids</span>, <span class="n">module.vpc.private_subnet_ids</span>)
+    <span class="attr">endpoint_private_access</span> = <span class="k">true</span>
+    <span class="attr">endpoint_public_access</span>  = <span class="k">true</span>
+    <span class="attr">public_access_cidrs</span>     = <span class="n">var.allowed_cidrs</span>
+  }
+
+  <span class="b">enabled_cluster_log_types</span> = [<span class="s">"api"</span>, <span class="s">"audit"</span>, <span class="s">"authenticator"</span>]
+
+  <span class="attr">depends_on</span> = [
+    <span class="n">aws_iam_role_policy_attachment.eks_cluster_policy</span>,
+    <span class="n">aws_cloudwatch_log_group.eks</span>
+  ]
+}
+
+<span class="c"># ─── NODE GROUP ────────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_eks_node_group"</span> <span class="s">"main"</span> {
+  <span class="attr">cluster_name</span>    = <span class="n">aws_eks_cluster.main.name</span>
+  <span class="attr">node_group_name</span> = <span class="s">"main"</span>
+  <span class="attr">node_role_arn</span>   = <span class="n">aws_iam_role.eks_node.arn</span>
+  <span class="attr">subnet_ids</span>      = <span class="n">module.vpc.private_subnet_ids</span>
+  <span class="attr">instance_types</span>  = [<span class="n">var.node_instance_type</span>]
+
+  <span class="b">scaling_config</span> {
+    <span class="attr">desired_size</span> = <span class="n">var.node_desired</span>
+    <span class="attr">max_size</span>     = <span class="n">var.node_max</span>
+    <span class="attr">min_size</span>     = <span class="n">var.node_min</span>
+  }
+
+  <span class="b">update_config</span> {
+    <span class="attr">max_unavailable</span> = <span class="num">1</span>
+  }
+
+  <span class="b">labels</span> = {
+    <span class="attr">role</span> = <span class="s">"general"</span>
+    <span class="attr">env</span>  = <span class="n">var.environment</span>
+  }
+
+  <span class="b">lifecycle</span> { <span class="attr">ignore_changes</span> = [<span class="n">scaling_config[0].desired_size</span>] }
+}
+
+<span class="c"># ─── CLUSTER IAM ROLE ──────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_iam_role"</span> <span class="s">"eks_cluster"</span> {
+  <span class="attr">name</span> = <span class="s">"eks-cluster-role"</span>
+  <span class="attr">assume_role_policy</span> = <span class="fn">jsonencode</span>({
+    Version = <span class="s">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="s">"sts:AssumeRole"</span>
+      Effect    = <span class="s">"Allow"</span>
+      Principal = { Service = <span class="s">"eks.amazonaws.com"</span> }
+    }]
+  })
+}
+
+<span class="b">resource</span> <span class="s">"aws_iam_role_policy_attachment"</span> <span class="s">"eks_cluster_policy"</span> {
+  <span class="attr">policy_arn</span> = <span class="s">"arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"</span>
+  <span class="attr">role</span>       = <span class="n">aws_iam_role.eks_cluster.name</span>
+}
+
+<span class="c"># ─── NODE IAM ROLE ─────────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_iam_role"</span> <span class="s">"eks_node"</span> {
+  <span class="attr">name</span> = <span class="s">"eks-node-role"</span>
+  <span class="attr">assume_role_policy</span> = <span class="fn">jsonencode</span>({
+    Version = <span class="s">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="s">"sts:AssumeRole"</span>
+      Effect    = <span class="s">"Allow"</span>
+      Principal = { Service = <span class="s">"ec2.amazonaws.com"</span> }
+    }]
+  })
+}
+
+<span class="b">resource</span> <span class="s">"aws_iam_role_policy_attachment"</span> <span class="s">"node_policies"</span> {
+  <span class="attr">for_each</span> = <span class="fn">toset</span>([
+    <span class="s">"arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"</span>,
+    <span class="s">"arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"</span>,
+    <span class="s">"arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"</span>,
+  ])
+  <span class="attr">policy_arn</span> = <span class="n">each.value</span>
+  <span class="attr">role</span>       = <span class="n">aws_iam_role.eks_node.name</span>
+}
+
+<span class="b">output</span> <span class="s">"cluster_endpoint"</span>     { <span class="attr">value</span> = <span class="n">aws_eks_cluster.main.endpoint</span> }
+<span class="b">output</span> <span class="s">"cluster_name"</span>         { <span class="attr">value</span> = <span class="n">aws_eks_cluster.main.name</span> }
+<span class="b">output</span> <span class="s">"kubeconfig_command"</span>   { <span class="attr">value</span> = <span class="s">"aws eks update-kubeconfig --name ${aws_eks_cluster.main.name}"</span> }</pre>
+  </div>
+
+  <h3>Project 14: Multi-Region DR Setup</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">project14-multi-region/main.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="b">provider</span> <span class="s">"aws"</span> {
+  <span class="attr">alias</span>  = <span class="s">"primary"</span>
+  <span class="attr">region</span> = <span class="s">"us-east-1"</span>
+}
+
+<span class="b">provider</span> <span class="s">"aws"</span> {
+  <span class="attr">alias</span>  = <span class="s">"dr"</span>
+  <span class="attr">region</span> = <span class="s">"us-west-2"</span>
+}
+
+<span class="c"># Primary RDS with multi-AZ</span>
+<span class="b">resource</span> <span class="s">"aws_db_instance"</span> <span class="s">"primary"</span> {
+  <span class="attr">provider</span>              = <span class="n">aws.primary</span>
+  <span class="attr">identifier</span>            = <span class="s">"app-primary"</span>
+  <span class="attr">engine</span>                = <span class="s">"postgres"</span>
+  <span class="attr">engine_version</span>        = <span class="s">"15"</span>
+  <span class="attr">instance_class</span>        = <span class="s">"db.r5.large"</span>
+  <span class="attr">multi_az</span>              = <span class="k">true</span>
+  <span class="attr">backup_retention_period</span> = <span class="num">7</span>
+  <span class="b">lifecycle</span> { <span class="attr">prevent_destroy</span> = <span class="k">true</span> }
+}
+
+<span class="c"># Read replica in DR region</span>
+<span class="b">resource</span> <span class="s">"aws_db_instance"</span> <span class="s">"replica"</span> {
+  <span class="attr">provider</span>            = <span class="n">aws.dr</span>
+  <span class="attr">identifier</span>          = <span class="s">"app-replica"</span>
+  <span class="attr">replicate_source_db</span> = <span class="n">aws_db_instance.primary.arn</span>
+  <span class="attr">instance_class</span>      = <span class="s">"db.r5.large"</span>
+}
+
+<span class="c"># Route53 health check + failover routing</span>
+<span class="b">resource</span> <span class="s">"aws_route53_health_check"</span> <span class="s">"primary"</span> {
+  <span class="attr">fqdn</span>              = <span class="n">aws_lb.primary.dns_name</span>
+  <span class="attr">port</span>              = <span class="num">443</span>
+  <span class="attr">type</span>              = <span class="s">"HTTPS"</span>
+  <span class="attr">resource_path</span>     = <span class="s">"/health"</span>
+  <span class="attr">failure_threshold</span> = <span class="num">3</span>
+  <span class="attr">request_interval</span>  = <span class="num">30</span>
+}
+
+<span class="b">resource</span> <span class="s">"aws_route53_record"</span> <span class="s">"primary"</span> {
+  <span class="attr">zone_id</span>         = <span class="n">data.aws_route53_zone.main.id</span>
+  <span class="attr">name</span>            = <span class="s">"app.example.com"</span>
+  <span class="attr">type</span>            = <span class="s">"A"</span>
+  <span class="attr">set_identifier</span>  = <span class="s">"primary"</span>
+  <span class="attr">health_check_id</span> = <span class="n">aws_route53_health_check.primary.id</span>
+
+  <span class="b">failover_routing_policy</span> { <span class="attr">type</span> = <span class="s">"PRIMARY"</span> }
+  <span class="b">alias</span> {
+    <span class="attr">name</span>                   = <span class="n">aws_lb.primary.dns_name</span>
+    <span class="attr">zone_id</span>                = <span class="n">aws_lb.primary.zone_id</span>
+    <span class="attr">evaluate_target_health</span> = <span class="k">true</span>
+  }
+}
+
+<span class="b">resource</span> <span class="s">"aws_route53_record"</span> <span class="s">"secondary"</span> {
+  <span class="attr">zone_id</span>        = <span class="n">data.aws_route53_zone.main.id</span>
+  <span class="attr">name</span>           = <span class="s">"app.example.com"</span>
+  <span class="attr">type</span>           = <span class="s">"A"</span>
+  <span class="attr">set_identifier</span> = <span class="s">"secondary"</span>
+
+  <span class="b">failover_routing_policy</span> { <span class="attr">type</span> = <span class="s">"SECONDARY"</span> }
+  <span class="b">alias</span> {
+    <span class="attr">name</span>                   = <span class="n">aws_lb.dr.dns_name</span>
+    <span class="attr">zone_id</span>                = <span class="n">aws_lb.dr.zone_id</span>
+    <span class="attr">evaluate_target_health</span> = <span class="k">true</span>
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- BEST PRACTICES -->
+<!-- ============================================================ -->
+<section class="section" id="best-practices">
+  <h2>Best Practices</h2>
+
+  <h3>File Structure</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">recommended project structure</span>
+      <span class="code-lang">TREE</span>
+    </div>
+    <pre><span class="c">production/
+├── main.tf          # resource definitions
+├── variables.tf     # input variable declarations
+├── outputs.tf       # output value declarations
+├── providers.tf     # provider configuration
+├── versions.tf      # terraform & provider version constraints
+├── locals.tf        # local value computations
+├── data.tf          # data source lookups
+├── terraform.tfvars # variable values (not in git for prod)
+└── README.md        # documentation
+
+modules/
+├── vpc/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── README.md    # module documentation
+└── ...</span></pre>
+  </div>
+
+  <h3>Naming Conventions</h3>
+  <table>
+    <tr><th>Item</th><th>Convention</th><th>Example</th></tr>
+    <tr><td>Resources</td><td>snake_case</td><td><code>aws_instance.web_server</code></td></tr>
+    <tr><td>Variables</td><td>snake_case</td><td><code>var.instance_type</code></td></tr>
+    <tr><td>Outputs</td><td>snake_case</td><td><code>output "vpc_id"</code></td></tr>
+    <tr><td>Modules</td><td>snake_case</td><td><code>module.vpc</code></td></tr>
+    <tr><td>Files</td><td>snake_case.tf</td><td><code>security_groups.tf</code></td></tr>
+    <tr><td>Locals</td><td>snake_case</td><td><code>local.name_prefix</code></td></tr>
+  </table>
+
+  <h3>Security Checklist</h3>
+  <ul class="checklist">
+    <li>Never hardcode credentials — use IAM roles, env vars, or secrets managers</li>
+    <li>Mark sensitive variables and outputs with <code>sensitive = true</code></li>
+    <li>Use remote backends with encryption enabled</li>
+    <li>Enable state locking with DynamoDB</li>
+    <li>Use minimum IAM permissions for the Terraform execution role</li>
+    <li>Scan Terraform configs with tfsec, checkov, or Snyk</li>
+    <li>Use <code>prevent_destroy = true</code> on stateful resources (RDS, S3)</li>
+    <li>Encrypt all EBS volumes and RDS instances at rest</li>
+    <li>Never commit <code>.tfstate</code>, <code>.tfvars</code> (with secrets), or <code>.terraform/</code> to git</li>
+  </ul>
+
+  <h3>Performance Tips</h3>
+  <ul class="checklist">
+    <li>Use <code>-target</code> sparingly — use separate state files for large infrastructure</li>
+    <li>Prefer <code>for_each</code> over <code>count</code> to avoid resource replacement on list changes</li>
+    <li>Use <code>terraform plan -parallelism=20</code> for large deploys (default is 10)</li>
+    <li>Split large monolithic configs into multiple state files per component</li>
+    <li>Use <code>terraform_remote_state</code> data sources to share outputs between stacks</li>
+    <li>Use <code>moved</code> blocks instead of destroy+recreate when refactoring</li>
+  </ul>
+
+  <h3>The moved Block (Terraform >= 1.1)</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">moved.tf</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># Rename a resource without destroying it</span>
+<span class="b">moved</span> {
+  <span class="attr">from</span> = <span class="n">aws_instance.web</span>
+  <span class="attr">to</span>   = <span class="n">aws_instance.web_server</span>
+}
+
+<span class="c"># Move resource into a module</span>
+<span class="b">moved</span> {
+  <span class="attr">from</span> = <span class="n">aws_vpc.main</span>
+  <span class="attr">to</span>   = <span class="n">module.vpc.aws_vpc.this</span>
+}
+
+<span class="c"># Move from count to for_each</span>
+<span class="b">moved</span> {
+  <span class="attr">from</span> = <span class="n">aws_subnet.public[0]</span>
+  <span class="attr">to</span>   = <span class="n">aws_subnet.public["us-east-1a"]</span>
+}</pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CHEATSHEET -->
+<!-- ============================================================ -->
+<section class="section" id="cheatsheet">
+  <h2>Quick Cheatsheet</h2>
+
+  <h3>Essential Commands</h3>
+  <table>
+    <tr><th>Command</th><th>When to Use</th></tr>
+    <tr><td><code>terraform init -upgrade</code></td><td>Upgrade provider versions</td></tr>
+    <tr><td><code>terraform plan -out=plan.tfplan</code></td><td>Save plan for review before apply</td></tr>
+    <tr><td><code>terraform apply plan.tfplan</code></td><td>Apply exact saved plan</td></tr>
+    <tr><td><code>terraform apply -target=aws_instance.web</code></td><td>Apply only one resource</td></tr>
+    <tr><td><code>terraform destroy -target=aws_instance.web</code></td><td>Destroy only one resource</td></tr>
+    <tr><td><code>terraform output -json</code></td><td>Get outputs in JSON format</td></tr>
+    <tr><td><code>terraform console</code></td><td>Interactive expression evaluator</td></tr>
+    <tr><td><code>terraform force-unlock LOCK_ID</code></td><td>Release stuck state lock</td></tr>
+    <tr><td><code>terraform providers lock</code></td><td>Generate provider lock file</td></tr>
+    <tr><td><code>terraform graph | dot -Tsvg > graph.svg</code></td><td>Visualize resource dependencies</td></tr>
+  </table>
+
+  <h3>Common Patterns</h3>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">patterns.tf — Quick Reference</span>
+      <span class="code-lang">HCL</span>
+    </div>
+    <pre><span class="c"># ─── CREATE N RESOURCES ────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"public"</span> {
+  <span class="attr">count</span>      = <span class="num">3</span>
+  <span class="attr">cidr_block</span> = <span class="fn">cidrsubnet</span>(<span class="n">var.vpc_cidr</span>, <span class="num">8</span>, <span class="n">count.index</span>)
+}
+
+<span class="c"># ─── CONDITIONAL RESOURCE ──────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_eip"</span> <span class="s">"nat"</span> {
+  <span class="attr">count</span> = <span class="n">var.enable_nat_gateway</span> ? <span class="num">1</span> : <span class="num">0</span>
+}
+
+<span class="c"># ─── RESOURCE FROM MAP ─────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"this"</span> {
+  <span class="attr">for_each</span> = <span class="fn">toset</span>([<span class="s">"logs"</span>, <span class="s">"backups"</span>, <span class="s">"assets"</span>])
+  <span class="attr">bucket</span>   = <span class="s">"${var.project}-${each.key}"</span>
+}
+
+<span class="c"># ─── REFERENCE ANOTHER RESOURCE ────────────────────────────────</span>
+<span class="c"># resource_type.resource_name.attribute</span>
+<span class="attr">vpc_id</span> = <span class="n">aws_vpc.main.id</span>
+
+<span class="c"># ─── REFERENCE A MODULE OUTPUT ─────────────────────────────────</span>
+<span class="c"># module.module_name.output_name</span>
+<span class="attr">vpc_id</span> = <span class="n">module.vpc.vpc_id</span>
+
+<span class="c"># ─── REFERENCE A DATA SOURCE ───────────────────────────────────</span>
+<span class="c"># data.data_type.data_name.attribute</span>
+<span class="attr">ami</span> = <span class="n">data.aws_ami.latest.id</span>
+
+<span class="c"># ─── CURRENT RESOURCE IN PROVISIONER ──────────────────────────</span>
+<span class="attr">host</span> = <span class="fn">self.public_ip</span>
+
+<span class="c"># ─── DYNAMIC CIDR SUBNETS ──────────────────────────────────────</span>
+<span class="attr">subnets</span> = [<span class="fn">for</span> i <span class="fn">in range</span>(<span class="num">3</span>) : <span class="fn">cidrsubnet</span>(<span class="s">"10.0.0.0/16"</span>, <span class="num">8</span>, i)]
+<span class="c"># → ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]</span>
+
+<span class="c"># ─── MERGE TAGS ────────────────────────────────────────────────</span>
+<span class="attr">tags</span> = <span class="fn">merge</span>(
+  <span class="n">local.common_tags</span>,
+  { Name = <span class="s">"specific-resource-name"</span> }
+)
+
+<span class="c"># ─── TEMPLATE FILE ─────────────────────────────────────────────</span>
+<span class="attr">user_data</span> = <span class="fn">templatefile</span>(<span class="s">"${path.module}/userdata.tpl"</span>, {
+  app_port = <span class="n">var.app_port</span>
+  db_host  = <span class="n">aws_db_instance.main.address</span>
+})
+
+<span class="c"># ─── PATH REFERENCES ───────────────────────────────────────────</span>
+<span class="c"># path.module  — directory of the current module</span>
+<span class="c"># path.root    — directory of the root module</span>
+<span class="c"># path.cwd     — current working directory</span>
+
+<span class="c"># ─── DEPEND EXPLICITLY ─────────────────────────────────────────</span>
+<span class="b">resource</span> <span class="s">"aws_db_instance"</span> <span class="s">"main"</span> {
+  <span class="attr">depends_on</span> = [<span class="n">aws_security_group.db</span>, <span class="n">aws_subnet.private</span>]
+}</pre>
+  </div>
+
+  <h3>Version Constraint Syntax</h3>
+  <table>
+    <tr><th>Constraint</th><th>Meaning</th></tr>
+    <tr><td><code>= 1.2.3</code></td><td>Exact version only</td></tr>
+    <tr><td><code>!= 1.2.3</code></td><td>Any version except this</td></tr>
+    <tr><td><code>&gt;= 1.2.0</code></td><td>This version or higher</td></tr>
+    <tr><td><code>&lt;= 1.2.0</code></td><td>This version or lower</td></tr>
+    <tr><td><code>~> 1.2</code></td><td>Pessimistic: &gt;= 1.2, &lt; 2.0</td></tr>
+    <tr><td><code>~> 1.2.3</code></td><td>Pessimistic: &gt;= 1.2.3, &lt; 1.3.0</td></tr>
+    <tr><td><code>&gt;= 1.0, &lt; 2.0</code></td><td>Range — any 1.x version</td></tr>
+  </table>
+
+  <div class="info-box tip">
+    <div class="icon">🚀</div>
+    <div class="content">
+      <strong>You're now Terraform-ready!</strong>
+      <p>Start with Project 01 (S3 website), work through the beginner projects, then tackle the intermediate ones. By Project 13 (EKS), you'll be writing production-grade Terraform. Remember: the best way to learn is to build. Happy terraforming!</p>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// Highlight active sidebar link on scroll
+const sections = document.querySelectorAll('section[id]');
+const sidebarLinks = document.querySelectorAll('.sidebar a');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      sidebarLinks.forEach(link => {
+        link.style.color = '';
+        link.style.borderLeftColor = '';
+      });
+      const active = document.querySelector(`.sidebar a[href="#${entry.target.id}"]`);
+      if (active) {
+        active.style.color = '#e2e8f0';
+        active.style.borderLeftColor = '#7c6af4';
+      }
+    }
+  });
+}, { threshold: 0.3 });
+
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
