@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitLab CI/CD — Complete Learning Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #0f1424;
+    --bg3: #141829;
+    --card: #161c2e;
+    --card2: #1a2035;
+    --border: #1e2840;
+    --border2: #242d45;
+    --orange: #ff6b35;
+    --orange2: #ff8c5a;
+    --blue: #4d9fff;
+    --blue2: #6eb3ff;
+    --green: #2ecc71;
+    --green2: #45e88a;
+    --purple: #b06aff;
+    --yellow: #ffd166;
+    --red: #ff4757;
+    --cyan: #00d2d3;
+    --text: #e8eaf0;
+    --text2: #9aa3b8;
+    --text3: #6b7591;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 260px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 40px 0;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .sidebar-logo .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--orange), #ff4500);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-logo h1 {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .sidebar-logo p {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: 4px;
+  }
+
+  .nav-section {
+    padding: 8px 12px 4px;
+  }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+    margin-bottom: 1px;
+  }
+
+  .nav-item:hover {
+    background: var(--card);
+    color: var(--text);
+  }
+
+  .nav-item.active {
+    background: rgba(255, 107, 53, 0.12);
+    color: var(--orange);
+    border-left: 2px solid var(--orange);
+  }
+
+  .nav-item .nav-icon {
+    font-size: 14px;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    margin-left: 260px;
+    min-height: 100vh;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--bg2) 0%, #0d1220 50%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 60px 50px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; left: 200px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(77,159,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,107,53,0.1);
+    border: 1px solid rgba(255,107,53,0.25);
+    color: var(--orange);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    font-family: var(--mono);
+  }
+
+  .hero h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--text) 0%, var(--text2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--orange), var(--orange2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    color: var(--text2);
+    max-width: 600px;
+    line-height: 1.7;
+    margin-bottom: 30px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .hero-stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .hero-stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--orange);
+    font-family: var(--mono);
+    line-height: 1;
+  }
+
+  .hero-stat-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 60px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+  }
+
+  .progress-bar::-webkit-scrollbar { height: 2px; }
+
+  .progress-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px 14px 0;
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .progress-item:hover { color: var(--text); border-bottom-color: var(--border2); }
+  .progress-item.done { color: var(--green); }
+  .progress-item.done .pi-dot { background: var(--green); }
+
+  .pi-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border2);
+    flex-shrink: 0;
+  }
+
+  /* ── CONTENT ── */
+  .content {
+    padding: 50px 60px;
+    max-width: 1100px;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 70px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--orange);
+    background: rgba(255,107,53,0.1);
+    border: 1px solid rgba(255,107,53,0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+    white-space: nowrap;
+  }
+
+  .section-header h2 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .section-header p {
+    font-size: 14px;
+    color: var(--text2);
+    margin-top: 6px;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 18px 0;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--card2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .code-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  .code-dot:nth-child(1) { background: #ff5f57; }
+  .code-dot:nth-child(2) { background: #febc2e; }
+  .code-dot:nth-child(3) { background: #28c840; }
+
+  .code-filename {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 600;
+  }
+
+  .code-lang {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--orange);
+    background: rgba(255,107,53,0.1);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  pre::-webkit-scrollbar { height: 4px; }
+  pre::-webkit-scrollbar-track { background: transparent; }
+  pre::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* syntax highlight */
+  .k  { color: var(--purple); }   /* keyword */
+  .s  { color: var(--green); }    /* string */
+  .c  { color: var(--text3); font-style: italic; } /* comment */
+  .v  { color: var(--blue); }     /* variable */
+  .n  { color: var(--orange); }   /* number/special */
+  .p  { color: var(--cyan); }     /* property */
+  .kw { color: #ff79c6; }         /* yaml key */
+  .val{ color: var(--yellow); }   /* yaml value */
+  .cm { color: var(--text3); font-style: italic; } /* comment */
+  .hl { background: rgba(255,107,53,0.08); display: block; margin: 0 -20px; padding: 0 20px; }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin: 18px 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: var(--card2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 16px;
+    font-size: 13px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); color: var(--text); }
+
+  td code, th code {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg3);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--orange);
+  }
+
+  /* ── CALLOUT ── */
+  .callout {
+    display: flex;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 8px;
+    margin: 18px 0;
+    border-left: 3px solid;
+  }
+
+  .callout.info    { background: rgba(77,159,255,0.08); border-color: var(--blue); }
+  .callout.warn    { background: rgba(255,209,102,0.08); border-color: var(--yellow); }
+  .callout.success { background: rgba(46,204,113,0.08); border-color: var(--green); }
+  .callout.danger  { background: rgba(255,71,87,0.08);  border-color: var(--red); }
+  .callout.tip     { background: rgba(176,106,255,0.08); border-color: var(--purple); }
+
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .callout-body { flex: 1; }
+  .callout-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .callout.info .callout-title    { color: var(--blue); }
+  .callout.warn .callout-title    { color: var(--yellow); }
+  .callout.success .callout-title { color: var(--green); }
+  .callout.danger .callout-title  { color: var(--red); }
+  .callout.tip .callout-title     { color: var(--purple); }
+
+  .callout p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── GRID ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 18px 0; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 18px 0; }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  .card-accent-orange { border-top: 3px solid var(--orange); }
+  .card-accent-blue   { border-top: 3px solid var(--blue); }
+  .card-accent-green  { border-top: 3px solid var(--green); }
+  .card-accent-purple { border-top: 3px solid var(--purple); }
+  .card-accent-cyan   { border-top: 3px solid var(--cyan); }
+  .card-accent-yellow { border-top: 3px solid var(--yellow); }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 18px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.8;
+  }
+
+  .flow .flow-orange { color: var(--orange); }
+  .flow .flow-blue   { color: var(--blue); }
+  .flow .flow-green  { color: var(--green); }
+  .flow .flow-purple { color: var(--purple); }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+
+  .badge-orange { background: rgba(255,107,53,0.15); color: var(--orange); }
+  .badge-green  { background: rgba(46,204,113,0.15); color: var(--green); }
+  .badge-blue   { background: rgba(77,159,255,0.15); color: var(--blue); }
+  .badge-purple { background: rgba(176,106,255,0.15); color: var(--purple); }
+  .badge-yellow { background: rgba(255,209,102,0.15); color: var(--yellow); }
+  .badge-red    { background: rgba(255,71,87,0.15); color: var(--red); }
+
+  /* ── STEP LIST ── */
+  .step-list { margin: 18px 0; }
+
+  .step-item {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 36px;
+    bottom: -12px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--card2);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--orange);
+    flex-shrink: 0;
+    z-index: 1;
+  }
+
+  .step-body h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .step-body p  { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── INLINE CODE ── */
+  p code, li code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--orange2);
+  }
+
+  /* ── PROSE ── */
+  .prose { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 12px 0; }
+  .prose strong { color: var(--text); font-weight: 700; }
+
+  h3.sub {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3.sub::before {
+    content: '';
+    width: 3px; height: 18px;
+    background: var(--orange);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  h4.sub2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--blue);
+    margin: 20px 0 8px;
+    font-family: var(--mono);
+  }
+
+  /* ── PIPELINE VIZ ── */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    margin: 18px 0;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .pipeline::-webkit-scrollbar { height: 4px; }
+  .pipeline::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .pipeline-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 110px;
+  }
+
+  .pipeline-stage:not(:last-child)::after {
+    display: none;
+  }
+
+  .pipeline-connector {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    color: var(--text3);
+    font-size: 18px;
+    margin-top: 28px;
+  }
+
+  .ps-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+    font-family: var(--mono);
+  }
+
+  .ps-job {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text2);
+    margin-bottom: 4px;
+    width: 100px;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .ps-job:hover { border-color: var(--orange); color: var(--orange); }
+  .ps-job.success { border-color: var(--green); color: var(--green); }
+  .ps-job.manual  { border-color: var(--yellow); color: var(--yellow); }
+  .ps-job.deploy  { border-color: var(--blue); color: var(--blue); }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+
+  .toc-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    margin-bottom: 14px;
+    font-family: var(--mono);
+  }
+
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 5px;
+    text-decoration: none;
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  .toc-item:hover { background: var(--card2); color: var(--orange); }
+  .toc-item .toc-icon { font-size: 14px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 60px;
+    padding: 30px 60px 40px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: gap;
+    gap: 16px;
+  }
+
+  .footer p { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+
+  .footer-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus { border-color: var(--orange); }
+  .search-input::placeholder { color: var(--text3); }
+
+  /* ── SCROLLSPY ── */
+  .content section { scroll-margin-top: 20px; }
+
+  /* ── PYTHON LEVEL BADGES ── */
+  .level-row {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0;
+    flex-wrap: wrap;
+  }
+
+  .level-card {
+    flex: 1;
+    min-width: 200px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .level-emoji { font-size: 24px; flex-shrink: 0; }
+
+  .level-body h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .level-body p  { font-size: 12px; color: var(--text3); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .main { margin-left: 0; }
+    .hero, .content, .footer, .progress-bar { padding-left: 20px; padding-right: 20px; }
+    .hero h1 { font-size: 32px; }
+    .toc-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">🦊 GitLab CI/CD</div>
+    <h1>Complete Learning Guide</h1>
+    <p>// beginner → production</p>
+  </div>
+
+  <div class="search-bar">
+    <input class="search-input" type="text" placeholder="Search topics..." id="search" oninput="searchTopics(this.value)">
+  </div>
+
+  <div class="nav-section" id="nav-items">
+    <div class="nav-section-label">Core CI/CD</div>
+    <a class="nav-item" href="#core-concepts"><span class="nav-icon">🧠</span> Core Concepts <span class="nav-dot" style="background:var(--green)"></span></a>
+    <a class="nav-item" href="#writing-yaml"><span class="nav-icon">📄</span> Writing .gitlab-ci.yml</a>
+    <a class="nav-item" href="#artifacts"><span class="nav-icon">🗂️</span> Artifacts</a>
+    <a class="nav-item" href="#caching"><span class="nav-icon">⚡</span> Caching</a>
+    <a class="nav-item" href="#environments"><span class="nav-icon">🌍</span> Environments</a>
+
+    <div class="nav-section-label" style="margin-top:12px">Docker + AWS</div>
+    <a class="nav-item" href="#docker"><span class="nav-icon">🐳</span> Docker in CI/CD</a>
+    <a class="nav-item" href="#aws-deploy"><span class="nav-icon">☁️</span> Deploy to AWS</a>
+    <a class="nav-item" href="#multi-env"><span class="nav-icon">🔁</span> Multi-Env Promotion</a>
+
+    <div class="nav-section-label" style="margin-top:12px">Terraform</div>
+    <a class="nav-item" href="#terraform-explained"><span class="nav-icon">🏗️</span> Terraform Explained</a>
+    <a class="nav-item" href="#terraform-project"><span class="nav-icon">📦</span> Terraform Project</a>
+    <a class="nav-item" href="#terraform-walkthrough"><span class="nav-icon">🚀</span> Full Walkthrough</a>
+
+    <div class="nav-section-label" style="margin-top:12px">Python</div>
+    <a class="nav-item" href="#python-beginner"><span class="nav-icon">🟢</span> Beginner Projects</a>
+    <a class="nav-item" href="#python-intermediate"><span class="nav-icon">🟡</span> Intermediate Projects</a>
+    <a class="nav-item" href="#python-advanced"><span class="nav-icon">🔴</span> Advanced Projects</a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">📚 Complete Guide</div>
+    <h1>GitLab CI/CD<br><span>Mastery</span></h1>
+    <p class="hero-desc">Everything from writing your first pipeline to deploying production infrastructure on AWS with Docker, Terraform, and Python — all in one place.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">8</span>
+        <span class="hero-stat-label">Major Topics</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">40+</span>
+        <span class="hero-stat-label">Code Samples</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">10</span>
+        <span class="hero-stat-label">Python Projects</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">100%</span>
+        <span class="hero-stat-label">Production Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div class="progress-bar">
+    <a class="progress-item done" href="#core-concepts"><span class="pi-dot"></span> Core Concepts</a>
+    <a class="progress-item done" href="#writing-yaml"><span class="pi-dot"></span> YAML</a>
+    <a class="progress-item done" href="#artifacts"><span class="pi-dot"></span> Artifacts</a>
+    <a class="progress-item done" href="#caching"><span class="pi-dot"></span> Caching</a>
+    <a class="progress-item done" href="#environments"><span class="pi-dot"></span> Environments</a>
+    <a class="progress-item done" href="#docker"><span class="pi-dot"></span> Docker</a>
+    <a class="progress-item done" href="#aws-deploy"><span class="pi-dot"></span> AWS</a>
+    <a class="progress-item done" href="#multi-env"><span class="pi-dot"></span> Multi-Env</a>
+    <a class="progress-item done" href="#terraform-explained"><span class="pi-dot"></span> Terraform</a>
+    <a class="progress-item done" href="#python-beginner"><span class="pi-dot"></span> Python</a>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- TOC -->
+    <div class="toc">
+      <div class="toc-title">// Table of Contents</div>
+      <div class="toc-grid">
+        <a class="toc-item" href="#core-concepts"><span class="toc-icon">🧠</span> Core Concepts & Quick Recap</a>
+        <a class="toc-item" href="#writing-yaml"><span class="toc-icon">📄</span> Writing .gitlab-ci.yml</a>
+        <a class="toc-item" href="#artifacts"><span class="toc-icon">🗂️</span> Artifacts — Passing Files</a>
+        <a class="toc-item" href="#caching"><span class="toc-icon">⚡</span> Caching — Speed Up Pipelines</a>
+        <a class="toc-item" href="#environments"><span class="toc-icon">🌍</span> Environments & Deployments</a>
+        <a class="toc-item" href="#docker"><span class="toc-icon">🐳</span> Docker in GitLab CI/CD</a>
+        <a class="toc-item" href="#aws-deploy"><span class="toc-icon">☁️</span> Deploying to AWS</a>
+        <a class="toc-item" href="#multi-env"><span class="toc-icon">🔁</span> Multi-Environment Promotion</a>
+        <a class="toc-item" href="#terraform-explained"><span class="toc-icon">🏗️</span> Terraform Explained</a>
+        <a class="toc-item" href="#terraform-project"><span class="toc-icon">📦</span> Terraform Project Samples</a>
+        <a class="toc-item" href="#terraform-walkthrough"><span class="toc-icon">🚀</span> Full Infrastructure Walkthrough</a>
+        <a class="toc-item" href="#python-beginner"><span class="toc-icon">🐍</span> Python Projects (All Levels)</a>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 1 — CORE CONCEPTS
+    ══════════════════════════════════════════ -->
+    <section class="section" id="core-concepts">
+      <div class="section-header">
+        <span class="section-num">01</span>
+        <div>
+          <h2>Core Concepts</h2>
+          <p>The building blocks of every GitLab pipeline</p>
+        </div>
+      </div>
+
+      <p class="prose">GitLab CI/CD is driven by a single file — <code>.gitlab-ci.yml</code> — in your repo root. Here's how all the pieces fit together.</p>
+
+      <div class="grid-3">
+        <div class="card card-accent-orange">
+          <h3>🔀 Pipeline</h3>
+          <p>The full automation run triggered by an event — push, MR, or schedule. Contains all stages and jobs.</p>
+        </div>
+        <div class="card card-accent-blue">
+          <h3>📦 Stage</h3>
+          <p>A phase of the pipeline like <code>build → test → deploy</code>. All jobs in a stage run in parallel.</p>
+        </div>
+        <div class="card card-accent-green">
+          <h3>⚙️ Job</h3>
+          <p>A single task within a stage. Each job runs in a fresh container and executes your script.</p>
+        </div>
+        <div class="card card-accent-purple">
+          <h3>🤖 Runner</h3>
+          <p>The agent that executes jobs. Can be GitLab's shared runners or your own self-hosted runner.</p>
+        </div>
+        <div class="card card-accent-cyan">
+          <h3>📁 Artifact</h3>
+          <p>Files produced by a job and passed to later jobs or downloaded. Built binaries, test reports, etc.</p>
+        </div>
+        <div class="card card-accent-yellow">
+          <h3>💾 Cache</h3>
+          <p>Reused dependencies across pipeline runs to speed things up. <code>node_modules</code>, pip packages, etc.</p>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">💡</span>
+        <div class="callout-body">
+          <div class="callout-title">Key Distinction</div>
+          <p>Use <strong>artifacts</strong> to pass files between jobs in the same pipeline. Use <strong>cache</strong> to speed up repeated runs by reusing downloaded dependencies.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 2 — WRITING YAML
+    ══════════════════════════════════════════ -->
+    <section class="section" id="writing-yaml">
+      <div class="section-header">
+        <span class="section-num">02</span>
+        <div>
+          <h2>Writing .gitlab-ci.yml</h2>
+          <p>The complete picture — every directive you need to know</p>
+        </div>
+      </div>
+
+      <h3 class="sub">Basic Structure</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">.gitlab-ci.yml</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">stages</span>:
+  - build
+  - test
+  - deploy
+
+<span class="kw">variables</span>:
+  <span class="p">APP_NAME</span>: <span class="s">my-app</span>
+
+<span class="kw">build-job</span>:
+  <span class="p">stage</span>: <span class="val">build</span>
+  <span class="p">script</span>:
+    - <span class="s">echo "Building $APP_NAME"</span>
+    - npm install
+    - npm run build
+
+<span class="kw">test-job</span>:
+  <span class="p">stage</span>: <span class="val">test</span>
+  <span class="p">script</span>:
+    - npm run test
+
+<span class="kw">deploy-job</span>:
+  <span class="p">stage</span>: <span class="val">deploy</span>
+  <span class="p">script</span>:
+    - echo "Deploying..."
+  <span class="p">only</span>:
+    - main</pre>
+      </div>
+
+      <h3 class="sub">Rules — Preferred over only/except</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">rules example</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">deploy-job</span>:
+  <span class="p">script</span>: ./deploy.sh
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "main"'</span>   <span class="cm"># only on main</span>
+    - <span class="p">if</span>: <span class="s">'$CI_PIPELINE_SOURCE == "merge_request_event"'</span>
+      <span class="p">when</span>: <span class="val">never</span>                          <span class="cm"># skip on MRs</span></pre>
+      </div>
+
+      <h3 class="sub">needs — DAG (run out of stage order)</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">needs + parallel</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">deploy-job</span>:
+  <span class="p">stage</span>: <span class="val">deploy</span>
+  <span class="p">needs</span>: [<span class="s">"build-job"</span>]  <span class="cm"># starts as soon as build-job finishes</span>
+
+<span class="kw">test-job</span>:
+  <span class="p">parallel</span>: <span class="n">5</span>           <span class="cm"># runs 5 instances simultaneously</span>
+  <span class="p">script</span>: npm run test -- --shard=<span class="v">$CI_NODE_INDEX</span>/<span class="v">$CI_NODE_TOTAL</span></pre>
+      </div>
+
+      <h3 class="sub">Pipeline Visualization</h3>
+      <div class="pipeline">
+        <div class="pipeline-stage">
+          <div class="ps-label">build</div>
+          <div class="ps-job success">build-image</div>
+        </div>
+        <div class="pipeline-connector">→</div>
+        <div class="pipeline-stage">
+          <div class="ps-label">test</div>
+          <div class="ps-job success">unit-tests</div>
+          <div class="ps-job success">lint</div>
+          <div class="ps-job success">sec-scan</div>
+        </div>
+        <div class="pipeline-connector">→</div>
+        <div class="pipeline-stage">
+          <div class="ps-label">deploy-dev</div>
+          <div class="ps-job deploy">deploy-dev</div>
+        </div>
+        <div class="pipeline-connector">→</div>
+        <div class="pipeline-stage">
+          <div class="ps-label">validate</div>
+          <div class="ps-job success">smoke-test</div>
+        </div>
+        <div class="pipeline-connector">→</div>
+        <div class="pipeline-stage">
+          <div class="ps-label">deploy-stg</div>
+          <div class="ps-job deploy">deploy-staging</div>
+        </div>
+        <div class="pipeline-connector">→</div>
+        <div class="pipeline-stage">
+          <div class="ps-label">production</div>
+          <div class="ps-job manual">deploy-prod ✋</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Key Directive</th><th>Purpose</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>stages</code></td><td>Define pipeline phases in order</td><td><code>- build - test - deploy</code></td></tr>
+            <tr><td><code>rules</code></td><td>Conditional job execution</td><td><code>if: '$CI_COMMIT_BRANCH == "main"'</code></td></tr>
+            <tr><td><code>needs</code></td><td>DAG — skip waiting for whole stage</td><td><code>needs: ["build-job"]</code></td></tr>
+            <tr><td><code>extends</code></td><td>Inherit from a base job config</td><td><code>extends: .base-job</code></td></tr>
+            <tr><td><code>include</code></td><td>Split pipeline across files</td><td><code>local: .gitlab/ci/test.yml</code></td></tr>
+            <tr><td><code>parallel</code></td><td>Fan out a job N times</td><td><code>parallel: 5</code></td></tr>
+            <tr><td><code>when</code></td><td>Control when job runs</td><td><code>manual</code>, <code>on_failure</code>, <code>always</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 3 — ARTIFACTS
+    ══════════════════════════════════════════ -->
+    <section class="section" id="artifacts">
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <div>
+          <h2>Artifacts</h2>
+          <p>Passing files between jobs and stages</p>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">artifacts — basic + reports</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">build-job</span>:
+  <span class="p">stage</span>: build
+  <span class="p">script</span>:
+    - npm run build
+  <span class="p">artifacts</span>:
+    <span class="p">paths</span>:
+      - dist/              <span class="cm"># upload this folder</span>
+    <span class="p">expire_in</span>: <span class="s">1 week</span>      <span class="cm"># auto-cleanup</span>
+
+<span class="kw">test-job</span>:
+  <span class="p">stage</span>: test
+  <span class="p">script</span>:
+    - npm run test -- --coverage
+  <span class="p">artifacts</span>:
+    <span class="p">reports</span>:
+      <span class="p">junit</span>: <span class="s">junit.xml</span>           <span class="cm"># shows in MR UI</span>
+      <span class="p">coverage_report</span>:
+        <span class="p">coverage_format</span>: <span class="val">cobertura</span>
+        <span class="p">path</span>: <span class="s">coverage/cobertura-coverage.xml</span></pre>
+      </div>
+
+      <div class="callout success">
+        <span class="callout-icon">✅</span>
+        <div class="callout-body">
+          <div class="callout-title">Artifact Reports</div>
+          <p>Special artifact types that GitLab renders natively in the UI — test results appear inline in merge requests, coverage shown on commit, security findings in the security dashboard.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 4 — CACHING
+    ══════════════════════════════════════════ -->
+    <section class="section" id="caching">
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <div>
+          <h2>Caching</h2>
+          <p>Speed up your pipelines by reusing dependencies</p>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">cache configuration</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">cache</span>:
+  <span class="p">key</span>:
+    <span class="p">files</span>:
+      - package-lock.json        <span class="cm"># cache busts when lockfile changes</span>
+  <span class="p">paths</span>:
+    - node_modules/
+
+<span class="kw">build-job</span>:
+  <span class="p">cache</span>:
+    <span class="p">key</span>: <span class="s">"$CI_COMMIT_REF_SLUG"</span>   <span class="cm"># separate cache per branch</span>
+    <span class="p">paths</span>:
+      - .npm/
+  <span class="p">script</span>:
+    - npm ci --cache .npm/</pre>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Use Case</th><th>Use Artifact</th><th>Use Cache</th></tr></thead>
+          <tbody>
+            <tr><td>Pass built dist/ between jobs</td><td>✅</td><td>❌</td></tr>
+            <tr><td>node_modules across runs</td><td>❌</td><td>✅</td></tr>
+            <tr><td>Test reports for MR display</td><td>✅</td><td>❌</td></tr>
+            <tr><td>pip packages, Maven deps</td><td>❌</td><td>✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 5 — ENVIRONMENTS
+    ══════════════════════════════════════════ -->
+    <section class="section" id="environments">
+      <div class="section-header">
+        <span class="section-num">05</span>
+        <div>
+          <h2>Environments & Deployments</h2>
+          <p>Track, protect, and manage where your code runs</p>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">staging + production with manual gate</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">deploy-staging</span>:
+  <span class="p">stage</span>: deploy
+  <span class="p">script</span>:
+    - ./deploy.sh staging
+  <span class="p">environment</span>:
+    <span class="p">name</span>: <span class="val">staging</span>
+    <span class="p">url</span>: <span class="s">https://staging.myapp.com</span>
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "develop"'</span>
+
+<span class="kw">deploy-production</span>:
+  <span class="p">stage</span>: deploy
+  <span class="p">script</span>:
+    - ./deploy.sh production
+  <span class="p">environment</span>:
+    <span class="p">name</span>: <span class="val">production</span>
+    <span class="p">url</span>: <span class="s">https://myapp.com</span>
+  <span class="p">when</span>: <span class="val">manual</span>                    <span class="cm"># ✋ human must click play</span>
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "main"'</span></pre>
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-body">
+          <div class="callout-title">Protect Production</div>
+          <p>Go to <strong>Settings → CI/CD → Environments</strong> to add required approvers, restrict who can deploy, and set deployment freeze windows (e.g. no deploys Friday 5pm–Monday 9am).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 6 — DOCKER
+    ══════════════════════════════════════════ -->
+    <section class="section" id="docker">
+      <div class="section-header">
+        <span class="section-num">06</span>
+        <div>
+          <h2>Docker in GitLab CI/CD</h2>
+          <p>Building, pushing, and running containers in your pipeline</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-accent-blue">
+          <h3>🖥️ Docker as Runtime</h3>
+          <p>Use a Docker image as the environment your job runs in. Every job can specify its own <code>image:</code>.</p>
+        </div>
+        <div class="card card-accent-orange">
+          <h3>🔨 Docker as Task</h3>
+          <p>Build, tag, and push Docker images from your pipeline. Requires Docker-in-Docker (DinD).</p>
+        </div>
+      </div>
+
+      <h3 class="sub">Docker-in-Docker Setup</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">build and push to GitLab Registry</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">build-and-push</span>:
+  <span class="p">image</span>: <span class="s">docker:26</span>
+  <span class="p">services</span>:
+    - <span class="s">docker:26-dind</span>            <span class="cm"># sidecar Docker daemon</span>
+  <span class="p">variables</span>:
+    <span class="p">DOCKER_TLS_CERTDIR</span>: <span class="s">"/certs"</span>
+    <span class="p">IMAGE_TAG</span>: <span class="v">$CI_REGISTRY_IMAGE</span>:<span class="v">$CI_COMMIT_SHORT_SHA</span>
+  <span class="p">before_script</span>:
+    - docker login -u <span class="v">$CI_REGISTRY_USER</span> -p <span class="v">$CI_REGISTRY_PASSWORD</span> <span class="v">$CI_REGISTRY</span>
+  <span class="p">script</span>:
+    - docker build
+        --cache-from <span class="v">$CI_REGISTRY_IMAGE</span>:latest
+        --tag <span class="v">$IMAGE_TAG</span>
+        --tag <span class="v">$CI_REGISTRY_IMAGE</span>:latest .
+    - docker push <span class="v">$IMAGE_TAG</span>
+    - docker push <span class="v">$CI_REGISTRY_IMAGE</span>:latest</pre>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variable</th><th>Value</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td><code>$CI_REGISTRY</code></td><td><code>registry.gitlab.com</code></td><td>Auto-provided</td></tr>
+            <tr><td><code>$CI_REGISTRY_IMAGE</code></td><td><code>registry.gitlab.com/group/project</code></td><td>Auto-provided</td></tr>
+            <tr><td><code>$CI_REGISTRY_USER</code></td><td>GitLab CI token user</td><td>Auto-provided</td></tr>
+            <tr><td><code>$CI_REGISTRY_PASSWORD</code></td><td>GitLab CI token password</td><td>Auto-provided</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon">🔒</span>
+        <div class="callout-body">
+          <div class="callout-title">Security Best Practices</div>
+          <p>Never hardcode credentials. Use <code>$CI_REGISTRY_USER</code> for GitLab's built-in registry. For Docker Hub, store tokens in <strong>Settings → CI/CD → Variables</strong> with the <em>Masked</em> option enabled.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 7 — AWS DEPLOY
+    ══════════════════════════════════════════ -->
+    <section class="section" id="aws-deploy">
+      <div class="section-header">
+        <span class="section-num">07</span>
+        <div>
+          <h2>Deploy to AWS</h2>
+          <p>ECR + ECS Fargate, EC2, and EKS deployment patterns</p>
+        </div>
+      </div>
+
+      <div class="flow">  Code Push → GitLab CI → Build Docker Image → Push to ECR → Deploy
+                                                                              ├── <span class="flow-blue">ECS Fargate</span>  (serverless)
+                                                                              ├── <span class="flow-green">EC2</span>          (SSH + Docker)
+                                                                              └── <span class="flow-purple">EKS</span>          (Kubernetes)</div>
+
+      <h3 class="sub">AWS Variables to Set in GitLab</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variable</th><th>Value</th><th>Masked?</th></tr></thead>
+          <tbody>
+            <tr><td><code>AWS_ACCESS_KEY_ID</code></td><td>IAM user access key</td><td><span class="badge badge-green">✅ YES</span></td></tr>
+            <tr><td><code>AWS_SECRET_ACCESS_KEY</code></td><td>IAM user secret key</td><td><span class="badge badge-green">✅ YES</span></td></tr>
+            <tr><td><code>AWS_DEFAULT_REGION</code></td><td>e.g. <code>us-east-1</code></td><td><span class="badge badge-red">❌ NO</span></td></tr>
+            <tr><td><code>ECR_REGISTRY</code></td><td>Your ECR registry URL</td><td><span class="badge badge-red">❌ NO</span></td></tr>
+            <tr><td><code>EC2_SSH_KEY</code></td><td>Private key (File type)</td><td><span class="badge badge-green">✅ YES</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub">Push to ECR + Deploy to ECS</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">full ECS deployment pipeline</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">variables</span>:
+  <span class="p">ECR_REGISTRY</span>: <span class="s">123456789.dkr.ecr.us-east-1.amazonaws.com</span>
+  <span class="p">IMAGE_TAG</span>: <span class="v">$ECR_REGISTRY</span>/my-app:<span class="v">$CI_COMMIT_SHORT_SHA</span>
+
+<span class="kw">build-ecr</span>:
+  <span class="p">image</span>: docker:26
+  <span class="p">services</span>: [<span class="s">docker:26-dind</span>]
+  <span class="p">before_script</span>:
+    - apk add --no-cache aws-cli
+    - aws ecr get-login-password | docker login --username AWS
+        --password-stdin <span class="v">$ECR_REGISTRY</span>
+  <span class="p">script</span>:
+    - docker build --tag <span class="v">$IMAGE_TAG</span> .
+    - docker push <span class="v">$IMAGE_TAG</span>
+
+<span class="kw">deploy-ecs</span>:
+  <span class="p">image</span>: python:3.12-alpine
+  <span class="p">needs</span>: [<span class="s">build-ecr</span>]
+  <span class="p">script</span>:
+    - pip install awscli -q
+    - aws ecs update-service
+        --cluster my-cluster
+        --service my-app-service
+        --force-new-deployment
+    - aws ecs wait services-stable
+        --cluster my-cluster
+        --services my-app-service
+  <span class="p">environment</span>:
+    <span class="p">name</span>: <span class="val">production</span>
+  <span class="p">when</span>: <span class="val">manual</span></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 8 — MULTI-ENV PROMOTION
+    ══════════════════════════════════════════ -->
+    <section class="section" id="multi-env">
+      <div class="section-header">
+        <span class="section-num">08</span>
+        <div>
+          <h2>Multi-Environment Promotion</h2>
+          <p>Dev → Staging → Production with automated gates and human approvals</p>
+        </div>
+      </div>
+
+      <div class="flow">  feature branch  →  develop  →  main
+        │                  │           │
+      [build]           [build]     [build]
+        │                  │           │
+      [test]            [test]      [test]
+        │                  │           │
+    deploy dev ──→  deploy staging ──→  deploy prod
+    (automatic)      (automatic)       (<span class="flow-orange">MANUAL ✋</span>)
+                          │
+                  [smoke tests run]
+                          │
+                   only if green
+                   prod unlocks</div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Branch</th><th>Environment</th><th>Trigger</th><th>Gate</th></tr></thead>
+          <tbody>
+            <tr><td><code>feature/*</code></td><td>none</td><td>Build + test only</td><td>—</td></tr>
+            <tr><td><code>develop</code></td><td>dev → staging</td><td>Automatic</td><td>Smoke tests must pass</td></tr>
+            <tr><td><code>main</code></td><td>production</td><td>Manual</td><td>Human + staging green</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">multi-env pipeline structure</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">stages</span>:
+  - build
+  - test
+  - deploy-dev
+  - validate-dev
+  - deploy-staging
+  - validate-staging
+  - deploy-production
+
+<span class="kw">deploy-dev</span>:
+  <span class="p">stage</span>: deploy-dev
+  <span class="p">environment</span>:
+    <span class="p">name</span>: <span class="val">dev</span>
+    <span class="p">url</span>: <span class="s">https://dev.myapp.com</span>
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "develop"'</span>
+
+<span class="kw">smoke-test-dev</span>:
+  <span class="p">stage</span>: validate-dev
+  <span class="p">needs</span>: [<span class="s">deploy-dev</span>]
+  <span class="p">script</span>:
+    - newman run tests/smoke.json --env-var <span class="s">"base_url=https://dev.myapp.com"</span>
+
+<span class="kw">deploy-staging</span>:
+  <span class="p">stage</span>: deploy-staging
+  <span class="p">needs</span>:
+    - <span class="p">job</span>: <span class="s">smoke-test-dev</span>      <span class="cm"># blocked until smoke tests pass</span>
+      <span class="p">artifacts</span>: <span class="val">false</span>
+
+<span class="kw">deploy-production</span>:
+  <span class="p">stage</span>: deploy-production
+  <span class="p">needs</span>:
+    - <span class="p">job</span>: <span class="s">smoke-test-staging</span>  <span class="cm"># staging must be green</span>
+  <span class="p">when</span>: <span class="val">manual</span>                  <span class="cm"># ✋ human clicks play</span>
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "main"'</span></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 9 — TERRAFORM EXPLAINED
+    ══════════════════════════════════════════ -->
+    <section class="section" id="terraform-explained">
+      <div class="section-header">
+        <span class="section-num">09</span>
+        <div>
+          <h2>Terraform Explained</h2>
+          <p>Infrastructure as code — the complete mental model</p>
+        </div>
+      </div>
+
+      <p class="prose">Think of Terraform as a <strong>universal remote control for cloud infrastructure</strong>. Instead of clicking around the AWS console, you write code that describes what you want — and Terraform figures out how to make it real.</p>
+
+      <h3 class="sub">The 3-Step Cycle</h3>
+      <div class="grid-3">
+        <div class="card card-accent-blue">
+          <h3>1. terraform init</h3>
+          <p>Downloads the AWS provider plugin that knows how to talk to AWS APIs. Sets up the remote state backend.</p>
+        </div>
+        <div class="card card-accent-yellow">
+          <h3>2. terraform plan</h3>
+          <p>Compares your code vs what currently exists. Shows exactly what will be created, changed, or destroyed. <strong>Nothing touches AWS yet.</strong></p>
+        </div>
+        <div class="card card-accent-green">
+          <h3>3. terraform apply</h3>
+          <p>Executes the plan, calls AWS APIs, waits for resources to be ready. Type <code>yes</code> to confirm.</p>
+        </div>
+      </div>
+
+      <h3 class="sub">The 4 Core Concepts</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">core HCL concepts</span>
+          <span class="code-lang">HCL</span>
+        </div>
+        <pre><span class="cm"># 1. RESOURCE — things you create</span>
+<span class="k">resource</span> <span class="s">"aws_s3_bucket"</span> <span class="s">"my_bucket"</span> {
+  bucket = <span class="s">"my-unique-bucket-2024"</span>
+}
+
+<span class="cm"># 2. VARIABLE — inputs to your config</span>
+<span class="k">variable</span> <span class="s">"environment"</span> {
+  type    = string
+  default = <span class="s">"dev"</span>
+}
+
+<span class="cm"># 3. OUTPUT — values you want to see or share</span>
+<span class="k">output</span> <span class="s">"bucket_url"</span> {
+  value = aws_s3_bucket.my_bucket.bucket_domain_name
+}
+
+<span class="cm"># 4. DATA SOURCE — read existing things you didn't create</span>
+<span class="k">data</span> <span class="s">"aws_vpc"</span> <span class="s">"existing"</span> {
+  tags = { Name = <span class="s">"company-main-vpc"</span> }
+}
+
+<span class="k">resource</span> <span class="s">"aws_subnet"</span> <span class="s">"mine"</span> {
+  vpc_id     = data.aws_vpc.existing.id  <span class="cm"># reference it with data.</span>
+  cidr_block = <span class="s">"10.0.5.0/24"</span>
+}</pre>
+      </div>
+
+      <h3 class="sub">Commands Cheat Sheet</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">terminal</span>
+          <span class="code-lang">BASH</span>
+        </div>
+        <pre>terraform init          <span class="cm"># download providers, set up backend</span>
+terraform validate      <span class="cm"># check syntax without connecting to AWS</span>
+terraform fmt           <span class="cm"># auto-format your .tf files</span>
+terraform plan          <span class="cm"># show what will change (dry run)</span>
+terraform apply         <span class="cm"># make it real</span>
+terraform destroy       <span class="cm"># tear everything down</span>
+terraform output        <span class="cm"># show output values</span>
+terraform state list    <span class="cm"># list all resources in state</span>
+terraform import        <span class="cm"># bring existing AWS resource under Terraform</span></pre>
+      </div>
+
+      <div class="callout danger">
+        <span class="callout-icon">🚨</span>
+        <div class="callout-body">
+          <div class="callout-title">Common Gotchas</div>
+          <p><strong>Never edit state manually</strong> — use <code>terraform state</code> commands. <strong>terraform destroy destroys everything</strong> — always run plan first. <strong>Sensitive values end up in state</strong> — use SSM Parameter Store for passwords, not raw variables.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 10 — TERRAFORM PROJECT
+    ══════════════════════════════════════════ -->
+    <section class="section" id="terraform-project">
+      <div class="section-header">
+        <span class="section-num">10</span>
+        <div>
+          <h2>Terraform Project Structure</h2>
+          <p>Production-grade module layout for AWS</p>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">project layout</span>
+          <span class="code-lang">TREE</span>
+        </div>
+        <pre>terraform/
+├── main.tf           <span class="cm"># root module — wires modules together</span>
+├── variables.tf      <span class="cm"># input variables</span>
+├── outputs.tf        <span class="cm"># exported values</span>
+├── versions.tf       <span class="cm"># provider + terraform version pins</span>
+├── backend.tf        <span class="cm"># remote state config (S3 + DynamoDB)</span>
+│
+└── modules/
+    ├── vpc/          <span class="cm"># networking</span>
+    ├── ecr/          <span class="cm"># container registry</span>
+    ├── ecs/          <span class="cm"># fargate cluster + service</span>
+    ├── alb/          <span class="cm"># load balancer</span>
+    └── rds/          <span class="cm"># postgres database</span></pre>
+      </div>
+
+      <h3 class="sub">versions.tf — Always Pin Your Versions</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">versions.tf</span>
+          <span class="code-lang">HCL</span>
+        </div>
+        <pre><span class="k">terraform</span> {
+  required_version = <span class="s">">= 1.7.0"</span>
+
+  required_providers {
+    aws = {
+      source  = <span class="s">"hashicorp/aws"</span>
+      version = <span class="s">"~> 5.40"</span>
+    }
+  }
+}
+
+<span class="k">provider</span> <span class="s">"aws"</span> {
+  region = var.aws_region
+
+  default_tags {
+    tags = {
+      Project     = var.project_name
+      Environment = var.environment
+      ManagedBy   = <span class="s">"terraform"</span>
+    }
+  }
+}</pre>
+      </div>
+
+      <h3 class="sub">backend.tf — Remote State</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">backend.tf</span>
+          <span class="code-lang">HCL</span>
+        </div>
+        <pre><span class="k">terraform</span> {
+  backend <span class="s">"s3"</span> {
+    bucket         = <span class="s">"my-company-terraform-state"</span>
+    key            = <span class="s">"my-app/terraform.tfstate"</span>
+    region         = <span class="s">"us-east-1"</span>
+    encrypt        = <span class="val">true</span>
+    dynamodb_table = <span class="s">"terraform-state-lock"</span>  <span class="cm"># prevents concurrent applies</span>
+  }
+}</pre>
+      </div>
+
+      <h3 class="sub">GitLab CI for Terraform</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">.gitlab-ci.yml — terraform pipeline</span>
+          <span class="code-lang">YAML</span>
+        </div>
+        <pre><span class="kw">stages</span>: [validate, plan, apply]
+
+<span class="k">default</span>:
+  <span class="p">image</span>: <span class="s">hashicorp/terraform:1.7.0</span>
+  <span class="p">before_script</span>:
+    - terraform init
+
+<span class="kw">validate</span>:
+  <span class="p">stage</span>: validate
+  <span class="p">script</span>:
+    - terraform validate
+    - terraform fmt -check -recursive
+
+<span class="kw">plan</span>:
+  <span class="p">stage</span>: plan
+  <span class="p">script</span>:
+    - terraform plan -out=plan.tfplan
+  <span class="p">artifacts</span>:
+    <span class="p">paths</span>: [plan.tfplan]
+    <span class="p">expire_in</span>: <span class="s">1 week</span>
+
+<span class="kw">apply-staging</span>:
+  <span class="p">stage</span>: apply
+  <span class="p">needs</span>: [plan]
+  <span class="p">script</span>:
+    - terraform apply -auto-approve plan.tfplan
+  <span class="p">environment</span>: { <span class="p">name</span>: <span class="val">staging</span> }
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "develop"'</span>
+
+<span class="kw">apply-production</span>:
+  <span class="p">stage</span>: apply
+  <span class="p">needs</span>: [plan]
+  <span class="p">script</span>:
+    - terraform apply -auto-approve plan.tfplan
+  <span class="p">environment</span>: { <span class="p">name</span>: <span class="val">production</span> }
+  <span class="p">when</span>: <span class="val">manual</span>
+  <span class="p">rules</span>:
+    - <span class="p">if</span>: <span class="s">'$CI_COMMIT_BRANCH == "main"'</span></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 11 — TERRAFORM WALKTHROUGH
+    ══════════════════════════════════════════ -->
+    <section class="section" id="terraform-walkthrough">
+      <div class="section-header">
+        <span class="section-num">11</span>
+        <div>
+          <h2>Infrastructure Walkthrough</h2>
+          <p>VPC → ECR → ALB → ECS Fargate — explained line by line</p>
+        </div>
+      </div>
+
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h4>VPC & Networking</h4>
+            <p>Creates the isolated network. Public subnets for the ALB (internet-facing), private subnets for ECS tasks (no direct internet access). NAT Gateways let private tasks pull Docker images from ECR without being publicly reachable.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h4>Security Groups</h4>
+            <p>ALB security group accepts port 80/443 from the internet. ECS security group only accepts traffic <em>from the ALB security group</em> — not from an IP range, but from a specific AWS identity. Nothing else can reach your containers.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h4>ECR Repository</h4>
+            <p>Private container registry. Auto-scans images on push for vulnerabilities. Lifecycle policy keeps last 10 images and deletes older ones to control storage costs.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h4>ALB + Target Group</h4>
+            <p>Load balancer spreads traffic across all ECS tasks. Target type must be <code>ip</code> for Fargate. Health checks hit <code>/health</code> every 30s — tasks failing 3 checks are removed from rotation automatically.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h4>ECS Cluster + Fargate Service</h4>
+            <p>Cluster is a logical namespace. Service maintains <code>desired_count</code> tasks always running. <code>deployment_circuit_breaker</code> auto-rolls back if new tasks fail health checks. <code>ignore_changes = [task_definition]</code> lets CI/CD manage image updates without Terraform fighting over it.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h4>Auto Scaling</h4>
+            <p>Watches average CPU across all tasks. Scales out quickly (60s cooldown) when CPU hits 70%. Scales in slowly (300s cooldown) to avoid yo-yoing. Min = your desired count. Max = 6 tasks (cost protection).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">run it</span>
+          <span class="code-lang">BASH</span>
+        </div>
+        <pre>terraform init       <span class="cm"># downloads provider, connects to S3 backend</span>
+terraform validate   <span class="cm"># check syntax</span>
+terraform fmt        <span class="cm"># auto-format</span>
+terraform plan       <span class="cm"># preview ~27 resources (always do this first)</span>
+terraform apply      <span class="cm"># create everything (~3-5 min)</span>
+terraform output     <span class="cm"># see your ALB URL + ECR push commands</span>
+
+<span class="cm"># Tear down to avoid AWS costs</span>
+terraform destroy</pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         SECTION 12 — PYTHON BEGINNER
+    ══════════════════════════════════════════ -->
+    <section class="section" id="python-beginner">
+      <div class="section-header">
+        <span class="section-num">12</span>
+        <div>
+          <h2>Python Projects</h2>
+          <p>10 real projects from beginner to advanced</p>
+        </div>
+      </div>
+
+      <div class="level-row">
+        <div class="level-card">
+          <div class="level-emoji">🟢</div>
+          <div class="level-body">
+            <h4>Beginner (Projects 1-3)</h4>
+            <p>Variables, loops, functions, file I/O, APIs, error handling</p>
+          </div>
+        </div>
+        <div class="level-card">
+          <div class="level-emoji">🟡</div>
+          <div class="level-body">
+            <h4>Intermediate (Projects 4-6)</h4>
+            <p>REST APIs, FastAPI, PostgreSQL, SQLAlchemy, pytest, async</p>
+          </div>
+        </div>
+        <div class="level-card">
+          <div class="level-emoji">🔴</div>
+          <div class="level-body">
+            <h4>Advanced (Projects 7-10)</h4>
+            <p>Celery, Redis, WebSockets, data pipelines, microservices</p>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sub">🟢 Project 1 — Number Guessing Game</h3>
+      <p class="prose"><strong>Concepts:</strong> variables, loops, conditionals, user input, random</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">guess.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="k">import</span> random
+
+<span class="k">def</span> <span class="n">play_game</span>():
+    secret = random.randint(<span class="n">1</span>, <span class="n">100</span>)
+    attempts = <span class="n">0</span>
+    max_attempts = <span class="n">7</span>
+
+    <span class="k">print</span>(<span class="s">"🎯 Guess the number between 1 and 100!"</span>)
+
+    <span class="k">while</span> attempts < max_attempts:
+        <span class="k">try</span>:
+            guess = <span class="k">int</span>(<span class="k">input</span>(<span class="s">f"Attempt {attempts+1}/{max_attempts} → "</span>))
+        <span class="k">except</span> ValueError:
+            <span class="k">print</span>(<span class="s">"Please enter a valid number."</span>)
+            <span class="k">continue</span>
+
+        attempts += <span class="n">1</span>
+        <span class="k">if</span> guess < secret:
+            <span class="k">print</span>(<span class="s">"📈 Too low!"</span>)
+        <span class="k">elif</span> guess > secret:
+            <span class="k">print</span>(<span class="s">"📉 Too high!"</span>)
+        <span class="k">else</span>:
+            <span class="k">print</span>(<span class="s">f"🎉 Correct in {attempts} attempts!"</span>)
+            <span class="k">return</span>
+
+    <span class="k">print</span>(<span class="s">f"💀 Game over! The number was {secret}."</span>)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    play_game()</pre>
+      </div>
+
+      <h3 class="sub">🟢 Project 2 — Expense Tracker</h3>
+      <p class="prose"><strong>Concepts:</strong> functions, lists, dictionaries, file I/O, JSON</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">expenses.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="k">import</span> json, os
+<span class="k">from</span> datetime <span class="k">import</span> datetime
+
+FILENAME = <span class="s">"expenses.json"</span>
+
+<span class="k">def</span> <span class="n">load_expenses</span>():
+    <span class="k">if</span> os.path.exists(FILENAME):
+        <span class="k">with</span> <span class="k">open</span>(FILENAME) <span class="k">as</span> f:
+            <span class="k">return</span> json.load(f)
+    <span class="k">return</span> []
+
+<span class="k">def</span> <span class="n">add_expense</span>(expenses):
+    category    = <span class="k">input</span>(<span class="s">"Category: "</span>).strip()
+    description = <span class="k">input</span>(<span class="s">"Description: "</span>).strip()
+    amount      = <span class="k">float</span>(<span class="k">input</span>(<span class="s">"Amount: $"</span>))
+
+    expenses.append({
+        <span class="s">"date"</span>: datetime.now().strftime(<span class="s">"%Y-%m-%d"</span>),
+        <span class="s">"category"</span>: category,
+        <span class="s">"description"</span>: description,
+        <span class="s">"amount"</span>: amount
+    })
+    <span class="k">with</span> <span class="k">open</span>(FILENAME, <span class="s">"w"</span>) <span class="k">as</span> f:
+        json.dump(expenses, f, indent=<span class="n">2</span>)
+
+<span class="k">def</span> <span class="n">show_summary</span>(expenses):
+    total = <span class="k">sum</span>(e[<span class="s">"amount"</span>] <span class="k">for</span> e <span class="k">in</span> expenses)
+    by_cat = {}
+    <span class="k">for</span> e <span class="k">in</span> expenses:
+        by_cat[e[<span class="s">"category"</span>]] = by_cat.get(e[<span class="s">"category"</span>], <span class="n">0</span>) + e[<span class="s">"amount"</span>]
+    <span class="k">print</span>(<span class="s">f"💰 Total: ${total:.2f}"</span>)
+    <span class="k">for</span> cat, amt <span class="k">in</span> sorted(by_cat.items(), key=<span class="k">lambda</span> x: x[<span class="n">1</span>], reverse=<span class="val">True</span>):
+        bar = <span class="s">"█"</span> * <span class="k">int</span>(amt / total * <span class="n">20</span>)
+        <span class="k">print</span>(<span class="s">f"  {cat:<15} ${amt:>8.2f}  {bar}"</span>)</pre>
+      </div>
+
+      <h3 class="sub">🟢 Project 3 — Weather CLI</h3>
+      <p class="prose"><strong>Concepts:</strong> HTTP requests, APIs, error handling, environment variables</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">weather.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="k">import</span> os, sys, requests
+
+API_KEY  = os.getenv(<span class="s">"OPENWEATHER_API_KEY"</span>)
+BASE_URL = <span class="s">"https://api.openweathermap.org/data/2.5"</span>
+
+<span class="k">def</span> <span class="n">get_weather</span>(city):
+    r = requests.get(<span class="s">f"{BASE_URL}/weather"</span>,
+        params={<span class="s">"q"</span>: city, <span class="s">"appid"</span>: API_KEY, <span class="s">"units"</span>: <span class="s">"metric"</span>},
+        timeout=<span class="n">10</span>)
+    r.raise_for_status()
+    <span class="k">return</span> r.json()
+
+<span class="k">def</span> <span class="n">display_weather</span>(data):
+    temp  = data[<span class="s">"main"</span>][<span class="s">"temp"</span>]
+    desc  = data[<span class="s">"weather"</span>][<span class="n">0</span>][<span class="s">"description"</span>].capitalize()
+    humid = data[<span class="s">"main"</span>][<span class="s">"humidity"</span>]
+    wind  = data[<span class="s">"wind"</span>][<span class="s">"speed"</span>]
+    <span class="k">print</span>(<span class="s">f"🌡️  {data['name']}: {temp:.1f}°C — {desc}"</span>)
+    <span class="k">print</span>(<span class="s">f"   Humidity: {humid}%  Wind: {wind} m/s"</span>)
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    city = <span class="s">" "</span>.join(sys.argv[<span class="n">1</span>:]) <span class="k">or</span> <span class="k">input</span>(<span class="s">"City: "</span>)
+    <span class="k">try</span>:
+        display_weather(get_weather(city))
+    <span class="k">except</span> requests.HTTPError <span class="k">as</span> e:
+        <span class="k">print</span>(<span class="s">f"❌ {e}"</span>)</pre>
+      </div>
+    </section>
+
+    <!-- PYTHON INTERMEDIATE -->
+    <section class="section" id="python-intermediate">
+      <div class="section-header">
+        <span class="section-num">13</span>
+        <div>
+          <h2>Python — Intermediate Projects</h2>
+          <p>REST APIs, databases, and testing</p>
+        </div>
+      </div>
+
+      <h3 class="sub">🟡 Project 4 — FastAPI Task Manager</h3>
+      <p class="prose"><strong>Concepts:</strong> REST API, FastAPI, Pydantic validation, HTTP methods, auto-generated docs</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">models.py + routers/tasks.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="cm"># models.py</span>
+<span class="k">from</span> pydantic <span class="k">import</span> BaseModel, Field
+<span class="k">from</span> enum <span class="k">import</span> Enum
+<span class="k">from</span> typing <span class="k">import</span> Optional
+<span class="k">from</span> datetime <span class="k">import</span> datetime
+
+<span class="k">class</span> <span class="n">Priority</span>(str, Enum):
+    low    = <span class="s">"low"</span>
+    medium = <span class="s">"medium"</span>
+    high   = <span class="s">"high"</span>
+
+<span class="k">class</span> <span class="n">TaskCreate</span>(BaseModel):
+    title       : str = Field(..., min_length=<span class="n">1</span>, max_length=<span class="n">100</span>)
+    description : Optional[str] = <span class="val">None</span>
+    priority    : Priority = Priority.medium
+
+<span class="cm"># routers/tasks.py</span>
+<span class="k">from</span> fastapi <span class="k">import</span> APIRouter, HTTPException
+
+router = APIRouter(prefix=<span class="s">"/tasks"</span>, tags=[<span class="s">"tasks"</span>])
+db = {}; counter = <span class="n">0</span>
+
+<span class="p">@router.post</span>(<span class="s">"/"</span>, status_code=<span class="n">201</span>)
+<span class="k">def</span> <span class="n">create_task</span>(task: TaskCreate):
+    <span class="k">global</span> counter; counter += <span class="n">1</span>
+    db[counter] = {<span class="s">"id"</span>: counter, **task.model_dump()}
+    <span class="k">return</span> db[counter]
+
+<span class="p">@router.get</span>(<span class="s">"/{task_id}"</span>)
+<span class="k">def</span> <span class="n">get_task</span>(task_id: int):
+    <span class="k">if</span> task_id <span class="k">not in</span> db:
+        <span class="k">raise</span> HTTPException(status_code=<span class="n">404</span>, detail=<span class="s">"Not found"</span>)
+    <span class="k">return</span> db[task_id]</pre>
+      </div>
+
+      <div class="callout info">
+        <span class="callout-icon">📖</span>
+        <div class="callout-body">
+          <div class="callout-title">Auto-Generated API Docs</div>
+          <p>After running <code>uvicorn main:app --reload</code>, visit <code>http://localhost:8000/docs</code> for interactive Swagger UI — all endpoints documented and testable automatically.</p>
+        </div>
+      </div>
+
+      <h3 class="sub">🟡 Project 5 — PostgreSQL with SQLAlchemy Async</h3>
+      <p class="prose"><strong>Concepts:</strong> async SQLAlchemy ORM, Alembic migrations, dependency injection</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">database.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="k">from</span> sqlalchemy.ext.asyncio <span class="k">import</span> create_async_engine, AsyncSession
+<span class="k">from</span> sqlalchemy.orm <span class="k">import</span> sessionmaker, DeclarativeBase
+<span class="k">import</span> os
+
+DATABASE_URL = os.getenv(<span class="s">"DATABASE_URL"</span>,
+    <span class="s">"postgresql+asyncpg://postgres:password@localhost/taskdb"</span>)
+
+engine = create_async_engine(DATABASE_URL)
+
+AsyncSessionLocal = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=<span class="val">False</span>)
+
+<span class="k">class</span> <span class="n">Base</span>(DeclarativeBase): <span class="k">pass</span>
+
+<span class="k">async def</span> <span class="n">get_db</span>():
+    <span class="k">async with</span> AsyncSessionLocal() <span class="k">as</span> session:
+        <span class="k">try</span>:
+            <span class="k">yield</span> session
+            <span class="k">await</span> session.commit()
+        <span class="k">except</span>:
+            <span class="k">await</span> session.rollback()
+            <span class="k">raise</span></pre>
+      </div>
+
+      <h3 class="sub">🟡 Project 6 — Testing with pytest</h3>
+      <p class="prose"><strong>Concepts:</strong> async tests, fixtures, dependency overrides, coverage</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">tests/test_tasks.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="k">import</span> pytest
+
+<span class="p">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="n">test_create_task</span>(client):
+    response = <span class="k">await</span> client.post(<span class="s">"/tasks/"</span>, json={
+        <span class="s">"title"</span>: <span class="s">"Buy groceries"</span>,
+        <span class="s">"priority"</span>: <span class="s">"high"</span>
+    })
+    <span class="k">assert</span> response.status_code == <span class="n">201</span>
+    <span class="k">assert</span> response.json()[<span class="s">"title"</span>] == <span class="s">"Buy groceries"</span>
+    <span class="k">assert</span> response.json()[<span class="s">"completed"</span>] <span class="k">is</span> <span class="val">False</span>
+
+<span class="p">@pytest.mark.asyncio</span>
+<span class="k">async def</span> <span class="n">test_delete_task</span>(client):
+    r = <span class="k">await</span> client.post(<span class="s">"/tasks/"</span>, json={<span class="s">"title"</span>: <span class="s">"Delete me"</span>})
+    task_id = r.json()[<span class="s">"id"</span>]
+
+    res = <span class="k">await</span> client.delete(<span class="s">f"/tasks/{task_id}"</span>)
+    <span class="k">assert</span> res.status_code == <span class="n">204</span>
+
+    res = <span class="k">await</span> client.get(<span class="s">f"/tasks/{task_id}"</span>)
+    <span class="k">assert</span> res.status_code == <span class="n">404</span></pre>
+      </div>
+    </section>
+
+    <!-- PYTHON ADVANCED -->
+    <section class="section" id="python-advanced">
+      <div class="section-header">
+        <span class="section-num">14</span>
+        <div>
+          <h2>Python — Advanced Projects</h2>
+          <p>Background jobs, real-time, data pipelines, microservices</p>
+        </div>
+      </div>
+
+      <h3 class="sub">🔴 Project 7 — Background Jobs with Celery + Redis</h3>
+      <p class="prose"><strong>Concepts:</strong> async task queues, workers, scheduled jobs, retries, result backend</p>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div></div>
+          <span class="code-filename">celery_app.py + workers/email.py</span>
+          <span class="code-lang">PYTHON</span>
+        </div>
+        <pre><span class="cm"># celery_app.py</span>
+<span class="k">from</span> celery <span class="k">import</span> Celery
+<span class="k">from</span> celery.schedules <span class="k">import</span> crontab
+
+app = Celery(<span class="s">"tasks"</span>,
+    broker=<span class="s">"redis://localhost:6379/0"</span>,
+    backend=<span class="s">"redis://localhost:6379/1"</span>)
+
+app.conf.beat_schedule = {
+    <span class="s">"daily-report"</span>: {
+        <span class="s">"task"</span>: <span class="s">"workers.reports.generate_daily_report"</span>,
+        <span class="s">"schedule"</span>: crontab(hour=<span class="n">8</span>, minute=<span class="n">0</span>),
+    }
+}
+
+<span class="cm"># workers/email.py</span>
+<span class="p">@app.task</span>(bind=<span class="val">True</span>, max_retries=<span class="n">3</span>, default_retry_delay=<span class="n">60</span>)
+<span class="k">def</span> <span class="n">send_email</span>(self, to, subject, body):
+    <span class="k">try</span>:
+        <span class="cm"># send email logic here</span>
+        <span class="k">return</span> {<span class="s">"status"</span>: <span class="s">"sent"</span>, <span class="s">"to"</span>: to}
+    <span class="k">except</span> Exception <span class="k">as</span> exc:
+        <span class="k">raise</span> self.retry(exc=exc)  <span class="cm"># auto retry up to 3x</span>
+
+<span class="cm"># Run workers:</span>
+<span class="cm"># celery -A celery_app worker --loglevel=info</span>
+<span class="cm"># celery -A celery_app beat   --loglevel=info</span></pre>
+      </div>
+
+      <div class="grid-3">
+        <div class="card card-accent-red">
+          <h3>🔴 Project 8</h3>
+          <p><strong>WebSocket Chat</strong> — FastAPI WebSockets, real-time broadcasting, connection manager, rooms</p>
+        </div>
+        <div class="card card-accent-purple">
+          <h3>🔴 Project 9</h3>
+          <p><strong>Data Pipeline</strong> — pandas ETL, async HTTP scraping, PostgreSQL COPY, scheduled transforms</p>
+        </div>
+        <div class="card card-accent-orange">
+          <h3>🔴 Project 10</h3>
+          <p><strong>Microservices</strong> — FastAPI services, message queues, service discovery, Docker Compose orchestration</p>
+        </div>
+      </div>
+
+      <h3 class="sub">Learning Path</h3>
+      <div class="flow">  <span class="flow-green">Beginner</span>
+  ├── Project 1: Number Guessing Game    (loops, conditionals)
+  ├── Project 2: Expense Tracker         (file I/O, JSON, dicts)
+  └── Project 3: Weather CLI             (HTTP requests, APIs)
+
+  <span class="flow-orange">Intermediate</span>
+  ├── Project 4: FastAPI Task Manager    (REST, Pydantic, routing)
+  ├── Project 5: PostgreSQL Integration  (SQLAlchemy, async, ORM)
+  └── Project 6: Full Test Suite         (pytest, fixtures, coverage)
+
+  <span class="flow-purple">Advanced</span>
+  ├── Project 7: Celery + Redis          (queues, workers, scheduling)
+  ├── Project 8: WebSocket Chat          (real-time, connections)
+  ├── Project 9: Data Pipeline          (ETL, pandas, scheduling)
+  └── Project 10: Microservices          (services, queues, Docker)</div>
+    </section>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div>
+        <p>// GitLab CI/CD Complete Learning Guide</p>
+        <p style="margin-top:4px">Generated from your learning session • 2026</p>
+      </div>
+      <div class="footer-badges">
+        <span class="badge badge-orange">GitLab CI/CD</span>
+        <span class="badge badge-blue">Docker</span>
+        <span class="badge badge-green">AWS</span>
+        <span class="badge badge-purple">Terraform</span>
+        <span class="badge badge-yellow">Python</span>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  // Active nav on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navItems = document.querySelectorAll('.nav-item');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navItems.forEach(n => n.classList.remove('active'));
+        const active = document.querySelector(`.nav-item[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Search
+  function searchTopics(query) {
+    const items = document.querySelectorAll('.nav-item');
+    const q = query.toLowerCase();
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = (!q || text.includes(q)) ? 'flex' : 'none';
+    });
+  }
+</script>
+
+</body>
+</html>
