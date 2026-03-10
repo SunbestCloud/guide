@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker Mastery — Hands-On Projects</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+  :root {
+    --bg:#0a0c10; --surface:#111318; --border:#1e2230;
+    --accent:#00d4ff; --accent2:#ff6b35; --green:#3ddc84;
+    --yellow:#ffd166; --purple:#c084fc; --pink:#f472b6; --red:#ff5555;
+    --text:#e2e8f0; --muted:#64748b; --done:#1a2f1e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 22px 100px;position:relative;z-index:1}
+
+  /* HEADER */
+  .hdr{text-align:center;padding:50px 0 36px}
+  .whale{font-size:52px;display:block;margin-bottom:12px;animation:float 3s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .hdr h1{font-size:clamp(1.9rem,5vw,3.2rem);font-weight:800;line-height:1.1;letter-spacing:-2px}
+  .hdr h1 span{color:var(--accent)}
+  .hdr p{margin-top:10px;color:var(--muted);font-size:.88rem;font-family:'JetBrains Mono',monospace}
+
+  /* OVERALL PROGRESS */
+  .glob-prog{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin-bottom:30px;display:flex;align-items:center;gap:14px}
+  .prog-out{flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden}
+  .prog-in{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple),var(--green));border-radius:99px;transition:width .5s ease;width:0%}
+  .prog-lbl{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted);white-space:nowrap}
+
+  /* LEVEL SECTIONS */
+  .level-section{margin-bottom:36px}
+  .level-heading{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .level-badge{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;padding:5px 12px;border-radius:7px;letter-spacing:.5px;text-transform:uppercase}
+  .lb-beginner    {background:rgba(61,220,132,.12);color:var(--green);  border:1px solid rgba(61,220,132,.25)}
+  .lb-intermediate{background:rgba(255,209,102,.12);color:var(--yellow); border:1px solid rgba(255,209,102,.25)}
+  .lb-advanced    {background:rgba(255,107,53,.12); color:var(--accent2);border:1px solid rgba(255,107,53,.25)}
+  .lb-expert      {background:rgba(192,132,252,.12);color:var(--purple); border:1px solid rgba(192,132,252,.25)}
+  .level-line{flex:1;height:1px;background:var(--border)}
+  .level-count{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--muted)}
+
+  /* PROJECT CARDS GRID */
+  .proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:20px}
+  .proj-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 15px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px}
+  .proj-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .proj-card.active{border-color:var(--accent);background:rgba(0,212,255,.05);box-shadow:0 0 0 1px rgba(0,212,255,.1)}
+  .proj-card.done-proj{border-color:var(--green);background:rgba(61,220,132,.04)}
+  .pc-top{display:flex;align-items:flex-start;justify-content:space-between}
+  .pc-icon{font-size:1.5rem}
+  .pc-check{color:var(--green);font-size:.75rem;display:none}
+  .proj-card.done-proj .pc-check{display:block}
+  .pc-name{font-size:.8rem;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.3}
+  .pc-stack{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted);margin-top:2px}
+
+  /* PROJECT PANEL */
+  .proj-panel{display:none;animation:fadeIn .2s ease}
+  .proj-panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .panel-hdr{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:15px 18px;margin-bottom:16px}
+  .ph-icon{font-size:2rem}
+  .ph-info h2{font-size:1.05rem;font-weight:800;letter-spacing:-.5px}
+  .ph-info p{font-size:.8rem;color:var(--muted);margin-top:3px}
+  .ph-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .diff-tag{font-family:'JetBrains Mono',monospace;font-size:.67rem;padding:3px 9px;border-radius:6px;white-space:nowrap}
+  .dt-beginner    {background:rgba(61,220,132,.1); color:var(--green);  border:1px solid rgba(61,220,132,.2)}
+  .dt-intermediate{background:rgba(255,209,102,.1);color:var(--yellow); border:1px solid rgba(255,209,102,.2)}
+  .dt-advanced    {background:rgba(255,107,53,.1); color:var(--accent2);border:1px solid rgba(255,107,53,.2)}
+  .dt-expert      {background:rgba(192,132,252,.1);color:var(--purple); border:1px solid rgba(192,132,252,.2)}
+  .proj-progress-mini{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--muted)}
+
+  /* STEPS */
+  .step{background:var(--surface);border:1px solid var(--border);border-radius:13px;margin-bottom:13px;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+  .step.active{border-color:var(--accent);box-shadow:0 0 0 1px rgba(0,212,255,.08),0 6px 28px rgba(0,212,255,.05)}
+  .step.completed{border-color:var(--green);background:var(--done)}
+  .step-hdr{display:flex;align-items:flex-start;gap:12px;padding:15px 17px;cursor:pointer;user-select:none}
+  .snum{width:30px;height:30px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:700;flex-shrink:0;transition:all .3s;color:var(--muted)}
+  .step.active .snum{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.08)}
+  .step.completed .snum{border-color:var(--green);background:var(--green);color:#000}
+  .smeta{flex:1}
+  .smeta h3{font-size:.93rem;font-weight:700;letter-spacing:-.3px}
+  .smeta p{font-size:.79rem;color:var(--muted);margin-top:2px;font-weight:400}
+  .stag{font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:2px 7px;border-radius:5px;white-space:nowrap;align-self:flex-start;margin-top:3px}
+  .t-setup{background:rgba(255,107,53,.15); color:var(--accent2)}
+  .t-code {background:rgba(0,212,255,.1);   color:var(--accent)}
+  .t-dock {background:rgba(61,220,132,.1);  color:var(--green)}
+  .t-run  {background:rgba(255,209,102,.1); color:var(--yellow)}
+  .t-conf {background:rgba(192,132,252,.1); color:var(--purple)}
+  .t-sec  {background:rgba(255,85,85,.1);   color:var(--red)}
+  .t-obs  {background:rgba(244,114,182,.1); color:var(--pink)}
+  .chevron{color:var(--muted);font-size:.72rem;transition:transform .25s;margin-left:auto;padding-left:8px;flex-shrink:0}
+  .step.open .chevron{transform:rotate(180deg)}
+  .step-body{display:none;padding:0 17px 17px;animation:sdown .2s ease}
+  .step.open .step-body{display:block}
+  @keyframes sdown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .step-body p{font-size:.85rem;line-height:1.7;color:#94a3b8;margin-bottom:11px}
+
+  /* CODE */
+  .cb{background:#070910;border:1px solid var(--border);border-radius:9px;margin:11px 0;overflow:hidden}
+  .cl{display:flex;align-items:center;justify-content:space-between;padding:6px 13px;border-bottom:1px solid var(--border);background:#0d0f15}
+  .cl span{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted)}
+  .cp{background:none;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.65rem;padding:2px 9px;border-radius:5px;cursor:pointer;transition:all .2s}
+  .cp:hover{border-color:var(--accent);color:var(--accent)}
+  .cp.copied{border-color:var(--green);color:var(--green)}
+  pre{padding:13px 15px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.8;color:#c9d1d9}
+  .kw{color:#ff79c6}.cm{color:#6272a4;font-style:italic}.st{color:#f1fa8c}
+  .fn{color:#50fa7b}.nm{color:#bd93f9}.hl{color:var(--accent)}
+  .a2{color:var(--accent2)}.pu{color:var(--purple)}.gn{color:var(--green)}
+
+  /* CALLOUTS */
+  .ca{display:flex;gap:10px;border-radius:9px;padding:11px 13px;margin:11px 0;font-size:.83rem;line-height:1.6}
+  .ca-i{background:rgba(0,212,255,.06);  border:1px solid rgba(0,212,255,.15)}
+  .ca-t{background:rgba(61,220,132,.06); border:1px solid rgba(61,220,132,.15)}
+  .ca-w{background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.15)}
+  .ca-r{background:rgba(255,85,85,.06);  border:1px solid rgba(255,85,85,.15)}
+  .cai{font-size:.95rem;flex-shrink:0}
+  .cat{color:#94a3b8}.cat strong{color:var(--text)}
+
+  /* FILE TREE */
+  .ft{background:#070910;border:1px solid var(--border);border-radius:9px;padding:13px 15px;font-family:'JetBrains Mono',monospace;font-size:.78rem;margin:11px 0;line-height:1.9}
+  .fd{color:var(--accent)}.ff{color:#94a3b8}.fn2{color:var(--green)}
+
+  /* DONE BTN */
+  .db{margin-top:14px;background:none;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:7px;font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s}
+  .db:hover{border-color:var(--green);color:var(--green);background:rgba(61,220,132,.06)}
+  .step.completed .db{background:rgba(61,220,132,.1);border-color:var(--green);color:var(--green)}
+
+  /* FINALE */
+  .finale{text-align:center;padding:50px 28px;border:1px solid rgba(192,132,252,.25);border-radius:20px;background:linear-gradient(135deg,rgba(0,212,255,.04),rgba(192,132,252,.04),rgba(61,220,132,.04));margin-top:28px;display:none;animation:fadeIn .5s ease}
+  .finale h2{font-size:2rem;font-weight:800;letter-spacing:-1px}
+  .finale h2 span{color:var(--purple)}
+  .finale p{color:var(--muted);margin-top:8px;font-size:.88rem}
+  .cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin-top:20px}
+  .cc{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:9px;padding:12px;text-align:left}
+  .cc .ci{font-size:1.1rem;margin-bottom:5px}.cc .cl2{font-size:.75rem;font-weight:700;color:var(--text)}.cc .cd{font-size:.7rem;color:var(--muted);margin-top:2px}
+  code{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:.85em}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <span class="whale">🐳</span>
+    <h1>Docker <span>Mastery</span> Path</h1>
+    <p>// 11 hands-on projects · beginner → intermediate → advanced → expert</p>
+  </div>
+
+  <div class="glob-prog">
+    <span class="prog-lbl">Mastery</span>
+    <div class="prog-out"><div class="prog-in" id="gBar"></div></div>
+    <span class="prog-lbl" id="gTxt">0 / 11 projects</span>
+  </div>
+
+  <!-- ═══════════════════════ BEGINNER ═══════════════════════ -->
+  <div class="level-section">
+    <div class="level-heading">
+      <span class="level-badge lb-beginner">🌱 Beginner</span>
+      <div class="level-line"></div>
+      <span class="level-count">3 projects</span>
+    </div>
+    <div class="proj-grid">
+      <div class="proj-card active" onclick="show(0)" id="tab-0">
+        <div class="pc-top"><span class="pc-icon">📊</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Visit Counter</div>
+        <div class="pc-stack">Flask · Redis</div>
+      </div>
+      <div class="proj-card" onclick="show(1)" id="tab-1">
+        <div class="pc-top"><span class="pc-icon">🗄️</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Postgres + pgAdmin</div>
+        <div class="pc-stack">Postgres · pgAdmin</div>
+      </div>
+      <div class="proj-card" onclick="show(2)" id="tab-2">
+        <div class="pc-top"><span class="pc-icon">📝</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Static Site Server</div>
+        <div class="pc-stack">Nginx · HTML/CSS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ INTERMEDIATE ═══════════════════ -->
+  <div class="level-section">
+    <div class="level-heading">
+      <span class="level-badge lb-intermediate">⚡ Intermediate</span>
+      <div class="level-line"></div>
+      <span class="level-count">3 projects</span>
+    </div>
+    <div class="proj-grid">
+      <div class="proj-card" onclick="show(3)" id="tab-3">
+        <div class="pc-top"><span class="pc-icon">🌐</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Nginx Reverse Proxy</div>
+        <div class="pc-stack">Nginx · Node.js</div>
+      </div>
+      <div class="proj-card" onclick="show(4)" id="tab-4">
+        <div class="pc-top"><span class="pc-icon">⚙️</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Multi-Stage Build</div>
+        <div class="pc-stack">Docker · Node.js</div>
+      </div>
+      <div class="proj-card" onclick="show(5)" id="tab-5">
+        <div class="pc-top"><span class="pc-icon">📡</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">REST API + MongoDB</div>
+        <div class="pc-stack">Express · Mongoose</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ ADVANCED ════════════════════════ -->
+  <div class="level-section">
+    <div class="level-heading">
+      <span class="level-badge lb-advanced">🔥 Advanced</span>
+      <div class="level-line"></div>
+      <span class="level-count">3 projects</span>
+    </div>
+    <div class="proj-grid">
+      <div class="proj-card" onclick="show(6)" id="tab-6">
+        <div class="pc-top"><span class="pc-icon">🔒</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Secrets &amp; Security</div>
+        <div class="pc-stack">Docker Secrets · Vault</div>
+      </div>
+      <div class="proj-card" onclick="show(7)" id="tab-7">
+        <div class="pc-top"><span class="pc-icon">🔄</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">CI/CD Pipeline</div>
+        <div class="pc-stack">GitHub Actions · Registry</div>
+      </div>
+      <div class="proj-card" onclick="show(8)" id="tab-8">
+        <div class="pc-top"><span class="pc-icon">📈</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Observability Stack</div>
+        <div class="pc-stack">Prometheus · Grafana</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════ EXPERT ══════════════════════════ -->
+  <div class="level-section">
+    <div class="level-heading">
+      <span class="level-badge lb-expert">💜 Expert</span>
+      <div class="level-line"></div>
+      <span class="level-count">2 projects</span>
+    </div>
+    <div class="proj-grid">
+      <div class="proj-card" onclick="show(9)" id="tab-9">
+        <div class="pc-top"><span class="pc-icon">☸️</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Docker Swarm Cluster</div>
+        <div class="pc-stack">Swarm · Overlay Net</div>
+      </div>
+      <div class="proj-card" onclick="show(10)" id="tab-10">
+        <div class="pc-top"><span class="pc-icon">🧩</span><span class="pc-check">✓</span></div>
+        <div class="pc-name">Custom Bridge Network</div>
+        <div class="pc-stack">Network · mTLS · DNS</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       PANELS
+  ══════════════════════════════════════════════════════════ -->
+
+  <!-- P0: Visit Counter -->
+  <div class="proj-panel active" id="p0">
+    <div class="panel-hdr">
+      <span class="ph-icon">📊</span>
+      <div class="ph-info"><h2>Visit Counter — Flask + Redis</h2><p>Track page visits with an in-memory store; learn images, containers &amp; Compose basics</p></div>
+      <div class="ph-right"><span class="diff-tag dt-beginner">beginner</span><span class="proj-progress-mini" id="pp0">0 / 5</span></div>
+    </div>
+    <div class="step" data-proj="0" data-step="s0-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Install &amp; Core Concepts</h3><p>Images, containers, Dockerfile basics</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Docker packages your app and all dependencies into a <strong>container</strong> — an isolated environment that runs identically on every machine. An <strong>Image</strong> is the blueprint; a <strong>Container</strong> is a running instance.</p>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> --version
+<span class="fn">docker</span> compose version</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="0" data-step="s0-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Project Scaffold</h3><p>Create the files</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> visit-counter <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> visit-counter
+<span class="fn">touch</span> app.py requirements.txt Dockerfile docker-compose.yml</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="0" data-step="s0-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Flask App + Requirements</h3><p>Web server tracking visits via Redis</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>app.py</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">from</span> flask <span class="kw">import</span> Flask
+<span class="kw">import</span> redis
+app = <span class="fn">Flask</span>(<span class="nm">__name__</span>)
+cache = redis.<span class="fn">Redis</span>(host=<span class="st">'redis'</span>, port=<span class="nm">6379</span>)
+<span class="kw">@</span>app.<span class="fn">route</span>(<span class="st">'/'</span>)
+<span class="kw">def</span> <span class="fn">index</span>():
+    count = cache.<span class="fn">incr</span>(<span class="st">'visits'</span>)
+    <span class="kw">return</span> <span class="fn">f</span><span class="st">"&lt;h1&gt;🐳 Visitor #{count}&lt;/h1&gt;"</span>
+<span class="kw">if</span> <span class="nm">__name__</span> == <span class="st">'__main__'</span>: app.<span class="fn">run</span>(host=<span class="st">'0.0.0.0'</span>, port=<span class="nm">5000</span>)</pre></div>
+      <div class="cb"><div class="cl"><span>requirements.txt</span><button class="cp" onclick="cop(this)">copy</button></div><pre>flask==3.0.3
+redis==5.0.4</pre></div>
+      <div class="ca ca-i"><span class="cai">💡</span><span class="cat"><strong>host='redis'</strong> works because Docker's internal DNS resolves container service names automatically.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="0" data-step="s0-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Dockerfile</h3><p>Layered image recipe with cache trick</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>Dockerfile</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">FROM</span> python:<span class="nm">3.12-slim</span>
+<span class="kw">WORKDIR</span> /app
+<span class="kw">COPY</span> requirements.txt .
+<span class="kw">RUN</span> pip install --no-cache-dir -r requirements.txt
+<span class="kw">COPY</span> . .
+<span class="kw">EXPOSE</span> <span class="nm">5000</span>
+<span class="kw">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="0" data-step="s0-5"><div class="step-hdr" onclick="tog(this)"><div class="snum">05</div><div class="smeta"><h3>Compose &amp; Run</h3><p>Wire services and launch</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">web</span>:
+    build: .
+    ports: [<span class="st">"5000:5000"</span>]
+    depends_on: [redis]
+    volumes: [<span class="st">".:/app"</span>]
+  <span class="a2">redis</span>:
+    image: redis:<span class="nm">7-alpine</span></pre></div>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> compose up --build</pre></div>
+      <div class="ca ca-t"><span class="cai">🌐</span><span class="cat">Open <strong>http://localhost:5000</strong> and refresh — the counter increments!</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P1: Postgres + pgAdmin -->
+  <div class="proj-panel" id="p1">
+    <div class="panel-hdr">
+      <span class="ph-icon">🗄️</span>
+      <div class="ph-info"><h2>Postgres + pgAdmin — Database Stack</h2><p>Run PostgreSQL with a browser GUI; learn named volumes &amp; env vars</p></div>
+      <div class="ph-right"><span class="diff-tag dt-beginner">beginner</span><span class="proj-progress-mini" id="pp1">0 / 4</span></div>
+    </div>
+    <div class="step" data-proj="1" data-step="s1-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Scaffold &amp; Concepts</h3><p>Named volumes persist data across restarts</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="ca ca-i"><span class="cai">🗃️</span><span class="cat"><strong>Named volumes</strong> keep database data alive even when containers are removed. <strong>Env vars</strong> configure services without hardcoding secrets.</span></div>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> pg-stack <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> pg-stack
+<span class="fn">touch</span> docker-compose.yml init.sql</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="1" data-step="s1-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Init SQL Script</h3><p>Auto-seed data on first container start</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>init.sql</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">CREATE TABLE IF NOT EXISTS</span> users (
+  id      <span class="nm">SERIAL PRIMARY KEY</span>,
+  name    <span class="nm">VARCHAR(100)</span>,
+  email   <span class="nm">VARCHAR(100) UNIQUE</span>,
+  created <span class="nm">TIMESTAMP DEFAULT NOW()</span>
+);
+<span class="kw">INSERT INTO</span> users (name, email) <span class="kw">VALUES</span>
+  (<span class="st">'Alice'</span>, <span class="st">'alice@example.com'</span>),
+  (<span class="st">'Bob'</span>,   <span class="st">'bob@example.com'</span>);</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="1" data-step="s1-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>docker-compose.yml</h3><p>Postgres + pgAdmin + named volume</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">postgres</span>:
+    image: postgres:<span class="nm">16-alpine</span>
+    environment:
+      POSTGRES_DB:       <span class="st">mydb</span>
+      POSTGRES_USER:     <span class="st">admin</span>
+      POSTGRES_PASSWORD: <span class="st">secret123</span>
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports: [<span class="st">"5432:5432"</span>]
+  <span class="a2">pgadmin</span>:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    <span class="st">admin@local.dev</span>
+      PGADMIN_DEFAULT_PASSWORD: <span class="st">admin</span>
+    ports: [<span class="st">"8080:80"</span>]
+    depends_on: [postgres]
+<span class="pu">volumes</span>:
+  pg_data:</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="1" data-step="s1-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Launch &amp; Connect</h3><p>pgAdmin GUI + CLI queries</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> compose up -d
+<span class="fn">docker</span> compose exec postgres psql -U admin -d mydb -c <span class="st">"SELECT * FROM users;"</span></pre></div>
+      <div class="ca ca-t"><span class="cai">🔌</span><span class="cat">Open <strong>http://localhost:8080</strong>, log in <code>admin@local.dev / admin</code>. Add server → Host: <code>postgres</code>, Port <code>5432</code>.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P2: Static Site -->
+  <div class="proj-panel" id="p2">
+    <div class="panel-hdr">
+      <span class="ph-icon">📝</span>
+      <div class="ph-info"><h2>Static Site Server — Nginx + Custom Config</h2><p>Serve a static HTML site with Nginx; learn custom configs, MIME types &amp; caching headers</p></div>
+      <div class="ph-right"><span class="diff-tag dt-beginner">beginner</span><span class="proj-progress-mini" id="pp2">0 / 4</span></div>
+    </div>
+    <div class="step" data-proj="2" data-step="s2-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Scaffold the Site</h3><p>Create HTML, CSS, and config files</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>This project teaches you Nginx configuration fundamentals — serving files, setting cache headers, custom error pages — all without touching your local machine's server setup.</p>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> static-site <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> static-site
+<span class="fn">mkdir</span> site nginx
+<span class="fn">touch</span> site/index.html site/style.css nginx/default.conf Dockerfile</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="2" data-step="s2-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>HTML Site Content</h3><p>Simple page to serve</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>site/index.html</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">&lt;!DOCTYPE html&gt;</span>
+<span class="hl">&lt;html&gt;</span>
+<span class="hl">&lt;head&gt;</span>
+  <span class="kw">&lt;meta</span> charset=<span class="st">"UTF-8"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;title&gt;</span>My Docker Site<span class="kw">&lt;/title&gt;</span>
+  <span class="kw">&lt;link</span> rel=<span class="st">"stylesheet"</span> href=<span class="st">"style.css"</span><span class="kw">&gt;</span>
+<span class="hl">&lt;/head&gt;</span>
+<span class="hl">&lt;body&gt;</span>
+  <span class="kw">&lt;h1&gt;</span>🐳 Served by Nginx in Docker<span class="kw">&lt;/h1&gt;</span>
+  <span class="kw">&lt;p&gt;</span>Static files. Zero dependencies on the host.<span class="kw">&lt;/p&gt;</span>
+<span class="hl">&lt;/body&gt;&lt;/html&gt;</span></pre></div>
+      <div class="cb"><div class="cl"><span>site/style.css</span><button class="cp" onclick="cop(this)">copy</button></div><pre>body { font-family: sans-serif; max-width: 600px; margin: 80px auto; }
+h1   { color: #00d4ff; }</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="2" data-step="s2-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Nginx Config &amp; Dockerfile</h3><p>Custom server block with cache headers</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>nginx/default.conf</span><button class="cp" onclick="cop(this)">copy</button></div><pre>server {
+    listen <span class="nm">80</span>;
+    root   /usr/share/nginx/html;
+    index  index.html;
+
+    <span class="cm"># Gzip compression</span>
+    gzip on;
+    gzip_types text/css application/javascript;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    <span class="cm"># Cache static assets for 30 days</span>
+    location ~* \.(css|js|png|jpg|ico)$ {
+        expires 30d;
+        add_header Cache-Control <span class="st">"public, immutable"</span>;
+    }
+
+    <span class="cm"># Custom 404 page</span>
+    error_page 404 /404.html;
+}</pre></div>
+      <div class="cb"><div class="cl"><span>Dockerfile</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">FROM</span> nginx:<span class="nm">alpine</span>
+<span class="cm"># Copy site files into Nginx's serve directory</span>
+<span class="kw">COPY</span> site/ /usr/share/nginx/html/
+<span class="cm"># Override the default Nginx config</span>
+<span class="kw">COPY</span> nginx/default.conf /etc/nginx/conf.d/default.conf
+<span class="kw">EXPOSE</span> <span class="nm">80</span></pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="2" data-step="s2-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Build, Run &amp; Inspect</h3><p>Verify headers and config reload</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> build -t my-static-site .
+<span class="fn">docker</span> run -p <span class="nm">8080:80</span> my-static-site
+
+<span class="cm"># In another terminal — verify cache headers</span>
+<span class="fn">curl</span> -I http://localhost:8080/style.css
+
+<span class="cm"># Reload Nginx config without restarting container</span>
+<span class="fn">docker</span> exec &lt;container_id&gt; nginx -s reload</pre></div>
+      <div class="ca ca-i"><span class="cai">💡</span><span class="cat">This pattern — a <strong>FROM nginx:alpine + COPY</strong> Dockerfile — is the standard way to deploy React/Vue/static builds to production.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P3: Nginx Proxy -->
+  <div class="proj-panel" id="p3">
+    <div class="panel-hdr">
+      <span class="ph-icon">🌐</span>
+      <div class="ph-info"><h2>Nginx Reverse Proxy — Load Balancing</h2><p>Route traffic across two Node.js replicas; see round-robin live</p></div>
+      <div class="ph-right"><span class="diff-tag dt-intermediate">intermediate</span><span class="proj-progress-mini" id="pp3">0 / 4</span></div>
+    </div>
+    <div class="step" data-proj="3" data-step="s3-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Architecture &amp; Scaffold</h3><p>Nginx in front, two app replicas behind</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="ca ca-i"><span class="cai">🏗️</span><span class="cat"><strong>Flow:</strong> Browser → Nginx :80 → round-robin → app1:3000 or app2:3000. Only Nginx is exposed externally.</span></div>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> nginx-proxy <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> nginx-proxy
+<span class="fn">mkdir</span> app nginx
+<span class="fn">touch</span> app/server.js nginx/nginx.conf docker-compose.yml</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="3" data-step="s3-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Node.js App — Hostname Reporter</h3><p>Each replica identifies itself visually</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>app/server.js</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">const</span> http = <span class="fn">require</span>(<span class="st">'http'</span>);
+<span class="kw">const</span> os   = <span class="fn">require</span>(<span class="st">'os'</span>);
+http.<span class="fn">createServer</span>((req, res) => {
+  res.<span class="fn">writeHead</span>(<span class="nm">200</span>, { <span class="st">'Content-Type'</span>: <span class="st">'text/html'</span> });
+  res.<span class="fn">end</span>(<span class="st">`&lt;h2&gt;🟢 Served by: &lt;b&gt;${os.hostname()}&lt;/b&gt;&lt;/h2&gt;
+&lt;p&gt;Refresh to see round-robin load balancing!&lt;/p&gt;`</span>);
+}).<span class="fn">listen</span>(<span class="nm">3000</span>);</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="3" data-step="s3-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Nginx Upstream Config</h3><p>Round-robin routing definition</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>nginx/nginx.conf</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">upstream</span> <span class="hl">backend</span> {
+    server <span class="a2">app1</span>:<span class="nm">3000</span>;
+    server <span class="a2">app2</span>:<span class="nm">3000</span>;
+}
+server {
+    listen <span class="nm">80</span>;
+    location / {
+        proxy_pass       http://<span class="hl">backend</span>;
+        proxy_set_header Host          $host;
+        proxy_set_header X-Real-IP     $remote_addr;
+    }
+}</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="3" data-step="s3-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Compose &amp; Watch Balancing</h3><p>Launch two replicas + Nginx</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="a2">app1</span>:
+    image: node:<span class="nm">20-alpine</span>
+    working_dir: /app
+    volumes: [<span class="st">"./app:/app"</span>]
+    command: node server.js
+  <span class="a2">app2</span>:
+    image: node:<span class="nm">20-alpine</span>
+    working_dir: /app
+    volumes: [<span class="st">"./app:/app"</span>]
+    command: node server.js
+  <span class="hl">nginx</span>:
+    image: nginx:<span class="nm">alpine</span>
+    ports: [<span class="st">"80:80"</span>]
+    volumes: [<span class="st">"./nginx/nginx.conf:/etc/nginx/conf.d/default.conf"</span>]
+    depends_on: [app1, app2]</pre></div>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> compose up --build</pre></div>
+      <div class="ca ca-t"><span class="cai">🔄</span><span class="cat">Open <strong>http://localhost</strong> — each refresh toggles between two different container hostnames!</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P4: Multi-Stage -->
+  <div class="proj-panel" id="p4">
+    <div class="panel-hdr">
+      <span class="ph-icon">⚙️</span>
+      <div class="ph-info"><h2>Multi-Stage Build — Lean Production Images</h2><p>Build in stage 1, ship only artifacts in stage 2; compare image sizes</p></div>
+      <div class="ph-right"><span class="diff-tag dt-intermediate">intermediate</span><span class="proj-progress-mini" id="pp4">0 / 4</span></div>
+    </div>
+    <div class="step" data-proj="4" data-step="s4-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Why Multi-Stage?</h3><p>Dev images can be 10× larger than needed</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="ca ca-i"><span class="cai">📉</span><span class="cat">A Node app with devDeps can be 1GB+. Multi-stage trims it to ~150MB. Go apps: 800MB → 15MB.</span></div>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> multi-stage <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> multi-stage
+<span class="fn">touch</span> Dockerfile server.js package.json .dockerignore</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="4" data-step="s4-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>App &amp; .dockerignore</h3><p>Express server plus ignore file</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>server.js</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">const</span> app = <span class="fn">require</span>(<span class="st">'express'</span>)();
+app.<span class="fn">get</span>(<span class="st">'/'</span>, (q,r) => r.<span class="fn">json</span>({ msg:<span class="st">'🐳 prod!'</span>, env:process.env.NODE_ENV }));
+app.<span class="fn">listen</span>(<span class="nm">3000</span>);</pre></div>
+      <div class="cb"><div class="cl"><span>.dockerignore</span><button class="cp" onclick="cop(this)">copy</button></div><pre>node_modules
+.git
+.env
+*.test.js</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="4" data-step="s4-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Multi-Stage Dockerfile</h3><p>Builder + lean production stage</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>Dockerfile</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># ── Stage 1: Builder ──────────────────────────</span>
+<span class="kw">FROM</span> node:<span class="nm">20-alpine</span> <span class="kw">AS</span> <span class="hl">builder</span>
+WORKDIR /app
+<span class="kw">COPY</span> package*.json .
+<span class="kw">RUN</span> npm ci
+<span class="kw">COPY</span> . .
+
+<span class="cm"># ── Stage 2: Production ───────────────────────</span>
+<span class="kw">FROM</span> node:<span class="nm">20-alpine</span> <span class="kw">AS</span> <span class="a2">production</span>
+<span class="kw">ENV</span> NODE_ENV=production
+WORKDIR /app
+<span class="kw">COPY</span> package*.json .
+<span class="kw">RUN</span> npm ci --omit=dev
+<span class="kw">COPY</span> --from=<span class="hl">builder</span> /app/server.js .
+<span class="kw">EXPOSE</span> <span class="nm">3000</span>
+<span class="kw">CMD</span> [<span class="st">"node"</span>, <span class="st">"server.js"</span>]</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="4" data-step="s4-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Build &amp; Compare Sizes</h3><p>See the difference, run production image</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> build --target production -t myapp:prod .
+<span class="fn">docker</span> build --target builder    -t myapp:dev  .
+<span class="fn">docker</span> images | <span class="fn">grep</span> myapp
+<span class="fn">docker</span> run -p <span class="nm">3000:3000</span> myapp:prod</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P5: REST API + Mongo -->
+  <div class="proj-panel" id="p5">
+    <div class="panel-hdr">
+      <span class="ph-icon">📡</span>
+      <div class="ph-info"><h2>REST API + MongoDB — Full CRUD Service</h2><p>Tasks API with Express + Mongoose; node_modules volume trick</p></div>
+      <div class="ph-right"><span class="diff-tag dt-intermediate">intermediate</span><span class="proj-progress-mini" id="pp5">0 / 4</span></div>
+    </div>
+    <div class="step" data-proj="5" data-step="s5-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Scaffold</h3><p>File structure</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> tasks-api <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> tasks-api
+<span class="fn">touch</span> index.js package.json Dockerfile docker-compose.yml .dockerignore</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="5" data-step="s5-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Express CRUD API</h3><p>GET, POST, PATCH, DELETE with Mongoose</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>index.js</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">const</span> express  = <span class="fn">require</span>(<span class="st">'express'</span>);
+<span class="kw">const</span> mongoose = <span class="fn">require</span>(<span class="st">'mongoose'</span>);
+<span class="kw">const</span> app = <span class="fn">express</span>();
+app.<span class="fn">use</span>(express.<span class="fn">json</span>());
+mongoose.<span class="fn">connect</span>(<span class="st">'mongodb://mongo:27017/tasksdb'</span>);
+<span class="kw">const</span> Task = mongoose.<span class="fn">model</span>(<span class="st">'Task'</span>, { title:<span class="nm">String</span>, done:{type:<span class="nm">Boolean</span>,default:<span class="kw">false</span>} });
+app.<span class="fn">get</span>   (<span class="st">'/tasks'</span>,      <span class="kw">async</span>(q,r) => r.<span class="fn">json</span>(<span class="kw">await</span> Task.<span class="fn">find</span>()));
+app.<span class="fn">post</span>  (<span class="st">'/tasks'</span>,      <span class="kw">async</span>(q,r) => r.<span class="fn">status</span>(<span class="nm">201</span>).<span class="fn">json</span>(<span class="kw">await</span> Task.<span class="fn">create</span>({title:q.body.title})));
+app.<span class="fn">patch</span> (<span class="st">'/tasks/:id'</span>, <span class="kw">async</span>(q,r) => r.<span class="fn">json</span>(<span class="kw">await</span> Task.<span class="fn">findByIdAndUpdate</span>(q.params.id,{done:<span class="kw">true</span>},{new:<span class="kw">true</span>})));
+app.<span class="fn">delete</span>(<span class="st">'/tasks/:id'</span>, <span class="kw">async</span>(q,r) => { <span class="kw">await</span> Task.<span class="fn">findByIdAndDelete</span>(q.params.id); r.<span class="fn">json</span>({deleted:<span class="kw">true</span>}); });
+app.<span class="fn">listen</span>(<span class="nm">3000</span>);</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="5" data-step="s5-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Dockerfile + Compose</h3><p>node_modules volume trick for live dev</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">api</span>:
+    build: .
+    ports: [<span class="st">"3000:3000"</span>]
+    depends_on: [mongo]
+    volumes:
+      - .:/app
+      - /app/node_modules   <span class="cm"># keep container's node_modules</span>
+  <span class="a2">mongo</span>:
+    image: mongo:<span class="nm">7</span>
+    volumes: [<span class="st">"mongo_data:/data/db"</span>]
+<span class="pu">volumes</span>: { mongo_data: }</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="5" data-step="s5-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Run &amp; CURL Test</h3><p>Test every endpoint</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> compose up --build
+<span class="fn">curl</span> -X POST http://localhost:3000/tasks \
+  -H <span class="st">"Content-Type: application/json"</span> -d <span class="st">'{"title":"Learn Docker"}'</span>
+<span class="fn">curl</span> http://localhost:3000/tasks</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P6: Secrets & Security -->
+  <div class="proj-panel" id="p6">
+    <div class="panel-hdr">
+      <span class="ph-icon">🔒</span>
+      <div class="ph-info"><h2>Secrets &amp; Security Hardening</h2><p>Docker secrets, non-root users, read-only filesystems, and image scanning</p></div>
+      <div class="ph-right"><span class="diff-tag dt-advanced">advanced</span><span class="proj-progress-mini" id="pp6">0 / 5</span></div>
+    </div>
+    <div class="step" data-proj="6" data-step="s6-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Why Container Security Matters</h3><p>Common vulnerabilities and what we'll fix</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Most Docker tutorials run containers as <strong>root</strong>, embed secrets in environment variables, and use writable filesystems — all security anti-patterns in production.</p>
+      <div class="ca ca-r"><span class="cai">🚨</span><span class="cat"><strong>Common mistakes:</strong> Hardcoded passwords in docker-compose.yml, running as root, no image scanning, no resource limits, writable container filesystem.</span></div>
+      <div class="cb"><div class="cl"><span>terminal — scaffold</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> secure-app <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> secure-app
+<span class="fn">touch</span> Dockerfile app.py docker-compose.yml</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="6" data-step="s6-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Non-Root User in Dockerfile</h3><p>Never run as root inside a container</p></div><span class="stag t-sec">security</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>If a container running as root is compromised, the attacker has root access to the host. Always create a dedicated user.</p>
+      <div class="cb"><div class="cl"><span>Dockerfile — hardened</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">FROM</span> python:<span class="nm">3.12-slim</span>
+
+<span class="cm"># Create a non-root user</span>
+<span class="kw">RUN</span> groupadd -r appuser <span class="kw">&amp;&amp;</span> useradd -r -g appuser appuser
+
+WORKDIR /app
+<span class="kw">COPY</span> requirements.txt .
+<span class="kw">RUN</span> pip install --no-cache-dir -r requirements.txt
+<span class="kw">COPY</span> --chown=appuser:appuser . .
+
+<span class="cm"># Drop to non-root before running</span>
+<span class="kw">USER</span> appuser
+
+<span class="kw">EXPOSE</span> <span class="nm">5000</span>
+<span class="kw">CMD</span> [<span class="st">"python"</span>, <span class="st">"app.py"</span>]</pre></div>
+      <div class="cb"><div class="cl"><span>terminal — verify user</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> build -t secure-app .
+<span class="fn">docker</span> run --rm secure-app whoami
+<span class="cm"># Should output: appuser (not root!)</span></pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="6" data-step="s6-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Docker Secrets</h3><p>Never pass credentials via environment variables</p></div><span class="stag t-sec">security</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Env vars are visible in <code>docker inspect</code>, logs, and to every process in the container. Docker Secrets mount credentials as <strong>files in memory</strong> only accessible to the intended container.</p>
+      <div class="cb"><div class="cl"><span>terminal — create secret</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Initialize Swarm mode (required for secrets)</span>
+<span class="fn">docker</span> swarm init
+
+<span class="cm"># Create a secret from stdin</span>
+<span class="fn">echo</span> <span class="st">"supersecretpassword"</span> | <span class="fn">docker</span> secret create db_password -
+
+<span class="cm"># List secrets (values are never shown)</span>
+<span class="fn">docker</span> secret ls</pre></div>
+      <div class="cb"><div class="cl"><span>docker-compose.yml — using secrets</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">postgres</span>:
+    image: postgres:<span class="nm">16-alpine</span>
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+
+<span class="pu">secrets</span>:
+  db_password:
+    external: <span class="kw">true</span>   <span class="cm"># references the secret we created above</span></pre></div>
+      <div class="ca ca-i"><span class="cai">🔐</span><span class="cat">The secret is mounted at <code>/run/secrets/db_password</code> as a file. Postgres reads it via <code>POSTGRES_PASSWORD_FILE</code>. The value is <strong>never</strong> in env vars or image layers.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="6" data-step="s6-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Read-Only Filesystem &amp; Resource Limits</h3><p>Lock down the container's runtime attack surface</p></div><span class="stag t-sec">security</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.yml — hardened runtime</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">api</span>:
+    image: secure-app
+    read_only: <span class="kw">true</span>            <span class="cm"># container FS is read-only</span>
+    tmpfs:
+      - /tmp                     <span class="cm"># writable temp space in RAM only</span>
+    security_opt:
+      - no-new-privileges:<span class="kw">true</span>  <span class="cm"># block privilege escalation</span>
+    cap_drop:
+      - ALL                      <span class="cm"># drop all Linux capabilities</span>
+    cap_add:
+      - NET_BIND_SERVICE         <span class="cm"># re-add only what's needed</span>
+    deploy:
+      resources:
+        limits:
+          cpus: <span class="st">'0.5'</span>           <span class="cm"># max 50% of one CPU</span>
+          memory: 256M</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="6" data-step="s6-5"><div class="step-hdr" onclick="tog(this)"><div class="snum">05</div><div class="smeta"><h3>Image Scanning with Trivy</h3><p>Find CVEs in your images before deploying</p></div><span class="stag t-sec">security</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p><strong>Trivy</strong> is the industry-standard open-source container scanner — it checks OS packages, language libraries, and config files for known vulnerabilities.</p>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Run Trivy itself in Docker — no install needed!</span>
+<span class="fn">docker</span> run --rm aquasec/trivy image secure-app
+
+<span class="cm"># Scan and output only HIGH/CRITICAL CVEs</span>
+<span class="fn">docker</span> run --rm aquasec/trivy image \
+  --severity HIGH,CRITICAL secure-app
+
+<span class="cm"># Exit with non-zero if CRITICAL CVEs found (for CI)</span>
+<span class="fn">docker</span> run --rm aquasec/trivy image \
+  --exit-code 1 --severity CRITICAL secure-app</pre></div>
+      <div class="ca ca-t"><span class="cai">✅</span><span class="cat"><strong>Best practice:</strong> Run Trivy in your CI pipeline on every build. The <code>--exit-code 1</code> flag fails the build if critical CVEs are found — enforcing security gates.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P7: CI/CD Pipeline -->
+  <div class="proj-panel" id="p7">
+    <div class="panel-hdr">
+      <span class="ph-icon">🔄</span>
+      <div class="ph-info"><h2>CI/CD Pipeline — GitHub Actions + Registry</h2><p>Automate build, test, scan, and push to Docker Hub on every git push</p></div>
+      <div class="ph-right"><span class="diff-tag dt-advanced">advanced</span><span class="proj-progress-mini" id="pp7">0 / 5</span></div>
+    </div>
+    <div class="step" data-proj="7" data-step="s7-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>What We're Automating</h3><p>Full pipeline: push → build → test → scan → deploy</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>We'll create a GitHub Actions workflow that triggers on every push, builds a multi-stage Docker image, runs tests inside a container, scans for CVEs, and pushes to Docker Hub — only if everything passes.</p>
+      <div class="ca ca-i"><span class="cai">🔄</span><span class="cat"><strong>Pipeline stages:</strong> checkout → build dev image → run tests in container → build prod image → scan with Trivy → push to registry → deploy.</span></div>
+      <div class="cb"><div class="cl"><span>terminal — scaffold</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> -p .github/workflows
+<span class="fn">touch</span> .github/workflows/docker.yml Dockerfile docker-compose.test.yml</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="7" data-step="s7-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Test Compose File</h3><p>Run tests inside a container, not the host</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.test.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">sut</span>:                          <span class="cm"># "system under test"</span>
+    build:
+      context: .
+      target: builder           <span class="cm"># use dev/builder stage</span>
+    command: npm test
+    environment:
+      NODE_ENV: test
+    depends_on: [mongo-test]
+
+  <span class="a2">mongo-test</span>:
+    image: mongo:<span class="nm">7</span>
+    tmpfs: [<span class="st">"/data/db"</span>]         <span class="cm"># in-memory — clean each run</span></pre></div>
+      <div class="ca ca-i"><span class="cai">💡</span><span class="cat">Using <code>tmpfs</code> for the test database gives a clean slate every run with no disk I/O overhead — perfect for CI.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="7" data-step="s7-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>GitHub Actions Workflow</h3><p>Full CI/CD pipeline as code</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>.github/workflows/docker.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="nm">name</span>: Docker CI/CD
+
+<span class="nm">on</span>:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+<span class="nm">jobs</span>:
+  <span class="hl">build-test-push</span>:
+    runs-on: ubuntu-latest
+
+    steps:
+      - <span class="nm">name</span>: Checkout
+        <span class="nm">uses</span>: actions/checkout@v4
+
+      - <span class="nm">name</span>: Set up Docker Buildx
+        <span class="nm">uses</span>: docker/setup-buildx-action@v3
+
+      - <span class="nm">name</span>: Run tests in Docker
+        <span class="nm">run</span>: docker compose -f docker-compose.test.yml up --exit-code-from sut
+
+      - <span class="nm">name</span>: Build production image
+        <span class="nm">uses</span>: docker/build-push-action@v5
+        <span class="nm">with</span>:
+          context: .
+          target: production
+          load: <span class="kw">true</span>
+          tags: myapp:latest
+
+      - <span class="nm">name</span>: Scan with Trivy
+        <span class="nm">uses</span>: aquasecurity/trivy-action@master
+        <span class="nm">with</span>:
+          image-ref: myapp:latest
+          severity: CRITICAL
+          exit-code: <span class="st">'1'</span>
+
+      - <span class="nm">name</span>: Login to Docker Hub
+        <span class="nm">if</span>: github.ref == <span class="st">'refs/heads/main'</span>
+        <span class="nm">uses</span>: docker/login-action@v3
+        <span class="nm">with</span>:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - <span class="nm">name</span>: Push to Docker Hub
+        <span class="nm">if</span>: github.ref == <span class="st">'refs/heads/main'</span>
+        <span class="nm">run</span>: |
+          <span class="fn">docker</span> tag myapp:latest ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
+          <span class="fn">docker</span> push ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="7" data-step="s7-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>BuildKit Cache &amp; Layer Optimization</h3><p>Make CI builds 3–5× faster with registry cache</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>By default, CI runners start fresh — no layer cache. BuildKit's <strong>registry cache</strong> exports cache to Docker Hub and imports it on the next run.</p>
+      <div class="cb"><div class="cl"><span>workflow step — with cache</span><button class="cp" onclick="cop(this)">copy</button></div><pre>- <span class="nm">name</span>: Build with cache
+  <span class="nm">uses</span>: docker/build-push-action@v5
+  <span class="nm">with</span>:
+    context: .
+    target: production
+    push: <span class="kw">true</span>
+    tags: myuser/myapp:latest
+    cache-from: type=registry,ref=myuser/myapp:buildcache
+    cache-to:   type=registry,ref=myuser/myapp:buildcache,mode=max</pre></div>
+      <div class="ca ca-t"><span class="cai">⚡</span><span class="cat">With registry cache, a Node.js build that took 3 min drops to ~30s on repeat runs because <code>npm install</code> layers are cached in the registry.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="7" data-step="s7-5"><div class="step-hdr" onclick="tog(this)"><div class="snum">05</div><div class="smeta"><h3>Semantic Versioning Tags</h3><p>Tag images with git SHAs and semver</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>workflow — smart tagging</span><button class="cp" onclick="cop(this)">copy</button></div><pre>- <span class="nm">name</span>: Docker meta
+  <span class="nm">id</span>: meta
+  <span class="nm">uses</span>: docker/metadata-action@v5
+  <span class="nm">with</span>:
+    images: myuser/myapp
+    tags: |
+      type=sha                     <span class="cm"># myapp:sha-abc1234</span>
+      type=semver,pattern={{version}}  <span class="cm"># myapp:1.2.3</span>
+      type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+- <span class="nm">name</span>: Build and push
+  <span class="nm">uses</span>: docker/build-push-action@v5
+  <span class="nm">with</span>:
+    tags:   ${{ steps.meta.outputs.tags }}
+    labels: ${{ steps.meta.outputs.labels }}</pre></div>
+      <div class="ca ca-t"><span class="cai">🏷️</span><span class="cat">Every commit gets a unique SHA tag. Every git tag like <code>v1.2.3</code> creates a proper semver image. <code>latest</code> only updates on main branch merges.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P8: Observability -->
+  <div class="proj-panel" id="p8">
+    <div class="panel-hdr">
+      <span class="ph-icon">📈</span>
+      <div class="ph-info"><h2>Observability Stack — Prometheus + Grafana</h2><p>Instrument your app, collect metrics, build dashboards, set alerts</p></div>
+      <div class="ph-right"><span class="diff-tag dt-advanced">advanced</span><span class="proj-progress-mini" id="pp8">0 / 5</span></div>
+    </div>
+    <div class="step" data-proj="8" data-step="s8-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Observability Architecture</h3><p>The three pillars: metrics, logs, traces</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>We'll build a full observability stack: <strong>Prometheus</strong> scrapes metrics, <strong>Grafana</strong> visualizes them in dashboards, and <strong>cAdvisor</strong> collects container-level resource metrics automatically.</p>
+      <div class="ca ca-i"><span class="cai">📊</span><span class="cat"><strong>Stack:</strong> App → exposes <code>/metrics</code> → Prometheus pulls every 15s → Grafana queries Prometheus → dashboards + alerts.</span></div>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> obs-stack <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> obs-stack
+<span class="fn">mkdir</span> app prometheus grafana/provisioning/dashboards grafana/provisioning/datasources
+<span class="fn">touch</span> docker-compose.yml prometheus/prometheus.yml app/server.js</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="8" data-step="s8-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Instrument the App</h3><p>Expose /metrics endpoint with prom-client</p></div><span class="stag t-code">code</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>app/server.js</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="kw">const</span> express = <span class="fn">require</span>(<span class="st">'express'</span>);
+<span class="kw">const</span> client  = <span class="fn">require</span>(<span class="st">'prom-client'</span>);
+
+<span class="kw">const</span> app = <span class="fn">express</span>();
+client.collectDefaultMetrics();   <span class="cm">// CPU, memory, event loop, etc.</span>
+
+<span class="cm">// Custom counter: count HTTP requests by route</span>
+<span class="kw">const</span> httpReqs = <span class="kw">new</span> client.<span class="fn">Counter</span>({
+  name: <span class="st">'http_requests_total'</span>,
+  help: <span class="st">'Total HTTP requests'</span>,
+  labelNames: [<span class="st">'method'</span>, <span class="st">'route'</span>, <span class="st">'status'</span>]
+});
+
+app.<span class="fn">use</span>((req, res, next) => {
+  res.<span class="fn">on</span>(<span class="st">'finish'</span>, () =>
+    httpReqs.<span class="fn">inc</span>({ method: req.method, route: req.path, status: res.statusCode })
+  );
+  <span class="fn">next</span>();
+});
+
+app.<span class="fn">get</span>(<span class="st">'/'</span>,        (q,r) => r.<span class="fn">json</span>({ status:<span class="st">'ok'</span> }));
+app.<span class="fn">get</span>(<span class="st">'/metrics'</span>, <span class="kw">async</span>(q,r) => {
+  r.<span class="fn">set</span>(<span class="st">'Content-Type'</span>, client.register.contentType);
+  r.<span class="fn">end</span>(<span class="kw">await</span> client.register.<span class="fn">metrics</span>());
+});
+
+app.<span class="fn">listen</span>(<span class="nm">3000</span>, () => console.<span class="fn">log</span>(<span class="st">'App + metrics on :3000'</span>));</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="8" data-step="s8-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Prometheus Config</h3><p>Tell Prometheus what to scrape</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>prometheus/prometheus.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="nm">global</span>:
+  scrape_interval: <span class="st">15s</span>
+
+<span class="nm">scrape_configs</span>:
+  - <span class="nm">job_name</span>: <span class="st">'app'</span>
+    <span class="nm">static_configs</span>:
+      - <span class="nm">targets</span>: [<span class="st">'app:3000'</span>]   <span class="cm"># Docker DNS resolves 'app'</span>
+
+  - <span class="nm">job_name</span>: <span class="st">'cadvisor'</span>
+    <span class="nm">static_configs</span>:
+      - <span class="nm">targets</span>: [<span class="st">'cadvisor:8080'</span>]
+
+  - <span class="nm">job_name</span>: <span class="st">'prometheus'</span>
+    <span class="nm">static_configs</span>:
+      - <span class="nm">targets</span>: [<span class="st">'localhost:9090'</span>]</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="8" data-step="s8-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Full docker-compose.yml</h3><p>App + Prometheus + Grafana + cAdvisor</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>docker-compose.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">app</span>:
+    build: ./app
+    ports: [<span class="st">"3000:3000"</span>]
+
+  <span class="a2">prometheus</span>:
+    image: prom/prometheus:<span class="nm">latest</span>
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prom_data:/prometheus
+    ports: [<span class="st">"9090:9090"</span>]
+    command: --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.retention.time=7d
+
+  <span class="pu">grafana</span>:
+    image: grafana/grafana:<span class="nm">latest</span>
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports: [<span class="st">"3001:3000"</span>]
+    depends_on: [prometheus]
+
+  <span class="gn">cadvisor</span>:
+    image: gcr.io/cadvisor/cadvisor:<span class="nm">latest</span>
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports: [<span class="st">"8081:8080"</span>]
+
+<span class="pu">volumes</span>:
+  prom_data:
+  grafana_data:</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="8" data-step="s8-5"><div class="step-hdr" onclick="tog(this)"><div class="snum">05</div><div class="smeta"><h3>Build Dashboard &amp; Alert</h3><p>Query PromQL, visualize, and set thresholds</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> compose up -d
+
+<span class="cm"># Generate some traffic to your app</span>
+<span class="kw">for</span> i <span class="kw">in</span> $(seq 1 50); <span class="kw">do</span> <span class="fn">curl</span> -s http://localhost:3000/ > /dev/null; <span class="kw">done</span></pre></div>
+      <div class="ca ca-t"><span class="cai">📊</span><span class="cat"><strong>Grafana:</strong> http://localhost:3001 (admin / admin123). Add Prometheus datasource → URL <code>http://prometheus:9090</code>. Try PromQL: <code>rate(http_requests_total[1m])</code></span></div>
+      <div class="ca ca-i"><span class="cai">🔔</span><span class="cat"><strong>Set an alert:</strong> In Grafana → Alerting → New alert rule. Condition: <code>rate(http_requests_total[5m]) &gt; 10</code>. This fires if you're getting more than 10 req/s.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P9: Docker Swarm -->
+  <div class="proj-panel" id="p9">
+    <div class="panel-hdr">
+      <span class="ph-icon">☸️</span>
+      <div class="ph-info"><h2>Docker Swarm — Cluster Orchestration</h2><p>Deploy a multi-service stack across a Swarm cluster; rolling updates, drain nodes, scale services</p></div>
+      <div class="ph-right"><span class="diff-tag dt-expert">expert</span><span class="proj-progress-mini" id="pp9">0 / 5</span></div>
+    </div>
+    <div class="step" data-proj="9" data-step="s9-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Swarm Concepts</h3><p>Managers, workers, services, tasks, stacks</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Docker Swarm turns a pool of Docker hosts into a single virtual cluster. A <strong>Manager</strong> node schedules <strong>Services</strong> (replicated containers called <strong>Tasks</strong>) across <strong>Worker</strong> nodes.</p>
+      <div class="ca ca-i"><span class="cai">🏗️</span><span class="cat"><strong>Key concepts:</strong> Service = desired state (3 replicas of myapp). Task = a running container fulfilling that service. Stack = a group of services from a Compose file deployed to Swarm.</span></div>
+      <div class="ca ca-w"><span class="cai">💻</span><span class="cat">For this project, a single machine in Swarm mode works fine. For a real cluster, provision 3 VMs (1 manager + 2 workers) on any cloud provider.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="9" data-step="s9-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Initialize Swarm &amp; Add Workers</h3><p>Create the cluster</p></div><span class="stag t-dock">docker</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal — manager node</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Initialize Swarm on the manager node</span>
+<span class="fn">docker</span> swarm init --advertise-addr &lt;MANAGER_IP&gt;
+<span class="cm"># Outputs a join token — copy it!</span>
+
+<span class="cm"># List nodes</span>
+<span class="fn">docker</span> node ls</pre></div>
+      <div class="cb"><div class="cl"><span>terminal — worker nodes</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Run on each worker (token from above)</span>
+<span class="fn">docker</span> swarm join --token &lt;WORKER_TOKEN&gt; &lt;MANAGER_IP&gt;:2377
+
+<span class="cm"># Back on manager — verify all nodes joined</span>
+<span class="fn">docker</span> node ls</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="9" data-step="s9-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>Write the Stack File</h3><p>Compose-style file for Swarm deployment</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Swarm uses <code>docker stack deploy</code> with a Compose file that adds <strong>deploy</strong> keys for replicas, update policy, placement, and resources.</p>
+      <div class="cb"><div class="cl"><span>stack.yml</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">web</span>:
+    image: nginx:<span class="nm">alpine</span>
+    ports:
+      - <span class="st">"80:80"</span>
+    deploy:
+      replicas: <span class="nm">3</span>
+      update_config:
+        parallelism: <span class="nm">1</span>           <span class="cm"># update 1 replica at a time</span>
+        delay: <span class="st">10s</span>              <span class="cm"># wait 10s between each</span>
+        failure_action: rollback <span class="cm"># auto-rollback on failure</span>
+      restart_policy:
+        condition: on-failure
+        max_attempts: <span class="nm">3</span>
+      placement:
+        constraints:
+          - node.role == worker   <span class="cm"># only run on worker nodes</span>
+      resources:
+        limits:
+          cpus: <span class="st">'0.25'</span>
+          memory: 64M
+
+  <span class="a2">visualizer</span>:
+    image: dockersamples/visualizer:<span class="nm">latest</span>
+    ports:
+      - <span class="st">"8080:8080"</span>
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints: [node.role == manager]  <span class="cm"># only on manager</span></pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="9" data-step="s9-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Deploy, Scale &amp; Rolling Update</h3><p>Live operations on the running cluster</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Deploy the stack</span>
+<span class="fn">docker</span> stack deploy -c stack.yml mystack
+
+<span class="cm"># List services and their replicas</span>
+<span class="fn">docker</span> stack services mystack
+
+<span class="cm"># Watch tasks running across nodes</span>
+<span class="fn">docker</span> stack ps mystack
+
+<span class="cm"># Scale up web service to 6 replicas</span>
+<span class="fn">docker</span> service scale mystack_web=<span class="nm">6</span>
+
+<span class="cm"># Rolling update: swap image</span>
+<span class="fn">docker</span> service update --image nginx:1.27-alpine mystack_web
+
+<span class="cm"># Watch the rolling update live</span>
+<span class="fn">watch</span> docker service ps mystack_web</pre></div>
+      <div class="ca ca-t"><span class="cai">🌐</span><span class="cat">Open <strong>http://localhost:8080</strong> for the Swarm Visualizer — a real-time visual of which containers are running on which nodes.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="9" data-step="s9-5"><div class="step-hdr" onclick="tog(this)"><div class="snum">05</div><div class="smeta"><h3>Drain a Node &amp; Failover</h3><p>Simulate a node going down — zero downtime</p></div><span class="stag t-run">run</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Draining removes all tasks from a node and reschedules them elsewhere — used for maintenance without downtime.</p>
+      <div class="cb"><div class="cl"><span>terminal</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Drain a worker node (graceful maintenance mode)</span>
+<span class="fn">docker</span> node update --availability drain &lt;worker-node-id&gt;
+
+<span class="cm"># Watch tasks migrate to other nodes in real time</span>
+<span class="fn">watch</span> docker service ps mystack_web
+
+<span class="cm"># Bring the node back to active</span>
+<span class="fn">docker</span> node update --availability active &lt;worker-node-id&gt;
+
+<span class="cm"># Force a rollback if an update goes wrong</span>
+<span class="fn">docker</span> service rollback mystack_web
+
+<span class="cm"># Tear down the stack</span>
+<span class="fn">docker</span> stack rm mystack</pre></div>
+      <div class="ca ca-t"><span class="cai">✅</span><span class="cat">While a node is draining, Swarm automatically reschedules its tasks on other available nodes — your service stays up with <strong>zero manual intervention</strong>.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- P10: Custom Network + mTLS -->
+  <div class="proj-panel" id="p10">
+    <div class="panel-hdr">
+      <span class="ph-icon">🧩</span>
+      <div class="ph-info"><h2>Custom Networking — Bridge, mTLS &amp; Service Mesh Concepts</h2><p>Custom bridge networks, inter-container TLS, DNS aliases, and network isolation</p></div>
+      <div class="ph-right"><span class="diff-tag dt-expert">expert</span><span class="proj-progress-mini" id="pp10">0 / 5</span></div>
+    </div>
+    <div class="step" data-proj="10" data-step="s10-1"><div class="step-hdr" onclick="tog(this)"><div class="snum">01</div><div class="smeta"><h3>Docker Network Types</h3><p>Bridge, host, overlay, macvlan — when to use each</p></div><span class="stag t-setup">setup</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Docker networking is one of the most misunderstood areas. Understanding it unlocks true production-grade architectures.</p>
+      <div class="ca ca-i"><span class="cai">🌐</span><span class="cat"><strong>bridge</strong> (default): containers on same host can communicate. <strong>host</strong>: container shares host network stack (no isolation). <strong>overlay</strong>: multi-host (Swarm). <strong>none</strong>: fully isolated.</span></div>
+      <div class="cb"><div class="cl"><span>terminal — explore existing networks</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> network ls
+<span class="fn">docker</span> network inspect bridge   <span class="cm"># see default bridge config</span>
+
+<span class="cm"># Create a named bridge network</span>
+<span class="fn">docker</span> network create \
+  --driver bridge \
+  --subnet 172.20.0.0/16 \
+  --gateway 172.20.0.1 \
+  mynet</pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="10" data-step="s10-2"><div class="step-hdr" onclick="tog(this)"><div class="snum">02</div><div class="smeta"><h3>Network Isolation Between Services</h3><p>Frontend can't reach DB — only backend can</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>A real security pattern: put your database on a private network only the backend can reach. The frontend has no route to the database at all.</p>
+      <div class="cb"><div class="cl"><span>docker-compose.yml — network isolation</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="hl">frontend</span>:
+    image: nginx:<span class="nm">alpine</span>
+    networks: [<span class="st">public</span>]            <span class="cm"># only on public network</span>
+    ports: [<span class="st">"80:80"</span>]
+
+  <span class="a2">backend</span>:
+    image: node:<span class="nm">20-alpine</span>
+    networks: [<span class="st">public</span>, <span class="st">private</span>]   <span class="cm"># bridge between both</span>
+
+  <span class="gn">database</span>:
+    image: postgres:<span class="nm">16-alpine</span>
+    networks: [<span class="st">private</span>]           <span class="cm"># ONLY on private — invisible to frontend</span>
+    environment:
+      POSTGRES_PASSWORD: secret
+
+<span class="pu">networks</span>:
+  public:
+    driver: bridge
+  private:
+    driver: bridge
+    internal: <span class="kw">true</span>               <span class="cm"># no external internet access</span></pre></div>
+      <div class="cb"><div class="cl"><span>terminal — verify isolation</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">docker</span> compose up -d
+<span class="cm"># Frontend CANNOT reach database:</span>
+<span class="fn">docker</span> compose exec frontend ping database
+<span class="cm"># Should fail — database is invisible from public network</span>
+
+<span class="cm"># Backend CAN reach both:</span>
+<span class="fn">docker</span> compose exec backend ping database
+<span class="cm"># Should succeed</span></pre></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="10" data-step="s10-3"><div class="step-hdr" onclick="tog(this)"><div class="snum">03</div><div class="smeta"><h3>DNS Aliases &amp; Service Discovery</h3><p>Multiple names for the same container</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>DNS aliases let you give a container multiple hostnames — useful for migrating services or running blue-green deployments without changing app code.</p>
+      <div class="cb"><div class="cl"><span>docker-compose.yml — DNS aliases</span><button class="cp" onclick="cop(this)">copy</button></div><pre>services:
+  <span class="a2">db-v2</span>:
+    image: postgres:<span class="nm">16-alpine</span>
+    networks:
+      private:
+        aliases:
+          - database         <span class="cm"># old name still works</span>
+          - db               <span class="cm"># short alias</span>
+          - postgres.internal  <span class="cm"># FQDN style</span>
+    environment:
+      POSTGRES_PASSWORD: secret
+
+<span class="pu">networks</span>:
+  private:</pre></div>
+      <div class="ca ca-i"><span class="cai">🔀</span><span class="cat">This is how <strong>zero-downtime database migrations</strong> work: keep the old name as an alias while migrating. Apps using the old name continue to work unchanged.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="10" data-step="s10-4"><div class="step-hdr" onclick="tog(this)"><div class="snum">04</div><div class="smeta"><h3>Generate &amp; Mount TLS Certs</h3><p>Encrypt inter-container traffic with mTLS</p></div><span class="stag t-sec">security</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>In production, you should encrypt traffic between services — even inside a private Docker network. We'll generate a local CA and self-signed certs.</p>
+      <div class="cb"><div class="cl"><span>terminal — generate certs with openssl</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="fn">mkdir</span> certs <span class="kw">&amp;&amp;</span> <span class="fn">cd</span> certs
+
+<span class="cm"># Generate a local CA key and cert</span>
+<span class="fn">openssl</span> genrsa -out ca.key 4096
+<span class="fn">openssl</span> req -new -x509 -days 1826 -key ca.key -out ca.crt \
+  -subj <span class="st">"/CN=MyLocalCA"</span>
+
+<span class="cm"># Generate server key + CSR</span>
+<span class="fn">openssl</span> genrsa -out server.key 2048
+<span class="fn">openssl</span> req -new -key server.key -out server.csr \
+  -subj <span class="st">"/CN=backend"</span>
+
+<span class="cm"># Sign the server cert with our CA</span>
+<span class="fn">openssl</span> x509 -req -days 365 \
+  -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out server.crt</pre></div>
+      <div class="ca ca-w"><span class="cai">⚠️</span><span class="cat">These are self-signed certs for learning. In production use <strong>cert-manager</strong> with Let's Encrypt, or a service mesh like <strong>Istio / Linkerd</strong> for automatic mTLS.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+    <div class="step" data-proj="10" data-step="s10-5"><div class="step-hdr" onclick="tog(this)"><div class="snum">05</div><div class="smeta"><h3>Overlay Networks &amp; Network Policies</h3><p>Multi-host networking and traffic control</p></div><span class="stag t-conf">config</span><span class="chevron">▼</span></div>
+    <div class="step-body">
+      <p>Overlay networks span multiple Docker hosts in a Swarm. With <code>--opt encrypted</code>, all overlay traffic is automatically encrypted with AES-128-GCM.</p>
+      <div class="cb"><div class="cl"><span>terminal — encrypted overlay network</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Create an encrypted overlay network (requires Swarm mode)</span>
+<span class="fn">docker</span> network create \
+  --driver overlay \
+  --opt encrypted \
+  --attachable \
+  secure-overlay
+
+<span class="cm"># Deploy service on the encrypted network</span>
+<span class="fn">docker</span> service create \
+  --name secure-api \
+  --network secure-overlay \
+  --replicas 3 \
+  node:<span class="nm">20-alpine</span> node -e <span class="st">"require('http').createServer((_,r)=>r.end('ok')).listen(3000)"</span>
+
+<span class="cm"># Inspect network — see connected containers and VXLAN config</span>
+<span class="fn">docker</span> network inspect secure-overlay</pre></div>
+      <div class="cb"><div class="cl"><span>terminal — advanced network diagnostics</span><button class="cp" onclick="cop(this)">copy</button></div><pre><span class="cm"># Show all IPs assigned to a container</span>
+<span class="fn">docker</span> inspect --format <span class="st">'{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'</span> &lt;container&gt;
+
+<span class="cm"># Packet capture on a container interface (requires tcpdump)</span>
+<span class="fn">docker</span> run --rm --net container:&lt;id&gt; nicolaka/netshoot tcpdump -i eth0 -n
+
+<span class="cm"># Full network connectivity report</span>
+<span class="fn">docker</span> run --rm --net container:&lt;id&gt; nicolaka/netshoot netstat -tlnp</pre></div>
+      <div class="ca ca-t"><span class="cai">🎓</span><span class="cat"><strong>nicolaka/netshoot</strong> is a container packed with every network debugging tool (tcpdump, nmap, curl, dig, netstat, etc.). It's the Swiss Army knife for Docker network troubleshooting.</span></div>
+      <button class="db" onclick="done(this)">✓ Mark as done</button>
+    </div></div>
+  </div>
+
+  <!-- FINALE -->
+  <div class="finale" id="finale">
+    <div style="font-size:2.8rem;margin-bottom:12px">🐳🏆</div>
+    <h2>Docker <span>Expert</span> Achieved!</h2>
+    <p>You've completed all 11 projects — from hello-world to encrypted overlay networks and full CI/CD pipelines.</p>
+    <div class="cgrid">
+      <div class="cc"><div class="ci">📦</div><div class="cl2">Images &amp; Layers</div><div class="cd">Caching, multi-stage</div></div>
+      <div class="cc"><div class="ci">🎼</div><div class="cl2">Compose</div><div class="cd">Multi-service orchestration</div></div>
+      <div class="cc"><div class="ci">💾</div><div class="cl2">Volumes</div><div class="cd">Named, tmpfs, bind</div></div>
+      <div class="cc"><div class="ci">🌐</div><div class="cl2">Networking</div><div class="cd">Bridge, overlay, isolation</div></div>
+      <div class="cc"><div class="ci">🔒</div><div class="cl2">Security</div><div class="cd">Secrets, non-root, Trivy</div></div>
+      <div class="cc"><div class="ci">🔄</div><div class="cl2">CI/CD</div><div class="cd">GitHub Actions, registry</div></div>
+      <div class="cc"><div class="ci">📈</div><div class="cl2">Observability</div><div class="cd">Prometheus, Grafana</div></div>
+      <div class="cc"><div class="ci">☸️</div><div class="cl2">Swarm</div><div class="cd">Cluster, rolling updates</div></div>
+      <div class="cc"><div class="ci">🔐</div><div class="cl2">mTLS</div><div class="cd">Encrypted inter-service</div></div>
+      <div class="cc"><div class="ci">🏷️</div><div class="cl2">Semver Tags</div><div class="cd">SHA, version, latest</div></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+const completed = {};
+const stepsPerProject = {0:5,1:4,2:4,3:4,4:4,5:4,6:5,7:5,8:5,9:5,10:5};
+const TOTAL = 11;
+
+function show(idx) {
+  document.querySelectorAll('.proj-card').forEach((c,i)=>c.classList.toggle('active',i===idx));
+  document.querySelectorAll('.proj-panel').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  // open first step of newly shown panel if none open
+  const panel = document.getElementById('p'+idx);
+  const hasOpen = panel.querySelector('.step.open');
+  if (!hasOpen) {
+    const first = panel.querySelector('.step');
+    if (first) first.classList.add('open','active');
+  }
+}
+
+function tog(hdr) {
+  const step = hdr.parentElement;
+  const wasOpen = step.classList.contains('open');
+  step.closest('.proj-panel').querySelectorAll('.step').forEach(s=>s.classList.remove('open','active'));
+  if (!wasOpen) step.classList.add('open','active');
+}
+
+function done(btn) {
+  const step = btn.closest('.step');
+  const key = step.dataset.step;
+  const proj = parseInt(step.dataset.proj);
+  if (completed[key]) {
+    delete completed[key];
+    step.classList.remove('completed');
+    btn.textContent = '✓ Mark as done';
+  } else {
+    completed[key] = true;
+    step.classList.add('completed');
+    btn.textContent = '✓ Completed!';
+  }
+  updateProgress(proj);
+}
+
+function updateProgress(proj) {
+  // Update per-project mini progress
+  const total = stepsPerProject[proj];
+  const done = Object.keys(completed).filter(k=>k.startsWith('s'+proj+'-')).length;
+  const pp = document.getElementById('pp'+proj);
+  if (pp) pp.textContent = done+' / '+total;
+
+  // Update project card done state
+  const tab = document.getElementById('tab-'+proj);
+  if (tab) tab.classList.toggle('done-proj', done===total);
+
+  // Global progress
+  let projsDone = 0;
+  for (let p = 0; p < TOTAL; p++) {
+    const t = stepsPerProject[p];
+    const d = Object.keys(completed).filter(k=>k.startsWith('s'+p+'-')).length;
+    if (d===t) projsDone++;
+  }
+  const pct = (projsDone/TOTAL)*100;
+  document.getElementById('gBar').style.width = pct+'%';
+  document.getElementById('gTxt').textContent = projsDone+' / '+TOTAL+' projects';
+  document.getElementById('finale').style.display = projsDone===TOTAL ? 'block' : 'none';
+}
+
+function cop(btn) {
+  const pre = btn.closest('.cb').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='copied!'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='copy'; btn.classList.remove('copied'); },1800);
+  });
+}
+
+// Open first step of first project
+document.querySelector('#p0 .step').classList.add('open','active');
+</script>
+</body>
+</html>

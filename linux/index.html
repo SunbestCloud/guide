@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Server Command Reference</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0d0f;
+    --surface: #111518;
+    --surface2: #161c20;
+    --border: #1e2a30;
+    --accent: #00e5a0;
+    --accent2: #00b8d9;
+    --accent3: #ff6b6b;
+    --accent4: #ffd166;
+    --accent5: #a78bfa;
+    --text: #e2eaed;
+    --muted: #5a7080;
+    --dim: #2a3840;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,13,15,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .logo span { color: var(--muted); font-weight: 400; }
+
+  .search-wrap {
+    flex: 1;
+    max-width: 480px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+  }
+  #search {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px 8px 38px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #search:focus { border-color: var(--accent); }
+  #search::placeholder { color: var(--muted); }
+
+  .count-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .count-badge strong { color: var(--accent); }
+
+  /* Layout */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sidebar-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 10px;
+    margin-bottom: 8px;
+  }
+
+  .cat-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    border: none;
+    background: transparent;
+    text-align: left;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .cat-btn:hover { background: var(--surface); color: var(--text); }
+  .cat-btn.active { background: var(--surface2); color: var(--text); }
+  .cat-btn .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-btn .badge {
+    margin-left: auto;
+    font-size: 0.65rem;
+    background: var(--dim);
+    padding: 1px 6px;
+    border-radius: 10px;
+    color: var(--muted);
+  }
+  .cat-btn.active .badge { background: var(--accent); color: var(--bg); }
+
+  /* Main content */
+  .main { display: flex; flex-direction: column; gap: 2.5rem; }
+
+  .section {
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .section-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+  /* Command grid */
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 10px;
+  }
+
+  .cmd-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .cmd-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 10px 0 0 10px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .cmd-card:hover { border-color: var(--dim); transform: translateY(-1px); }
+  .cmd-card:hover::before { opacity: 1; }
+
+  .cmd-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .cmd-code {
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.5;
+    word-break: break-all;
+  }
+  .cmd-copy {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .cmd-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .cmd-copy.copied { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.08); }
+
+  .cmd-desc {
+    font-size: 0.7rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .highlight { color: var(--accent); background: rgba(0,229,160,0.1); border-radius: 2px; }
+
+  /* Tags */
+  .cmd-tags { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 0.58rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Empty state */
+  .empty {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 4rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; }
+
+  /* No results */
+  .no-results { display: none; text-align: center; padding: 3rem; color: var(--muted); }
+
+  @media(max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+    .sidebar { position: static; flex-direction: row; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    ⬡ <span>linux</span>ref
+  </div>
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input id="search" type="text" placeholder="Search commands, descriptions..." autocomplete="off">
+  </div>
+  <div class="count-badge">Showing <strong id="visible-count">200</strong> of 200 commands</div>
+</header>
+
+<div class="container">
+  <nav class="sidebar">
+    <div class="sidebar-title">Categories</div>
+    <button class="cat-btn active" data-cat="all">
+      <span class="dot" style="background:#666"></span> All Commands
+      <span class="badge">200</span>
+    </button>
+    <button class="cat-btn" data-cat="system">
+      <span class="dot" style="background:#00e5a0"></span> System Info
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="cpu">
+      <span class="dot" style="background:#00b8d9"></span> CPU & Processes
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="memory">
+      <span class="dot" style="background:#a78bfa"></span> Memory
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="disk">
+      <span class="dot" style="background:#ffd166"></span> Disk & Storage
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="network">
+      <span class="dot" style="background:#ff6b6b"></span> Network
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="logs">
+      <span class="dot" style="background:#f97316"></span> Logs & Monitoring
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="security">
+      <span class="dot" style="background:#ec4899"></span> Security
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="services">
+      <span class="dot" style="background:#84cc16"></span> Services
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="files">
+      <span class="dot" style="background:#14b8a6"></span> Files & Dirs
+      <span class="badge">20</span>
+    </button>
+    <button class="cat-btn" data-cat="selinux">
+      <span class="dot" style="background:#fb923c"></span> SELinux
+      <span class="badge">20</span>
+    </button>
+  </nav>
+
+  <div class="main" id="main"></div>
+</div>
+
+<script>
+const CATS = {
+  system:   { label: 'System Information',    icon: '🖥️',  color: '#00e5a0', sub: 'OS, kernel, hardware, uptime' },
+  cpu:      { label: 'CPU & Processes',       icon: '⚙️',  color: '#00b8d9', sub: 'Load, processes, scheduling' },
+  memory:   { label: 'Memory',               icon: '🧠',  color: '#a78bfa', sub: 'RAM, swap, OOM analysis' },
+  disk:     { label: 'Disk & Storage',        icon: '💾',  color: '#ffd166', sub: 'Filesystem, I/O, partitions' },
+  network:  { label: 'Network',              icon: '🌐',  color: '#ff6b6b', sub: 'Interfaces, ports, traffic, DNS' },
+  logs:     { label: 'Logs & Monitoring',    icon: '📋',  color: '#f97316', sub: 'Journald, syslog, dmesg, auditd' },
+  security: { label: 'Security',             icon: '🔐',  color: '#ec4899', sub: 'Users, permissions, firewall, SSH' },
+  services: { label: 'Services & Systemd',   icon: '⚡',  color: '#84cc16', sub: 'Start, stop, enable, status' },
+  files:    { label: 'Files & Directories',  icon: '📁',  color: '#14b8a6', sub: 'Find, permissions, ownership' },
+  selinux:  { label: 'SELinux',              icon: '🛡️',  color: '#fb923c', sub: 'Contexts, policies, booleans, audit' },
+};
+
+const COMMANDS = [
+  // ── SYSTEM (20) ──────────────────────────────────────────
+  { cat:'system', cmd:'uname -a',                                         desc:'Show all kernel info: name, hostname, kernel version, machine type and OS', tags:['kernel'] },
+  { cat:'system', cmd:'hostnamectl',                                       desc:'Show hostname, static/transient/pretty name, OS, kernel, architecture', tags:['hostname'] },
+  { cat:'system', cmd:'cat /etc/os-release',                              desc:'Print OS name, version, ID, and distribution metadata from release file', tags:['os'] },
+  { cat:'system', cmd:'uptime -p',                                         desc:'Human-readable uptime output: "up 3 days, 4 hours, 22 minutes"', tags:['uptime'] },
+  { cat:'system', cmd:'timedatectl status',                                desc:'Show local time, timezone, NTP service state and synchronization status', tags:['time','ntp'] },
+  { cat:'system', cmd:'lscpu',                                             desc:'Show CPU architecture, cores, threads, sockets, NUMA nodes, cache sizes', tags:['cpu','hardware'] },
+  { cat:'system', cmd:'lshw -short',                                       desc:'Short hardware summary listing CPU, memory, disk, and network devices', tags:['hardware'] },
+  { cat:'system', cmd:'dmidecode -t system',                               desc:'BIOS/DMI data: manufacturer, product name, serial number, UUID (needs root)', tags:['bios','hardware'] },
+  { cat:'system', cmd:'cat /proc/cpuinfo | grep "model name" | head -1',  desc:'Display CPU model name from the kernel proc filesystem', tags:['cpu'] },
+  { cat:'system', cmd:'cat /proc/meminfo | head -20',                     desc:'First 20 lines of raw memory information from the kernel', tags:['memory'] },
+  { cat:'system', cmd:'nproc',                                             desc:'Print number of available processing units (logical cores)', tags:['cpu'] },
+  { cat:'system', cmd:'last reboot | head -5',                            desc:'Show the 5 most recent system reboot events from wtmp log', tags:['uptime','reboot'] },
+  { cat:'system', cmd:'lsmod',                                             desc:'List currently loaded kernel modules with size and dependencies', tags:['kernel','modules'] },
+  { cat:'system', cmd:'modinfo <module>',                                  desc:'Show details about a kernel module: version, author, parameters', tags:['kernel','modules'] },
+  { cat:'system', cmd:'sysctl -a 2>/dev/null | grep -i "vm\\|net\\|kernel" | head -30', desc:'Dump key kernel runtime parameters for VM, network, and core settings', tags:['kernel','tuning'] },
+  { cat:'system', cmd:'cat /proc/version',                                 desc:'Show exact kernel version string including compiler and build info', tags:['kernel'] },
+  { cat:'system', cmd:'arch',                                              desc:'Print machine hardware architecture (x86_64, aarch64, etc.)', tags:['hardware'] },
+  { cat:'system', cmd:'localectl',                                         desc:'Show system locale, keyboard layout, and language settings', tags:['locale'] },
+  { cat:'system', cmd:'hwinfo --short 2>/dev/null || lshw -businfo',      desc:'Short bus-level hardware info — CPU, disk, USB, PCI devices', tags:['hardware'] },
+  { cat:'system', cmd:'cat /sys/class/dmi/id/product_name 2>/dev/null',   desc:'Print the server product/model name from DMI sysfs (no root needed)', tags:['hardware'] },
+
+  // ── CPU & PROCESSES (20) ────────────────────────────────
+  { cat:'cpu', cmd:'top -bn1 | head -25',                                  desc:'Snapshot of top processes sorted by CPU usage (non-interactive batch mode)', tags:['cpu','processes'] },
+  { cat:'cpu', cmd:'htop',                                                  desc:'Interactive, color-coded process viewer with tree view and scroll support', tags:['cpu','processes','interactive'] },
+  { cat:'cpu', cmd:'ps aux --sort=-%cpu | head -15',                       desc:'List top 15 processes sorted by CPU percentage descending', tags:['processes'] },
+  { cat:'cpu', cmd:'ps aux --sort=-%mem | head -15',                       desc:'List top 15 processes sorted by memory percentage descending', tags:['processes','memory'] },
+  { cat:'cpu', cmd:'cat /proc/loadavg',                                    desc:'Raw load averages: 1m, 5m, 15m, running/total tasks, and last PID', tags:['load'] },
+  { cat:'cpu', cmd:'mpstat -P ALL 1 3',                                    desc:'Per-CPU core statistics sampled 3 times, 1 second apart (needs sysstat)', tags:['cpu','sysstat'] },
+  { cat:'cpu', cmd:'pidstat -u 1 5',                                       desc:'Per-process CPU usage sampled 5 times every second (needs sysstat)', tags:['processes','sysstat'] },
+  { cat:'cpu', cmd:'ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu | head -20', desc:'Custom process listing: PID, parent, command, CPU%, and MEM%', tags:['processes'] },
+  { cat:'cpu', cmd:'pgrep -a -u root',                                     desc:'List all processes owned by the root user with their full arguments', tags:['processes','security'] },
+  { cat:'cpu', cmd:'renice -n 10 -p <PID>',                               desc:'Lower scheduling priority (nice +10) of a running process by its PID', tags:['processes'] },
+  { cat:'cpu', cmd:'kill -9 <PID>',                                        desc:'Force-kill a process immediately by sending the SIGKILL signal', tags:['processes'] },
+  { cat:'cpu', cmd:'strace -p <PID> -e trace=all 2>&1 | head -30',        desc:'Trace system calls made by a running process (first 30 lines)', tags:['debug','processes'] },
+  { cat:'cpu', cmd:'taskset -cp <PID>',                                    desc:'Show CPU affinity mask — which cores a process is allowed to run on', tags:['cpu','affinity'] },
+  { cat:'cpu', cmd:'chrt -p <PID>',                                        desc:'Display scheduling policy and priority for a process (SCHED_OTHER, FIFO, RR)', tags:['scheduling'] },
+  { cat:'cpu', cmd:'perf top -g',                                          desc:'Live kernel/userspace profiler showing hottest functions by CPU cycles', tags:['profiling','debug'] },
+  { cat:'cpu', cmd:'sar -u 1 5',                                           desc:'CPU utilization report: user, system, iowait, idle every second for 5s', tags:['sysstat','cpu'] },
+  { cat:'cpu', cmd:'ps -eo pid,lstart,cmd | grep <name>',                 desc:'Show exact start timestamp (date+time) of processes matching a name', tags:['processes'] },
+  { cat:'cpu', cmd:'pstree -p',                                            desc:'Display process tree with PIDs — see parent-child process relationships', tags:['processes','tree'] },
+  { cat:'cpu', cmd:'cat /proc/<PID>/status | grep -E "Vm|Threads|State"', desc:'Low-level status of a specific process from the proc filesystem', tags:['processes','debug'] },
+  { cat:'cpu', cmd:'ionice -c 3 -p <PID>',                                desc:'Set process to idle I/O class — lowest disk priority, won\'t starve others', tags:['io','scheduling'] },
+
+  // ── MEMORY (20) ─────────────────────────────────────────
+  { cat:'memory', cmd:'free -h',                                           desc:'Human-readable summary of RAM and swap: used, free, available, buffers', tags:['ram','swap'] },
+  { cat:'memory', cmd:'vmstat -s',                                         desc:'Detailed virtual memory statistics in a tabular one-shot format', tags:['ram','vmstat'] },
+  { cat:'memory', cmd:'vmstat 1 5',                                        desc:'Live vmstat report sampled 5 times at 1-second intervals', tags:['ram','vmstat'] },
+  { cat:'memory', cmd:'cat /proc/meminfo',                                 desc:'Full raw memory information from the kernel proc filesystem', tags:['ram'] },
+  { cat:'memory', cmd:'slabtop -o',                                        desc:'Kernel slab cache snapshot — useful for spotting kernel memory leaks', tags:['kernel','memory'] },
+  { cat:'memory', cmd:'sar -r 1 5',                                        desc:'Memory utilization report every second for 5 samples (needs sysstat)', tags:['sysstat','ram'] },
+  { cat:'memory', cmd:'smem -r -k | head -15',                            desc:'Physical memory per-process with PSS/RSS/shared breakdown in KB', tags:['processes','ram'] },
+  { cat:'memory', cmd:'cat /proc/*/status 2>/dev/null | grep -E "^(Name|VmRSS)" | paste - -', desc:'Pair each process name with its resident set size from proc', tags:['processes','ram'] },
+  { cat:'memory', cmd:'dmesg | grep -i "oom"',                            desc:'Check kernel ring buffer for Out-Of-Memory killer invocation events', tags:['oom','kernel'] },
+  { cat:'memory', cmd:'grep -i "out of memory" /var/log/syslog | tail -20', desc:'Check syslog for recent OOM kill messages and affected processes', tags:['oom','logs'] },
+  { cat:'memory', cmd:'cat /proc/buddyinfo',                               desc:'Buddy allocator info showing memory fragmentation per zone and order', tags:['kernel','fragmentation'] },
+  { cat:'memory', cmd:'cat /proc/slabinfo | sort -k3 -rn | head -20',     desc:'Raw slab allocator data sorted by number of active objects', tags:['kernel','slab'] },
+  { cat:'memory', cmd:'numactl --hardware',                                desc:'Show NUMA topology: nodes, memory per node, distances between nodes', tags:['numa','hardware'] },
+  { cat:'memory', cmd:'numastat -m',                                       desc:'Per-node memory usage statistics in a human-readable table', tags:['numa'] },
+  { cat:'memory', cmd:'grep -E "HugePages|Hugepagesize" /proc/meminfo',   desc:'Check huge page configuration: total, free, and page size in use', tags:['hugepages','tuning'] },
+  { cat:'memory', cmd:'valgrind --leak-check=full <program>',              desc:'Run a program under Valgrind to detect memory leaks and invalid accesses', tags:['debug','leaks'] },
+  { cat:'memory', cmd:'sysctl vm.swappiness',                              desc:'Show current swappiness value (0=avoid swap, 100=aggressive swapping)', tags:['swap','tuning'] },
+  { cat:'memory', cmd:'sysctl -w vm.swappiness=10',                       desc:'Set swappiness to 10 — reduce swap usage for server workloads', tags:['swap','tuning'] },
+  { cat:'memory', cmd:'cat /proc/zoneinfo | grep -A5 "Node 0"',           desc:'Memory zone info for NUMA node 0: free pages, high/low watermarks', tags:['kernel','numa'] },
+  { cat:'memory', cmd:'ps -eo pid,rss,vsz,comm --sort=-rss | head -15',   desc:'List top 15 processes by RSS (resident set size) in kilobytes', tags:['processes','ram'] },
+
+  // ── DISK (20) ────────────────────────────────────────────
+  { cat:'disk', cmd:'df -hT',                                              desc:'Disk usage per filesystem with type, size, used, available, and mount', tags:['filesystem'] },
+  { cat:'disk', cmd:'df -i',                                               desc:'Inode usage per filesystem — exhausted inodes cause "no space" errors', tags:['filesystem','inodes'] },
+  { cat:'disk', cmd:'du -sh /* 2>/dev/null | sort -rh | head -15',        desc:'Top 15 largest root-level directories sorted by size descending', tags:['usage'] },
+  { cat:'disk', cmd:'du -sh /var/log/* | sort -rh | head -10',            desc:'Find the largest files inside /var/log directory', tags:['logs','usage'] },
+  { cat:'disk', cmd:'lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT',          desc:'List block devices with size, type, filesystem type, and mount point', tags:['block'] },
+  { cat:'disk', cmd:'blkid',                                               desc:'Print UUID, label, filesystem type for all discovered block devices', tags:['block','filesystem'] },
+  { cat:'disk', cmd:'iostat -xz 1 3',                                     desc:'Extended disk I/O stats: util%, await, r/w MB/s sampled 3 times (sysstat)', tags:['io','sysstat'] },
+  { cat:'disk', cmd:'iotop -o',                                            desc:'Live I/O usage per process — identify what is hammering the disk', tags:['io','processes'] },
+  { cat:'disk', cmd:'hdparm -I /dev/sda | grep -E "Model|Serial|capacity"', desc:'Drive model, serial number, and capacity reported by the disk itself', tags:['hardware'] },
+  { cat:'disk', cmd:'smartctl -a /dev/sda',                                desc:'Full SMART health report for a drive including error counts (needs smartmontools)', tags:['health','hardware'] },
+  { cat:'disk', cmd:'findmnt',                                             desc:'Show all currently mounted filesystems in a readable tree view', tags:['filesystem','mount'] },
+  { cat:'disk', cmd:'lsof +D /var/log | head -20',                        desc:'List open file handles in /var/log — find what process is writing logs', tags:['files','io'] },
+  { cat:'disk', cmd:'find / -xdev -size +100M 2>/dev/null | sort -k5 -rn | head -10', desc:'Find files larger than 100MB on the current filesystem only', tags:['files','usage'] },
+  { cat:'disk', cmd:'fstrim -av',                                          desc:'Issue TRIM to all mounted SSDs to reclaim space from deleted blocks', tags:['ssd','maintenance'] },
+  { cat:'disk', cmd:'tune2fs -l /dev/sda1 | grep -E "count|state|time"', desc:'Show ext4 filesystem metadata: mount count, last check time, state', tags:['filesystem','ext4'] },
+  { cat:'disk', cmd:'xfs_info /mount/point',                               desc:'Display XFS filesystem geometry: block size, AG count, log size', tags:['filesystem','xfs'] },
+  { cat:'disk', cmd:'pvs && vgs && lvs',                                   desc:'Show LVM physical volumes, volume groups, and logical volumes summary', tags:['lvm'] },
+  { cat:'disk', cmd:'mdadm --detail /dev/md0',                            desc:'RAID array status: level, state, member drives, rebuild progress', tags:['raid'] },
+  { cat:'disk', cmd:'dd if=/dev/zero of=/tmp/test bs=1M count=1024 oflag=direct', desc:'Benchmark raw disk write speed with 1GB direct I/O test', tags:['benchmark','io'] },
+  { cat:'disk', cmd:'ioping -c 10 /tmp',                                  desc:'Measure disk latency with 10 I/O ping requests to /tmp', tags:['benchmark','latency'] },
+
+  // ── NETWORK (20) ─────────────────────────────────────────
+  { cat:'network', cmd:'ip -br addr',                                      desc:'Brief summary of all network interfaces and their assigned IP addresses', tags:['interfaces'] },
+  { cat:'network', cmd:'ip route show',                                    desc:'Show kernel routing table including default gateway and static routes', tags:['routing'] },
+  { cat:'network', cmd:'ss -tulnp',                                        desc:'All TCP/UDP listening sockets with associated process name and PID', tags:['ports','sockets'] },
+  { cat:'network', cmd:'ss -s',                                            desc:'Socket statistics summary: established, time-wait, close-wait connection counts', tags:['sockets'] },
+  { cat:'network', cmd:'netstat -anp | grep ESTABLISHED | wc -l',         desc:'Count the number of currently established TCP connections', tags:['connections'] },
+  { cat:'network', cmd:'iftop -i eth0',                                    desc:'Live per-connection bandwidth usage on eth0 interface (interactive)', tags:['bandwidth','interactive'] },
+  { cat:'network', cmd:'nload eth0',                                       desc:'Real-time network traffic graph showing eth0 in/out throughput in Mbps', tags:['bandwidth'] },
+  { cat:'network', cmd:'tcpdump -i eth0 -n -c 100',                       desc:'Capture 100 packets on eth0 and display without DNS name resolution', tags:['capture','debug'] },
+  { cat:'network', cmd:'dig +short google.com',                            desc:'Quick DNS lookup returning only the A record(s) for a hostname', tags:['dns'] },
+  { cat:'network', cmd:'dig google.com ANY',                               desc:'Full DNS query showing all available record types for a domain', tags:['dns'] },
+  { cat:'network', cmd:'curl -s https://ifconfig.me',                     desc:'Retrieve the server\'s public external IP address via HTTP', tags:['ip'] },
+  { cat:'network', cmd:'traceroute -n 8.8.8.8',                           desc:'Trace network route to Google DNS without hostname resolution', tags:['routing','debug'] },
+  { cat:'network', cmd:'nmap -sV -p 22,80,443 <host>',                   desc:'Probe ports 22, 80, 443 on a host and detect running service versions', tags:['portscan','security'] },
+  { cat:'network', cmd:'ip -s link',                                       desc:'Show interface statistics: RX/TX bytes, errors, drops per interface', tags:['interfaces','stats'] },
+  { cat:'network', cmd:'ethtool eth0',                                     desc:'Show NIC speed, duplex, auto-negotiation, and link status for eth0', tags:['interfaces','hardware'] },
+  { cat:'network', cmd:'netstat -rn',                                      desc:'Show kernel routing table with numeric addresses, no DNS resolution', tags:['routing'] },
+  { cat:'network', cmd:'arp -n',                                           desc:'Display ARP cache — IP to MAC address mappings for local network', tags:['arp','lan'] },
+  { cat:'network', cmd:'mtr --report --no-dns 8.8.8.8',                   desc:'Combined traceroute + ping report to diagnose packet loss per hop', tags:['routing','debug'] },
+  { cat:'network', cmd:'nc -zv <host> 443',                                desc:'Test TCP connectivity to a host on port 443 without sending data', tags:['connectivity','debug'] },
+  { cat:'network', cmd:'ss -tp state established | awk \'{print $4}\' | cut -d: -f1 | sort | uniq -c | sort -rn | head', desc:'Top remote IPs by number of established connections', tags:['connections','security'] },
+
+  // ── LOGS (20) ────────────────────────────────────────────
+  { cat:'logs', cmd:'journalctl -p err -n 50 --no-pager',                 desc:'Show last 50 error-level log entries across all systemd units', tags:['errors','journald'] },
+  { cat:'logs', cmd:'journalctl -u nginx --since "1 hour ago"',           desc:'Show nginx service logs from the past hour via journald', tags:['journald','services'] },
+  { cat:'logs', cmd:'journalctl -f',                                       desc:'Follow the systemd journal in real time (equivalent of tail -f)', tags:['journald','realtime'] },
+  { cat:'logs', cmd:'journalctl --disk-usage',                             desc:'Show total disk space consumed by the systemd journal files', tags:['journald','disk'] },
+  { cat:'logs', cmd:'tail -f /var/log/syslog',                            desc:'Stream the syslog file in real time to watch for live system events', tags:['syslog','realtime'] },
+  { cat:'logs', cmd:'grep -i "error\\|crit\\|emerg" /var/log/syslog | tail -30', desc:'Filter recent critical error entries from the syslog file', tags:['syslog','errors'] },
+  { cat:'logs', cmd:'dmesg -T | tail -30',                                desc:'Last 30 kernel messages with human-readable timestamps', tags:['kernel','dmesg'] },
+  { cat:'logs', cmd:'dmesg -T | grep -iE "error|fail|warn|oom"',         desc:'Kernel ring buffer filtered to just warnings, errors, and OOM events', tags:['kernel','errors'] },
+  { cat:'logs', cmd:'last -n 20',                                          desc:'Last 20 user login sessions with source IP and session duration', tags:['auth','users'] },
+  { cat:'logs', cmd:'lastb -n 20',                                         desc:'Last 20 failed login attempts showing username and source IP', tags:['auth','security'] },
+  { cat:'logs', cmd:'ausearch -m LOGIN --start today',                     desc:'Audit log search for all login events since midnight today (needs auditd)', tags:['audit'] },
+  { cat:'logs', cmd:'logrotate -d /etc/logrotate.conf',                   desc:'Dry-run logrotate to preview what logs would be rotated or compressed', tags:['maintenance'] },
+  { cat:'logs', cmd:'journalctl --since "yesterday" --until "today" -p warning', desc:'All warning-level journal entries from the past 24 hours', tags:['journald','errors'] },
+  { cat:'logs', cmd:'journalctl -b -1 -p err',                            desc:'Error-level entries from the previous boot session', tags:['journald','boot'] },
+  { cat:'logs', cmd:'cat /var/log/auth.log | grep "sudo" | tail -20',     desc:'Last 20 sudo command executions logged in the auth log', tags:['auth','sudo'] },
+  { cat:'logs', cmd:'tail -n 100 /var/log/kern.log | grep -iE "fail|error|warn"', desc:'Filter recent kernel log file for failures and warnings', tags:['kernel','errors'] },
+  { cat:'logs', cmd:'auditctl -l',                                         desc:'List all active auditd rules currently loaded in the kernel', tags:['audit'] },
+  { cat:'logs', cmd:'ausearch -x /usr/bin/sudo --start today',            desc:'Audit events for all sudo executions since midnight today', tags:['audit','sudo'] },
+  { cat:'logs', cmd:'journalctl -k --since "1 hour ago"',                 desc:'Kernel messages only from the past hour via journald (-k = kernel)', tags:['kernel','journald'] },
+  { cat:'logs', cmd:'find /var/log -name "*.gz" -mtime -7 | xargs ls -lh', desc:'List compressed rotated log archives created in the last 7 days', tags:['logs','files'] },
+
+  // ── SECURITY (20) ────────────────────────────────────────
+  { cat:'security', cmd:'who',                                             desc:'Show currently logged-in users, their TTY, and login time', tags:['users'] },
+  { cat:'security', cmd:'w',                                               desc:'Who is logged in, what they\'re running, and current system load', tags:['users','load'] },
+  { cat:'security', cmd:'id <username>',                                   desc:'Show UID, GID, and all group memberships for a given user', tags:['users','groups'] },
+  { cat:'security', cmd:'getent passwd | grep -v nologin | grep -v false', desc:'List only users with valid login shells who can log in to the system', tags:['users'] },
+  { cat:'security', cmd:'grep "PermitRootLogin\\|PasswordAuthentication" /etc/ssh/sshd_config', desc:'Check SSH config for root login and password authentication settings', tags:['ssh','config'] },
+  { cat:'security', cmd:'find / -perm -4000 -type f 2>/dev/null',         desc:'Find all SUID binaries — common privilege escalation attack vectors', tags:['permissions','audit'] },
+  { cat:'security', cmd:'find / -perm -2 -type f 2>/dev/null | head -20', desc:'Find world-writable files — a security risk if they contain sensitive data', tags:['permissions'] },
+  { cat:'security', cmd:'ufw status verbose',                              desc:'Show all UFW firewall rules and current status in verbose mode', tags:['firewall'] },
+  { cat:'security', cmd:'iptables -L -n -v',                              desc:'List all iptables rules with packet and byte counters', tags:['firewall','iptables'] },
+  { cat:'security', cmd:'ss -tulnp | awk \'NR>1 {print $5}\' | sort -u', desc:'Unique listening addresses and ports — spot unexpected exposed services', tags:['ports','audit'] },
+  { cat:'security', cmd:'chage -l <username>',                            desc:'Show password expiry policy and last change date for a specific user', tags:['passwords','users'] },
+  { cat:'security', cmd:'lynis audit system',                              desc:'Full system security audit with scored recommendations (needs lynis)', tags:['audit','tools'] },
+  { cat:'security', cmd:'fail2ban-client status',                          desc:'Show all active fail2ban jails and the number of currently banned IPs', tags:['fail2ban','ssh'] },
+  { cat:'security', cmd:'grep "^sudo\\|^wheel" /etc/group',               desc:'Show members of the sudo/wheel groups who have admin privileges', tags:['sudo','groups'] },
+  { cat:'security', cmd:'awk -F: \'$3 == 0 {print $1}\' /etc/passwd',    desc:'Find all accounts with UID 0 (root-level privileges) — should only be root', tags:['users','audit'] },
+  { cat:'security', cmd:'cat /etc/sudoers && ls /etc/sudoers.d/',         desc:'Review main sudoers file and any drop-in override configurations', tags:['sudo','config'] },
+  { cat:'security', cmd:'openssl s_client -connect <host>:443 </dev/null 2>&1 | grep -E "subject|expire|verify"', desc:'Check TLS certificate subject, expiry, and verification result', tags:['ssl','tls'] },
+  { cat:'security', cmd:'rkhunter --check --skip-keypress',               desc:'Rootkit Hunter scan: check for known rootkits, backdoors, local exploits', tags:['rootkit','audit'] },
+  { cat:'security', cmd:'aide --check',                                    desc:'AIDE file integrity check — detect unauthorized changes to system files', tags:['integrity','audit'] },
+  { cat:'security', cmd:'passwd -l <username>',                            desc:'Lock a user account — prevents login via password but keeps the account', tags:['users','lockout'] },
+
+  // ── SERVICES (20) ────────────────────────────────────────
+  { cat:'services', cmd:'systemctl list-units --failed',                  desc:'List all systemd units currently in a failed state with their status', tags:['systemd','failed'] },
+  { cat:'services', cmd:'systemctl list-units --type=service --state=running', desc:'List all currently running systemd services on the system', tags:['systemd'] },
+  { cat:'services', cmd:'systemctl status nginx',                          desc:'Show nginx service status, recent log entries, PID, and memory usage', tags:['systemd','nginx'] },
+  { cat:'services', cmd:'systemctl restart nginx',                         desc:'Restart the nginx service gracefully (sends stop then start)', tags:['systemd','nginx'] },
+  { cat:'services', cmd:'systemctl enable --now docker',                  desc:'Enable Docker to start at boot and start it immediately right now', tags:['systemd','docker'] },
+  { cat:'services', cmd:'systemctl list-timers --all',                    desc:'List all systemd timers (cron equivalents) and when they last ran', tags:['systemd','timers'] },
+  { cat:'services', cmd:'crontab -l',                                      desc:'List all cron jobs configured for the current user', tags:['cron'] },
+  { cat:'services', cmd:'cat /etc/cron.d/* /etc/cron.daily/*',           desc:'Display all system-wide cron job definitions', tags:['cron'] },
+  { cat:'services', cmd:'systemd-analyze blame | head -15',               desc:'Show which services take the longest to start during boot', tags:['systemd','boot'] },
+  { cat:'services', cmd:'journalctl -u <service> -n 50 --no-pager',       desc:'Last 50 log lines for a specific named systemd service', tags:['systemd','logs'] },
+  { cat:'services', cmd:'systemctl daemon-reload',                         desc:'Reload systemd manager configuration after editing unit files', tags:['systemd','config'] },
+  { cat:'services', cmd:'systemctl show nginx --property=MainPID,MemoryCurrent,CPUUsageNSec', desc:'Show specific resource properties of a running systemd service', tags:['systemd','resources'] },
+  { cat:'services', cmd:'systemctl cat sshd',                             desc:'Display the full unit file content for the sshd service', tags:['systemd','config'] },
+  { cat:'services', cmd:'systemctl is-active --quiet nginx && echo UP || echo DOWN', desc:'Scripting-friendly active check: print UP or DOWN for a service', tags:['systemd','monitoring'] },
+  { cat:'services', cmd:'systemctl list-unit-files --state=enabled',      desc:'List all services configured to start automatically at boot', tags:['systemd','startup'] },
+  { cat:'services', cmd:'systemd-analyze critical-chain',                 desc:'Show critical boot chain — services that most delayed the boot target', tags:['systemd','boot'] },
+  { cat:'services', cmd:'systemctl mask <service>',                        desc:'Completely disable a service so it cannot be started even manually', tags:['systemd','security'] },
+  { cat:'services', cmd:'systemctl list-dependencies <service>',          desc:'Show all unit dependencies for a service in a tree view', tags:['systemd','deps'] },
+  { cat:'services', cmd:'crontab -e',                                      desc:'Edit the current user\'s crontab file in the default editor', tags:['cron'] },
+  { cat:'services', cmd:'systemctl edit --force --full <service>',        desc:'Create or fully override a service unit file with your own configuration', tags:['systemd','config'] },
+
+  // ── FILES (20) ───────────────────────────────────────────
+  { cat:'files', cmd:'find /etc -mtime -1 -type f 2>/dev/null',          desc:'Find all regular files in /etc modified within the last 24 hours', tags:['find','config'] },
+  { cat:'files', cmd:'stat /etc/passwd',                                   desc:'Show full file metadata: size, inode, permissions, and all timestamps', tags:['metadata'] },
+  { cat:'files', cmd:'lsattr /etc/passwd',                                 desc:'Show extended filesystem attributes (immutable, append-only, etc.)', tags:['permissions','attributes'] },
+  { cat:'files', cmd:'find /var -name "*.log" -size +50M 2>/dev/null',    desc:'Find log files larger than 50MB anywhere under /var directory', tags:['logs','disk'] },
+  { cat:'files', cmd:'ls -lhtrR /var/log/ 2>/dev/null | tail -20',       desc:'Recursively list /var/log sorted by modification time, newest last', tags:['logs'] },
+  { cat:'files', cmd:'find / -user root -perm -o+w -type f 2>/dev/null', desc:'Find root-owned files that are also writable by others — security risk', tags:['permissions','security'] },
+  { cat:'files', cmd:'chmod 600 ~/.ssh/authorized_keys',                  desc:'Set correct permissions on SSH authorized_keys file (user read/write only)', tags:['ssh','permissions'] },
+  { cat:'files', cmd:'chown -R www-data:www-data /var/www/html',          desc:'Recursively set ownership of web root to the www-data user and group', tags:['ownership'] },
+  { cat:'files', cmd:'find /tmp /var/tmp -mtime +7 -delete',              desc:'Delete files in /tmp and /var/tmp that haven\'t been accessed in 7+ days', tags:['cleanup','tmp'] },
+  { cat:'files', cmd:'getfacl /var/www/html',                             desc:'Show POSIX Access Control List (ACL) entries for a file or directory', tags:['acl','permissions'] },
+  { cat:'files', cmd:'setfacl -m u:deploy:rwx /var/www/html',            desc:'Grant the deploy user rwx access via ACL without changing group ownership', tags:['acl','permissions'] },
+  { cat:'files', cmd:'find / -nouser -o -nogroup 2>/dev/null | head -20', desc:'Find orphaned files with no valid owner or group — leftover from deleted users', tags:['audit','ownership'] },
+  { cat:'files', cmd:'diff -rq /etc/nginx /backup/nginx',                 desc:'Recursively compare two directories and show files that differ', tags:['diff','config'] },
+  { cat:'files', cmd:'rsync -avz --dry-run /src/ /dst/',                 desc:'Dry-run rsync to preview what would be synced without transferring anything', tags:['sync','backup'] },
+  { cat:'files', cmd:'ln -s /etc/nginx/sites-available/app /etc/nginx/sites-enabled/', desc:'Create a symlink to enable an nginx site configuration', tags:['symlink','nginx'] },
+  { cat:'files', cmd:'file /usr/bin/python3',                              desc:'Determine file type (ELF binary, script, symlink) using magic bytes', tags:['metadata'] },
+  { cat:'files', cmd:'md5sum /etc/passwd && sha256sum /etc/passwd',       desc:'Generate MD5 and SHA256 checksums to verify file integrity', tags:['integrity','hashing'] },
+  { cat:'files', cmd:'inotifywait -rm /etc -e modify,create,delete',     desc:'Watch /etc recursively for any file modifications, creations, or deletions', tags:['monitoring','realtime'] },
+  { cat:'files', cmd:'tar -czvf /backup/etc-$(date +%F).tar.gz /etc',   desc:'Create a timestamped compressed backup of the entire /etc directory', tags:['backup'] },
+  { cat:'files', cmd:'find /home -name ".bash_history" -exec wc -l {} +', desc:'Count command history lines for every user\'s bash history file', tags:['audit','users'] },
+
+  // ── SELINUX (20) ─────────────────────────────────────────
+  { cat:'selinux', cmd:'getenforce',                                       desc:'Show current SELinux mode: Enforcing, Permissive, or Disabled', tags:['mode','status'] },
+  { cat:'selinux', cmd:'sestatus',                                         desc:'Full SELinux status: mode, policy name, MLS status, and mount context', tags:['status','policy'] },
+  { cat:'selinux', cmd:'setenforce 0',                                     desc:'Switch SELinux to Permissive mode temporarily — logs but doesn\'t block', tags:['mode','troubleshoot'] },
+  { cat:'selinux', cmd:'setenforce 1',                                     desc:'Switch SELinux back to Enforcing mode — policy is actively enforced', tags:['mode'] },
+  { cat:'selinux', cmd:'ls -Z /var/www/html',                             desc:'List files with their SELinux security context labels (user:role:type:level)', tags:['context','labels'] },
+  { cat:'selinux', cmd:'ps -eZ | grep nginx',                             desc:'Show SELinux context for running nginx processes (domain label)', tags:['context','processes'] },
+  { cat:'selinux', cmd:'chcon -t httpd_sys_content_t /var/www/html/app', desc:'Change file context type to httpd_sys_content_t for Apache/Nginx access', tags:['context','labels'] },
+  { cat:'selinux', cmd:'restorecon -Rv /var/www/html',                    desc:'Restore default SELinux file contexts recursively under /var/www/html', tags:['context','restore'] },
+  { cat:'selinux', cmd:'semanage fcontext -l | grep httpd',               desc:'List all defined SELinux file context mappings that match httpd policy', tags:['policy','fcontext'] },
+  { cat:'selinux', cmd:'semanage fcontext -a -t httpd_sys_content_t "/srv/web(/.*)?"', desc:'Permanently define a file context rule for a custom web directory path', tags:['policy','fcontext'] },
+  { cat:'selinux', cmd:'getsebool -a | grep httpd',                       desc:'List all SELinux booleans that affect httpd (Apache/Nginx) behavior', tags:['booleans'] },
+  { cat:'selinux', cmd:'setsebool -P httpd_can_network_connect 1',        desc:'Permanently allow Apache/Nginx to make outbound network connections', tags:['booleans','network'] },
+  { cat:'selinux', cmd:'setsebool -P httpd_use_nfs 1',                   desc:'Permanently allow the httpd domain to access NFS-mounted directories', tags:['booleans','nfs'] },
+  { cat:'selinux', cmd:'ausearch -m avc -ts recent',                      desc:'Search audit log for recent SELinux AVC denial events (access vector cache)', tags:['audit','denials'] },
+  { cat:'selinux', cmd:'audit2why < /var/log/audit/audit.log | tail -30', desc:'Explain recent SELinux denials in human-readable form with suggested fixes', tags:['audit','troubleshoot'] },
+  { cat:'selinux', cmd:'audit2allow -a -M mypolicy',                      desc:'Generate a custom SELinux policy module from recent AVC denials', tags:['policy','module'] },
+  { cat:'selinux', cmd:'semodule -i mypolicy.pp',                         desc:'Install and load a compiled SELinux policy module (.pp file) into the kernel', tags:['policy','module'] },
+  { cat:'selinux', cmd:'semodule -l | head -20',                          desc:'List the first 20 installed SELinux policy modules currently active', tags:['policy','modules'] },
+  { cat:'selinux', cmd:'seinfo -t | grep httpd',                          desc:'Query SELinux policy database for all type definitions matching httpd', tags:['policy','types'] },
+  { cat:'selinux', cmd:'sesearch --allow --source httpd_t --class file',  desc:'Show all file access rules that the httpd_t domain is allowed to perform', tags:['policy','rules'] },
+];
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+
+let currentCat = 'all';
+let searchTerm = '';
+
+function highlight(text, term) {
+  if (!term) return text;
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<span class="highlight">$1</span>');
+}
+
+function getTagStyle(cat) {
+  const c = CATS[cat];
+  return `background:${c.color}22; color:${c.color};`;
+}
+
+function render() {
+  const main = document.getElementById('main');
+  const cats = currentCat === 'all' ? Object.keys(CATS) : [currentCat];
+  let totalVisible = 0;
+  let html = '';
+
+  cats.forEach(cat => {
+    const cmds = COMMANDS.filter(c => {
+      if (c.cat !== cat) return false;
+      if (!searchTerm) return true;
+      const q = searchTerm.toLowerCase();
+      return c.cmd.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q) ||
+             (c.tags && c.tags.some(t => t.includes(q)));
+    });
+    if (cmds.length === 0) return;
+    totalVisible += cmds.length;
+
+    const info = CATS[cat];
+    html += `
+      <div class="section" data-cat="${cat}">
+        <div class="section-header">
+          <div class="section-icon" style="background:${info.color}22;">${info.icon}</div>
+          <div>
+            <div class="section-title" style="color:${info.color}">${info.label}</div>
+            <div class="section-sub">${info.sub} &mdash; ${cmds.length} command${cmds.length!==1?'s':''}</div>
+          </div>
+        </div>
+        <div class="cmd-grid">
+          ${cmds.map(c => `
+            <div class="cmd-card" style="--accent-cat:${info.color}" onclick="">
+              <style>.cmd-card[style*="${info.color}"]::before { background: ${info.color}; }</style>
+              <div class="cmd-top">
+                <div class="cmd-code" style="color:${info.color}">${highlight(escHtml(c.cmd), searchTerm)}</div>
+                <button class="cmd-copy" onclick="copyCmd(event, this, ${JSON.stringify(c.cmd)})">copy</button>
+              </div>
+              <div class="cmd-desc">${highlight(escHtml(c.desc), searchTerm)}</div>
+              ${c.tags ? `<div class="cmd-tags">${c.tags.map(t=>`<span class="tag" style="${getTagStyle(cat)}">${t}</span>`).join('')}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  });
+
+  if (totalVisible === 0) {
+    html = `<div class="no-results" style="display:block;color:var(--muted);padding:4rem;text-align:center;">
+      No commands match "<strong style="color:var(--text)">${escHtml(searchTerm)}</strong>"<br>
+      <span style="font-size:0.7rem;margin-top:0.5rem;display:block">Try a different keyword</span>
+    </div>`;
+  }
+
+  main.innerHTML = html;
+  document.getElementById('visible-count').textContent = totalVisible;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function copyCmd(e, btn, cmd) {
+  e.stopPropagation();
+  navigator.clipboard.writeText(cmd).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500);
+  });
+}
+
+// Category filter
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = btn.dataset.cat;
+    render();
+  });
+});
+
+// Search
+document.getElementById('search').addEventListener('input', e => {
+  searchTerm = e.target.value.trim();
+  if (searchTerm) {
+    currentCat = 'all';
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-cat="all"]').classList.add('active');
+  }
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
