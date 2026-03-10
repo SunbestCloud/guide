@@ -1,0 +1,41 @@
+
+---
+- name: I am going to install multi packages
+  hosts: all
+  tasks: 
+   - name: install 3 packages
+     yum:
+      - httpd
+      - unzip
+      - wget
+     state: latest
+
+
+- name: Install a list of packages with variable
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - httpd
+    - wget
+	
+- name: Install a list of packages with a loop 
+  yum:
+    name: "{{ item }}"
+	state: latest
+	update_cache: True
+  loop:
+    - openssh
+	- wget
+	
+- name: Install a list of packages array variable
+  yum:
+    name: ['httpd', 'php', 'wget']
+	state: present
+	update_cache: True
+
+- name: Install a package 
+  yum:
+    name: httpd
+    state: present
+    update_cache: True
