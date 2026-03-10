@@ -1,0 +1,3813 @@
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete DevOps + DevSecOps Lab Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        ul,
+        ol {
+            padding-left: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Complete DevOps + DevSecOps Lab Setup & CI/CD Pipeline Guide</h1>
+    <p><strong>Updated: January 03, 2026</strong></p>
+
+    <div class="section">
+        <h2>Overview</h2>
+        <p>This guide covers a full local DevOps lab on Ubuntu 24.04 LTS with:</p>
+        <ul>
+            <li>Docker, Minikube (Kubernetes), Ansible, Terraform</li>
+            <li>Prometheus, Grafana, Trivy, Falco</li>
+            <li>Node.js sample app with unit/integration tests</li>
+            <li>GitHub Actions CI/CD pipeline</li>
+            <li>Git best practices</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Tool Installations (Concise Commands)</h2>
+
+        <h3>Docker</h3>
+        <pre>
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER
+sudo systemctl enable --now docker
+</pre>
+
+        <h3>Minikube + kubectl</h3>
+        <pre>
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install kubectl /usr/local/bin/kubectl
+minikube start --driver=docker
+</pre>
+
+        <h3>Ansible</h3>
+        <pre>
+sudo apt install -y python3-pip
+python3 -m pip install --user --upgrade ansible
+</pre>
+
+        <h3>Terraform</h3>
+        <pre>
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>Sample Node.js App</h2>
+
+        <h3>Dockerfile</h3>
+        <pre>
+FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY app/server.js .
+EXPOSE 3000
+CMD ["node", "server.js"]
+</pre>
+
+        <h3>app/server.js</h3>
+        <pre>
+const express = require('express');
+const app = express();
+app.get('/', (req, res) => res.send('Hello from CI/CD!'));
+module.exports = app;
+if (require.main === module) app.listen(3000);
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>Kubernetes Manifest (k8s/deployment.yaml)</h2>
+        <pre>
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: my-app }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: my-app } }
+  template:
+    metadata: { labels: { app: my-app } }
+    spec:
+      containers:
+      - name: my-app
+        image: youruser/my-app:latest
+        ports: [{ containerPort: 3000 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: my-app }
+kind: LoadBalancer
+spec:
+  selector: { app: my-app }
+  ports: [{ port: 80, targetPort: 3000 }]
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>Ultra-Compact GitHub Actions CI/CD</h2>
+        <p>File: <code>.github/workflows/ci-cd.yml</code></p>
+        <pre>
+name: CI/CD
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: npm }
+      - run: npm ci
+      - run: npm test
+      - uses: aquasecurity/trivy-action@master
+        with: { scan-type: fs, severity: HIGH,CRITICAL }
+      - run: docker build -t app:${{ github.sha }} .
+      - run: trivy image --severity HIGH,CRITICAL --exit-code 1 app:${{ github.sha }}
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: |
+          docker tag app:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/my-app:${{ github.sha }}
+          docker tag app:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-app:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
+        if: github.event_name == 'push'
+      - run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube start --driver=docker
+        if: github.event_name == 'push'
+      - run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl set image deployment/my-app my-app=${{ secrets.DOCKERHUB_USERNAME }}/my-app:${{ github.sha }}
+          kubectl rollout status deployment/my-app --timeout=120s
+          curl -f $(minikube service my-app --url)/ || exit 1
+        if: github.event_name == 'push'
+</pre>
+        <p><strong>Required Secrets:</strong> DOCKERHUB_USERNAME, DOCKERHUB_TOKEN</p>
+    </div>
+
+    <div class="section">
+        <h2>Git Best Practices</h2>
+
+        <h3>.gitignore (Key Entries)</h3>
+        <pre>
+.terraform/
+*.tfstate*
+*.tfvars
+node_modules/
+.minikube/
+*.pem
+.env
+</pre>
+
+        <h3>Daily Commands</h3>
+        <pre>
+git pull
+git checkout -b feat/new-feature
+git add .
+git commit -m "feat: description"
+git push origin feat/new-feature
+# Open PR → merge → 
+git checkout main && git pull
+</pre>
+
+        <h3>Conventional Commits</h3>
+        <ul>
+            <li><code>feat:</code> New feature</li>
+            <li><code>fix:</code> Bug fix</li>
+            <li><code>infra:</code> Terraform/Ansible</li>
+            <li><code>ci:</code> Pipeline changes</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Quick Start Commands</h2>
+        <pre>
+# Local test
+minikube start --driver=docker
+kubectl apply -f k8s/deployment.yaml
+minikube service my-app --url
+
+# Full CI/CD
+git add .
+git commit -m "chore: update"
+git push origin main
+</pre>
+    </div>
+
+    <p><strong>End of Guide — Your full DevOps lab is ready!</strong></p>
+
+</body>
+
+</html>
+Copy the entire code above into a file named devops-lab-guide.html and open it in any browser for a clean, readable
+offline reference.
+
+2.1s
+set up linux servers
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setting Up Linux Servers - DevOps Lab Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        ul,
+        ol {
+            padding-left: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Setting Up Linux Servers for Your DevOps Lab</h1>
+    <p><strong>January 04, 2026</strong></p>
+
+    <div class="section">
+        <h2>1. Base OS Recommendation</h2>
+        <p>Use <strong>Ubuntu 24.04 LTS</strong> (Noble Numbat) — stable, well-supported, excellent for DevOps tools.
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>2. Local Setup (Virtual Machine)</h2>
+        <ol>
+            <li>Download Ubuntu 24.04 LTS ISO from <a href="https://ubuntu.com/download/server">ubuntu.com</a></li>
+            <li>Use VirtualBox, VMware, or Hyper-V</li>
+            <li>Recommended specs: 4+ CPUs, 8+ GB RAM, 50+ GB disk</li>
+            <li>During install: Enable OpenSSH server</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>3. Initial Server Hardening & Updates</h2>
+        <pre>
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget gnupg ca-certificates unzip git
+# Enable automatic security updates
+sudo apt install -y unattended-upgrades
+sudo dpkg-reconfigure --priority=low unattended-upgrades
+# Basic firewall
+sudo ufw allow OpenSSH
+sudo ufw enable
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Create a Non-Root User (Best Practice)</h2>
+        <pre>
+sudo adduser devopsuser
+sudo usermod -aG sudo devopsuser
+# Copy SSH keys
+sudo mkdir -p /home/devopsuser/.ssh
+sudo cp ~/.ssh/authorized_keys /home/devopsuser/.ssh/
+sudo chown -R devopsuser:devopsuser /home/devopsuser/.ssh
+# Disable root SSH login (edit /etc/ssh/sshd_config)
+sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+sudo systemctl restart ssh
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Cloud Server Setup (AWS EC2 Example)</h2>
+        <ol>
+            <li>Launch EC2 instance → Ubuntu Server 24.04 LTS</li>
+            <li>Instance type: t3.medium or larger</li>
+            <li>Security Group: Allow SSH (22) from your IP</li>
+            <li>Key pair: Create/download .pem</li>
+            <li>Connect: <code>ssh -i key.pem ubuntu@ec2-public-ip</code></li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>6. Essential Tools Installation</h2>
+        <pre>
+# Docker
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker $USER
+
+# Minikube + kubectl
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install kubectl /usr/local/bin/kubectl
+
+# Ansible
+sudo apt install -y python3-pip
+python3 -m pip install --user --upgrade ansible
+
+# Terraform
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. Quick Verification</h2>
+        <pre>
+docker --version
+minikube version
+kubectl version --client
+ansible --version
+terraform --version
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>8. Next Steps for Your Lab</h2>
+        <ul>
+            <li>Start Minikube: <code>minikube start --driver=docker</code></li>
+            <li>Deploy sample app (see previous guide)</li>
+            <li>Integrate with GitHub Actions CI/CD</li>
+            <li>Use Ansible/Terraform for automation</li>
+        </ul>
+    </div>
+
+    <p><strong>Your Linux server is now ready for DevOps tooling!</strong></p>
+
+</body>
+
+</html>
+Save this as linux-server-setup.html and open in your browser. This covers both local VM and cloud (AWS) setups with
+security best practices. Let me know if you want Azure, GCP, or digitalocean versions!
+
+11.4s
+Ansible automation for servers
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Automation for Linux Servers - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ansible Automation for Linux Servers</h1>
+    <p><strong>January 04, 2026</strong> — Production-ready modular setup for your DevOps lab</p>
+
+    <div class="section">
+        <h2>1. Repository Structure (Ansible Part)</h2>
+        <pre>
+my-devops-lab/
+└── ansible/
+    ├── ansible.cfg
+    ├── inventory/
+    │   └── hosts.ini           # or dynamic from Terraform
+    ├── playbook-server-setup.yml
+    └── roles/
+        ├── common/
+        ├── docker/
+        ├── minikube/
+        ├── monitoring/
+        ├── security/
+        └── tools/
+  </pre>
+    </div>
+
+    <div class="section">
+        <h2>2. ansible.cfg</h2>
+        <pre>
+[defaults]
+inventory = ./inventory/hosts.ini
+roles_path = ./roles
+host_key_checking = False
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Inventory Example (inventory/hosts.ini)</h2>
+        <pre>
+[lab_servers]
+server1 ansible_host=192.168.1.10 ansible_user=ubuntu
+server2 ansible_host=203.0.113.20 ansible_user=ubuntu
+
+[lab_servers:vars]
+ansible_python_interpreter=/usr/bin/python3
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Modular Roles (Key Tasks Only)</h2>
+
+        <h3>roles/common/tasks/main.yml</h3>
+        <pre>
+- name: Update & upgrade
+  apt:
+    update_cache: yes
+    upgrade: dist
+
+- name: Install base packages
+  apt:
+    name: [curl, wget, git, unzip, ca-certificates]
+    state: present
+</pre>
+
+        <h3>roles/docker/tasks/main.yml</h3>
+        <pre>
+- name: Add Docker repo & key
+  shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    echo "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable" > /etc/apt/sources.list.d/docker.list
+  args:
+    creates: /etc/apt/sources.list.d/docker.list
+
+- name: Install Docker
+  apt:
+    update_cache: yes
+    name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+    state: present
+
+- name: Add user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+</pre>
+
+        <h3>roles/minikube/tasks/main.yml</h3>
+        <pre>
+- name: Install Minikube
+  get_url:
+    url: https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    dest: /usr/local/bin/minikube
+    mode: '0755'
+
+- name: Install kubectl
+  shell: |
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    install kubectl /usr/local/bin/kubectl
+  args:
+    creates: /usr/local/bin/kubectl
+</pre>
+
+        <h3>roles/security/tasks/main.yml</h3>
+        <pre>
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+
+- name: Allow SSH
+  ufw:
+    rule: allow
+    name: OpenSSH
+
+- name: Disable root SSH login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: 'PermitRootLogin no'
+  notify: restart ssh
+
+handlers:
+  - name: restart ssh
+    service:
+      name: ssh
+      state: restarted
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Main Playbook: Full Server Automation</h2>
+        <p>File: <code>playbook-server-setup.yml</code></p>
+        <pre>
+---
+- name: Automate Linux Server Setup
+  hosts: lab_servers
+  become: yes
+  roles:
+    - common
+    - security
+    - docker
+    - minikube
+    - monitoring   # optional
+    - tools        # Terraform, etc.
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Run Commands</h2>
+        <pre>
+# Test connection
+ansible all -m ping
+
+# Dry-run
+ansible-playbook playbook-server-setup.yml --check
+
+# Execute
+ansible-playbook playbook-server-setup.yml
+
+# Single role only
+ansible-playbook playbook-server-setup.yml --tags docker
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. Integration with Terraform (Dynamic Inventory)</h2>
+        <p>After Terraform creates servers:</p>
+        <pre>
+terraform output -json ansible_inventory > ansible/inventory/generated.json
+
+ansible-playbook -i inventory/generated.json playbook-server-setup.yml
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>8. Benefits</h2>
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>Benefit</th>
+            </tr>
+            <tr>
+                <td>Idempotent</td>
+                <td>Run multiple times safely</td>
+            </tr>
+            <tr>
+                <td>Modular roles</td>
+                <td>Reusable & maintainable</td>
+            </tr>
+            <tr>
+                <td>No agent needed</td>
+                <td>Just SSH + Python</td>
+            </tr>
+            <tr>
+                <td>Works on 1 or 100 servers</td>
+                <td>Scales effortlessly</td>
+            </tr>
+        </table>
+    </div>
+
+    <p><strong>Your servers are now fully automated with Ansible — reproducible, secure, and fast!</strong></p>
+
+</body>
+
+</html>
+Save as ansible-server-automation.html. This gives you a complete, modular Ansible setup to automatically configure any
+number of Ubuntu servers in your lab (or production).
+
+Ready for Terraform integration and CI/CD execution! Let me know if you want Vault for secrets or Galaxy roles added.
+
+2.9s
+Add more example playbooks
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>More Ansible Playbook Examples - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>More Ansible Playbook Examples</h1>
+    <p><strong>January 04, 2026</strong> — Practical, modular playbooks for common DevOps tasks</p>
+
+    <div class="section">
+        <h2>1. Playbook: Install and Configure Prometheus Node Exporter</h2>
+        <p>File: <code>playbook-monitoring.yml</code></p>
+        <pre>
+---
+- name: Install Prometheus Node Exporter
+  hosts: lab_servers
+  become: yes
+  vars:
+    node_exporter_version: "1.8.2"
+
+  tasks:
+    - name: Create node_exporter user
+      user:
+        name: node_exporter
+        system: yes
+        shell: /usr/sbin/nologin
+
+    - name: Download and extract Node Exporter
+      unarchive:
+        src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: /tmp
+        remote_src: yes
+
+    - name: Move binary
+      copy:
+        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+        dest: /usr/local/bin/node_exporter
+        owner: node_exporter
+        group: node_exporter
+        mode: '0755'
+        remote_src: yes
+
+    - name: Create systemd service
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Prometheus Node Exporter
+
+          [Service]
+          User=node_exporter
+          ExecStart=/usr/local/bin/node_exporter
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable and start service
+      systemd:
+        name: node_exporter
+        enabled: yes
+        state: started
+
+    - name: Cleanup
+      file:
+        path: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+        state: absent
+</pre>
+        <p>Run: <code>ansible-playbook playbook-monitoring.yml</code><br>
+            Metrics available at <code>http://server-ip:9100/metrics</code></p>
+    </div>
+
+    <div class="section">
+        <h2>2. Playbook: Deploy Dockerized Node.js App</h2>
+        <p>File: <code>playbook-deploy-app.yml</code></p>
+        <pre>
+---
+- name: Deploy Node.js App via Docker
+  hosts: lab_servers
+  become: yes
+  vars:
+    app_image: "{{ dockerhub_username }}/my-app:latest"
+    app_port: 3000
+
+  tasks:
+    - name: Pull latest image
+      docker_image:
+        name: "{{ app_image }}"
+        source: pull
+
+    - name: Remove old container
+      docker_container:
+        name: my-app
+        state: absent
+      ignore_errors: yes
+
+    - name: Run new container
+      docker_container:
+        name: my-app
+        image: "{{ app_image }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "{{ app_port }}:3000"
+
+    - name: Wait for app to be healthy
+      uri:
+        url: "http://localhost:{{ app_port }}"
+        return_content: yes
+      register: result
+      until: result.status == 200
+      retries: 10
+      delay: 5
+</pre>
+        <p>Run: <code>ansible-playbook playbook-deploy-app.yml -e "dockerhub_username=youruser"</code></p>
+    </div>
+
+    <div class="section">
+        <h2>3. Playbook: Full Security Hardening</h2>
+        <p>File: <code>playbook-harden.yml</code></p>
+        <pre>
+---
+- name: Harden Ubuntu Servers
+  hosts: lab_servers
+  become: yes
+  tasks:
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        update_cache: yes
+
+    - name: Enable automatic security updates
+      apt:
+        name: unattended-upgrades
+        state: present
+
+    - name: Configure unattended-upgrades
+      copy:
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        content: |
+          Unattended-Upgrade::Allowed-Origins {
+              "${distro_id}:${distro_codename}-security";
+          };
+
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+      notify: restart ssh
+
+    - name: Set idle timeout
+      lineinfile:
+        path: /etc/profile
+        line: 'TMOUT=900 ; export TMOUT'
+        create: yes
+
+    - name: Enable and configure firewall
+      block:
+        - ufw:
+            state: enabled
+            policy: deny
+        - ufw:
+            rule: allow
+            name: OpenSSH
+        - ufw:
+            rule: allow
+            port: "{{ item }}"
+          loop: [3000, 9090, 3000, 9100]  # app, Prometheus, Grafana, Node Exporter
+
+  handlers:
+    - name: restart ssh
+      service:
+        name: ssh
+        state: restarted
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Playbook: Backup Configuration Files</h2>
+        <p>File: <code>playbook-backup.yml</code></p>
+        <pre>
+---
+- name: Backup Critical Configs
+  hosts: lab_servers
+  become: yes
+  tasks:
+    - name: Create backup directory
+      file:
+        path: /backups/{{ inventory_hostname }}
+        state: directory
+        mode: '0700'
+
+    - name: Backup configs
+      copy:
+        src: "{{ item }}"
+        dest: "/backups/{{ inventory_hostname }}/{{ item | basename }}"
+        remote_src: yes
+      loop:
+        - /etc/ssh/sshd_config
+        - /etc/docker/daemon.json
+        - /etc/prometheus/prometheus.yml
+
+    - name: Fetch backups locally
+      fetch:
+        src: "/backups/{{ inventory_hostname }}/{{ item | basename }}"
+        dest: "local_backups/{{ inventory_hostname }}/"
+        flat: yes
+      loop:
+        - /etc/ssh/sshd_config
+        - /etc/docker/daemon.json
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Playbook Summary Table</h2>
+        <table>
+            <tr>
+                <th>Playbook</th>
+                <th>Purpose</th>
+                <th>Key Features</th>
+            </tr>
+            <tr>
+                <td>playbook-monitoring.yml</td>
+                <td>Install Node Exporter</td>
+                <td>System metrics for Prometheus</td>
+            </tr>
+            <tr>
+                <td>playbook-deploy-app.yml</td>
+                <td>Deploy Docker app</td>
+                <td>Idempotent, health check</td>
+            </tr>
+            <tr>
+                <td>playbook-harden.yml</td>
+                <td>Server hardening</td>
+                <td>Auto updates, SSH security, firewall</td>
+            </tr>
+            <tr>
+                <td>playbook-backup.yml</td>
+                <td>Backup configs</td>
+                <td>Remote → local fetch</td>
+            </tr>
+        </table>
+    </div>
+
+    <p><strong>Use these playbooks to automate real-world tasks across your lab servers!</strong></p>
+
+</body>
+
+</html>
+Save as more-ansible-playbooks.html. These examples are production-ready, idempotent, and integrate perfectly with your
+existing modular roles and Terraform workflow.
+
+Let me know if you want playbooks for Nginx reverse proxy, Kubernetes cluster setup, log shipping, or database
+deployment!
+
+2.8s
+Add Prometheus monitoring role
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Role: Prometheus Monitoring - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ansible Role: Prometheus Monitoring</h1>
+    <p><strong>January 04, 2026</strong> — Install and configure Prometheus Node Exporter + optional Prometheus server
+    </p>
+
+    <div class="section">
+        <h2>Role Structure</h2>
+        <pre>
+ansible/roles/prometheus/
+├── defaults/main.yml
+├── tasks/main.yml
+├── templates/prometheus.yml.j2      # Optional for full server
+└── handlers/main.yml
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>1. defaults/main.yml</h2>
+        <pre>
+prometheus_node_exporter_version: "1.8.2"
+prometheus_node_exporter_enabled: true
+
+# Optional: Install full Prometheus server
+prometheus_server_enabled: false
+prometheus_version: "2.53.1"
+prometheus_scrape_interval: "15s"
+prometheus_extra_scrape_configs: []
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. tasks/main.yml</h2>
+        <pre>
+---
+- name: Install Prometheus Node Exporter
+  when: prometheus_node_exporter_enabled
+  block:
+    - name: Create prometheus user
+      user:
+        name: prometheus
+        system: yes
+        shell: /usr/sbin/nologin
+
+    - name: Download Node Exporter
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ prometheus_node_exporter_version }}/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64.tar.gz"
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: Extract Node Exporter
+      unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: Install binary
+      copy:
+        src: "/tmp/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64/node_exporter"
+        dest: /usr/local/bin/node_exporter
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+        remote_src: yes
+
+    - name: Create systemd service
+      template:
+        src: node_exporter.service.j2
+        dest: /etc/systemd/system/node_exporter.service
+      notify: restart node_exporter
+
+    - name: Enable and start Node Exporter
+      systemd:
+        name: node_exporter
+        enabled: yes
+        state: started
+        daemon_reload: yes
+
+    - name: Cleanup
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/node_exporter.tar.gz
+        - "/tmp/node_exporter-{{ prometheus_node_exporter_version }}.linux-amd64"
+
+- name: Install Full Prometheus Server (optional)
+  when: prometheus_server_enabled
+  block:
+    - name: Create config directory
+      file:
+        path: /etc/prometheus
+        state: directory
+        owner: prometheus
+        group: prometheus
+
+    - name: Download Prometheus
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: /tmp/prometheus.tar.gz
+
+    - name: Extract and install
+      unarchive:
+        src: /tmp/prometheus.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Link binaries
+      file:
+        src: "/opt/prometheus-{{ prometheus_version }}.linux-amd64/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        state: link
+      loop:
+        - prometheus
+        - promtool
+
+    - name: Render config
+      template:
+        src: prometheus.yml.j2
+        dest: /etc/prometheus/prometheus.yml
+        owner: prometheus
+        group: prometheus
+      notify: restart prometheus
+
+    - name: Create systemd service for Prometheus
+      template:
+        src: prometheus.service.j2
+        dest: /etc/systemd/system/prometheus.service
+      notify: restart prometheus
+
+    - name: Enable and start Prometheus
+      systemd:
+        name: prometheus
+        enabled: yes
+        state: started
+        daemon_reload: yes
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. templates/node_exporter.service.j2</h2>
+        <pre>
+[Unit]
+Description=Prometheus Node Exporter
+After=network.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/node_exporter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. templates/prometheus.yml.j2</h2>
+        <pre>
+global:
+  scrape_interval: {{ prometheus_scrape_interval }}
+
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['localhost:9100']
+{% if prometheus_extra_scrape_configs %}
+{{ prometheus_extra_scrape_configs | to_nice_yaml }}
+{% endif %}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. handlers/main.yml</h2>
+        <pre>
+---
+- name: restart node_exporter
+  systemd:
+    name: node_exporter
+    state: restarted
+
+- name: restart prometheus
+  systemd:
+    name: prometheus
+    state: restarted
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Use in Playbook</h2>
+        <pre>
+---
+- name: Configure Prometheus Monitoring
+  hosts: lab_servers
+  become: yes
+  roles:
+    - role: prometheus
+      prometheus_node_exporter_enabled: true
+      prometheus_server_enabled: true   # Set false on agents only
+      prometheus_extra_scrape_configs:
+        - job_name: 'myapp'
+          static_configs:
+            - targets: ['localhost:3000']
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. Verification</h2>
+        <pre>
+# Node Exporter
+curl http://localhost:9100/metrics
+
+# Full Prometheus (if enabled)
+curl http://localhost:9090/targets
+</pre>
+        <p>Access Prometheus UI: <code>http://server-ip:9090</code></p>
+    </div>
+
+    <p><strong>This role gives you flexible Prometheus monitoring — Node Exporter on all servers, full server on central
+            node.</strong></p>
+
+</body>
+
+</html>
+Save as ansible-prometheus-role.html. Fully modular, idempotent, and ready to integrate with your existing roles and
+Terraform-provisioned servers.
+
+Perfect for centralized monitoring in your DevOps lab! Let me know if you want Grafana role next.
+
+2.9s
+Grafana dashboard role
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Role: Grafana Dashboard - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ansible Role: Grafana Dashboard Server</h1>
+    <p><strong>January 04, 2026</strong> — Install Grafana, add Prometheus data source, and import popular dashboards
+    </p>
+
+    <div class="section">
+        <h2>Role Structure</h2>
+        <pre>
+ansible/roles/grafana/
+├── defaults/main.yml
+├── tasks/main.yml
+├── templates/grafana.ini.j2
+├── templates/provisioning/
+│   ├── datasources/prometheus.yml.j2
+│   └── dashboards/dashboard.yml.j2
+├── files/dashboards/
+│   ├── node-exporter.json          # Community dashboards
+│   └── kubernetes.json
+└── handlers/main.yml
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>1. defaults/main.yml</h2>
+        <pre>
+grafana_version: "11.3.0"                  # Check latest at grafana.com
+grafana_port: 3000
+grafana_admin_password: "admin"            # Change in production!
+prometheus_url: "http://localhost:9090"
+
+grafana_dashboards:
+  - name: "Node Exporter Full"
+    file: "node-exporter.json"
+    id: 1860                               # Optional: dashboard UID from grafana.com
+  - name: "Kubernetes Cluster"
+    file: "kubernetes.json"
+    id: 6417
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. tasks/main.yml</h2>
+        <pre>
+---
+- name: Add Grafana APT key
+  apt_key:
+    url: https://apt.grafana.com/gpg.key
+    state: present
+
+- name: Add Grafana repository
+  apt_repository:
+    repo: "deb https://apt.grafana.com stable main"
+    state: present
+    filename: grafana
+
+- name: Install Grafana
+  apt:
+    name: "grafana={{ grafana_version }}"
+    update_cache: yes
+    state: present
+
+- name: Configure grafana.ini
+  template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+  notify: restart grafana
+
+- name: Create provisioning directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: grafana
+    group: grafana
+  loop:
+    - /etc/grafana/provisioning/datasources
+    - /etc/grafana/provisioning/dashboards
+
+- name: Provision Prometheus data source
+  template:
+    src: provisioning/datasources/prometheus.yml.j2
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: grafana
+    group: grafana
+  notify: restart grafana
+
+- name: Provision dashboard config
+  template:
+    src: provisioning/dashboards/dashboard.yml.j2
+    dest: /etc/grafana/provisioning/dashboards/dashboard.yml
+    owner: grafana
+    group: grafana
+  notify: restart grafana
+
+- name: Copy dashboard JSON files
+  copy:
+    src: "dashboards/{{ item.file }}"
+    dest: /var/lib/grafana/dashboards/
+    owner: grafana
+    group: grafana
+    mode: '0644'
+  loop: "{{ grafana_dashboards }}"
+  notify: restart grafana
+
+- name: Ensure Grafana service is running
+  systemd:
+    name: grafana-server
+    enabled: yes
+    state: started
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. templates/grafana.ini.j2</h2>
+        <pre>
+[server]
+http_port = {{ grafana_port }}
+
+[security]
+admin_password = {{ grafana_admin_password }}
+
+[auth.anonymous]
+enabled = true
+org_role = Viewer
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. templates/provisioning/datasources/prometheus.yml.j2</h2>
+        <pre>
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: {{ prometheus_url }}
+    isDefault: true
+    editable: true
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. templates/provisioning/dashboards/dashboard.yml.j2</h2>
+        <pre>
+apiVersion: 1
+
+providers:
+  - name: 'default'
+    orgId: 1
+    folder: ''
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. handlers/main.yml</h2>
+        <pre>
+---
+- name: restart grafana
+  systemd:
+    name: grafana-server
+    state: restarted
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. Download Community Dashboards (files/dashboards/)</h2>
+        <p>Run once locally:</p>
+        <pre>
+# Node Exporter Full (ID 1860)
+curl -L https://grafana.com/api/dashboards/1860/revisions/latest/download > roles/grafana/files/dashboards/node-exporter.json
+
+# Kubernetes (ID 6417)
+curl -L https://grafana.com/api/dashboards/6417/revisions/latest/download > roles/grafana/files/dashboards/kubernetes.json
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>8. Use in Playbook</h2>
+        <pre>
+---
+- name: Deploy Grafana with Dashboards
+  hosts: monitoring_server    # Run on central monitoring host
+  become: yes
+  roles:
+    - role: grafana
+      grafana_admin_password: "securepassword123"
+      prometheus_url: "http://192.168.1.100:9090"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>9. Verification</h2>
+        <pre>
+# Access Grafana
+http://server-ip:3000
+
+# Default login
+admin / {{ grafana_admin_password }}
+
+# Dashboards appear automatically under "Dashboards" → "Manage"
+</pre>
+    </div>
+
+    <p><strong>This role deploys a fully configured Grafana instance with Prometheus integration and pre-loaded
+            community dashboards — perfect for your monitoring stack!</strong></p>
+
+</body>
+
+</html>
+Save as ansible-grafana-role.html. Combine with the Prometheus role on the same or separate server for complete
+observability.
+
+Let me know if you want alerting rules, Loki integration, or dashboard customization next!
+
+1.5s
+terraform integration
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform + Ansible Integration - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Terraform + Ansible Integration</h1>
+    <p><strong>January 04, 2026</strong> — Best-practice pattern: Terraform provisions infrastructure, Ansible
+        configures it</p>
+
+    <div class="section">
+        <h2>Why This Combination?</h2>
+        <table>
+            <tr>
+                <th>Tool</th>
+                <th>Strength</th>
+                <th>Role</th>
+            </tr>
+            <tr>
+                <td>Terraform</td>
+                <td>Declarative, cloud-native, handles immutable infra</td>
+                <td>Provision servers, networks, Kubernetes clusters</td>
+            </tr>
+            <tr>
+                <td>Ansible</td>
+                <td>Agentless, idempotent, excellent for configuration</td>
+                <td>Install tools, harden, deploy apps</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>1. Terraform: Provision Ubuntu Server + Output Inventory</h2>
+        <p>File: <code>terraform/main.tf</code> (simplified EC2 example)</p>
+        <pre>
+resource "aws_instance" "lab_server" {
+  count                  = 2
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = "t3.medium"
+  key_name               = var.key_name
+  vpc_security_group_ids = [aws_security_group.lab.id]
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "devops-lab-${count.index + 1}"
+  }
+}
+
+output "ansible_inventory" {
+  value = {
+    lab_servers = {
+      hosts = { for i, instance in aws_instance.lab_server : 
+        "server-${i+1}" => {
+          ansible_host = instance.public_ip
+          ansible_user = "ubuntu"
+          ansible_ssh_private_key_file = "${var.key_name}.pem"
+        }
+      }
+      vars = {
+        ansible_python_interpreter = "/usr/bin/python3"
+      }
+    }
+  }
+  description = "Ready-to-use Ansible inventory"
+}
+</pre>
+        <p>After <code>terraform apply</code>:</p>
+        <pre>
+terraform output -json ansible_inventory > ../ansible/inventory/generated.json
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. Ansible: Use Dynamic Inventory from Terraform</h2>
+
+        <h3>Option A: JSON Inventory File (Simple)</h3>
+        <p>Use the generated file directly:</p>
+        <pre>
+ansible-playbook -i inventory/generated.json playbook-server-setup.yml
+</pre>
+
+        <h3>Option B: Dynamic Inventory Script (Recommended)</h3>
+        <p>File: <code>ansible/inventory/terraform_inventory.py</code></p>
+        <pre>
+#!/usr/bin/env python3
+import json
+import subprocess
+import sys
+
+try:
+    output = subprocess.check_output(["terraform", "output", "-json", "ansible_inventory"])
+    inventory = json.loads(output)
+    print(json.dumps(inventory))
+except:
+    print(json.dumps({"_meta": {"hostvars": {}}}))
+    sys.exit(0)
+</pre>
+        <p>Make executable: <code>chmod +x terraform_inventory.py</code></p>
+        <p>In <code>ansible.cfg</code>:</p>
+        <pre>
+[defaults]
+inventory = ./inventory/terraform_inventory.py
+</pre>
+        <p>Now just run:</p>
+        <pre>
+ansible-playbook playbook-server-setup.yml
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Full Automated Workflow</h2>
+        <pre>
+# 1. Provision infrastructure
+cd terraform
+terraform init
+terraform apply -auto-approve
+
+# 2. Ansible automatically detects new servers
+cd ../ansible
+ansible all -m ping                     # Verify connectivity
+
+# 3. Configure everything
+ansible-playbook playbook-server-setup.yml
+
+# 4. (Later) Deploy app updates
+ansible-playbook playbook-deploy-app.yml
+
+# 5. Tear down
+cd ../terraform
+terraform destroy -auto-approve
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. GitHub Actions Integration (CI/CD)</h2>
+        <pre>
+# In .github/workflows/ci-cd.yml
+- name: Terraform Apply
+  run: terraform apply -auto-approve
+  env:
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+- name: Generate Ansible Inventory
+  run: terraform output -json ansible_inventory > inventory.json
+
+- name: Run Ansible Configuration
+  uses: dawidd6/action-ansible-playbook@v2
+  with:
+    playbook: playbook-server-setup.yml
+    directory: ansible
+    inventory: inventory.json
+    options: --extra-vars "dockerhub_username=${{ secrets.DOCKERHUB_USERNAME }}"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Advanced: Pass Variables from Terraform to Ansible</h2>
+        <pre>
+# terraform/outputs.tf
+output "prometheus_server_ip" {
+  value = aws_instance.monitoring.public_ip
+}
+
+# In CI/CD or locally
+ansible-playbook playbook-monitoring.yml \
+  -e "prometheus_url=http://$(terraform output -raw prometheus_server_ip):9090"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Benefits Summary</h2>
+        <ul>
+            <li><strong>Reproducible</strong>: Entire environment from bare metal to configured app in code</li>
+            <li><strong>Scalable</strong>: Add more servers → just change count in Terraform</li>
+            <li><strong>Safe</strong>: Idempotent operations, easy rollback (terraform destroy)</li>
+            <li><strong>GitOps-ready</strong>: All changes tracked in Git</li>
+        </ul>
+    </div>
+
+    <p><strong>You now have a complete, automated, production-grade Terraform + Ansible pipeline!</strong></p>
+
+</body>
+
+</html>
+Save as terraform-ansible-integration.html. This is the gold-standard pattern used by enterprises worldwide in 2026.
+
+Your infrastructure is now fully declarative and automatically configured — true Infrastructure as Code + Configuration
+as Code.
+
+Let me know if you want EKS + Ansible Operator examples or remote state + locking setup next!
+
+3.7s
+More concise code examples
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concise Code Examples - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Concise Code Examples</h1>
+    <p><strong>January 04, 2026</strong> — Minimal, ready-to-copy snippets from the full lab</p>
+
+    <div class="section">
+        <h2>1. Terraform: Provision EC2 + Output Inventory</h2>
+        <pre>
+resource "aws_instance" "lab" {
+  count        = 2
+  ami          = data.aws_ami.ubuntu.id
+  instance_type = "t3.medium"
+  key_name     = var.key_name
+  associate_public_ip_address = true
+}
+
+output "ansible_inventory" {
+  value = { for i, inst in aws_instance.lab :
+    "server-${i+1}" => {
+      ansible_host = inst.public_ip
+      ansible_user = "ubuntu"
+    }
+  }
+}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. Ansible Role: Docker (tasks/main.yml)</h2>
+        <pre>
+- shell: |
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    echo "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable" > /etc/apt/sources.list.d/docker.list
+  args:
+    creates: /etc/apt/sources.list.d/docker.list
+
+- apt:
+    update_cache: yes
+    name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
+    state: present
+
+- user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Ansible Role: Prometheus Node Exporter (tasks/main.yml)</h2>
+        <pre>
+- get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz"
+    dest: /tmp/node_exporter.tar.gz
+
+- unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- copy:
+    src: /tmp/node_exporter-1.8.2.linux-amd64/node_exporter
+    dest: /usr/local/bin/node_exporter
+    mode: '0755'
+    remote_src: yes
+
+- systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Ansible Role: Grafana (tasks/main.yml key steps)</h2>
+        <pre>
+- apt_repository:
+    repo: "deb https://apt.grafana.com stable main"
+
+- apt:
+    name: grafana
+    state: present
+
+- template:
+    src: provisioning/datasources/prometheus.yml.j2
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+  notify: restart grafana
+
+- copy:
+    src: dashboards/node-exporter.json
+    dest: /var/lib/grafana/dashboards/
+
+- systemd:
+    name: grafana-server
+    enabled: yes
+    state: started
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Main Ansible Playbook</h2>
+        <pre>
+---
+- name: Setup Lab Servers
+  hosts: all
+  become: yes
+  roles:
+    - docker
+    - minikube
+    - prometheus
+    - grafana
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Dockerized App Deployment (playbook snippet)</h2>
+        <pre>
+- docker_image:
+    name: "{{ dockerhub_username }}/my-app:latest"
+    source: pull
+
+- docker_container:
+    name: my-app
+    image: "{{ dockerhub_username }}/my-app:latest"
+    state: started
+    published_ports: "3000:3000"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. GitHub Actions Ultra-Compact CI/CD</h2>
+        <pre>
+name: CI/CD
+on: [push, pull_request]
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci && npm test
+      - uses: aquasecurity/trivy-action@master
+        with: { scan-type: fs }
+      - run: docker build -t app:${{ github.sha }} .
+      - run: trivy image app:${{ github.sha }}
+      - uses: docker/login-action@v3
+        if: github.event_name == 'push'
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-app:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
+        if: github.event_name == 'push'
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>8. Quick Commands</h2>
+        <pre>
+terraform apply
+terraform output -json ansible_inventory > ansible/inventory.json
+ansible-playbook -i inventory.json playbook-server-setup.yml
+</pre>
+    </div>
+
+    <p><strong>Ultra-concise, copy-paste ready — your full lab in minimal code.</strong></p>
+
+</body>
+
+</html>
+Save as concise-code-examples.html. These are the shortest working versions of all key components from the entire guide.
+
+Everything you need to build and automate the lab quickly!
+
+1.8s
+Minikube setup with Ansible
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Role: Minikube Setup - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ansible Role: Minikube Setup</h1>
+    <p><strong>January 04, 2026</strong> — Fully automated single-node Kubernetes cluster with Minikube using Docker
+        driver</p>
+
+    <div class="section">
+        <h2>Role Structure</h2>
+        <pre>
+ansible/roles/minikube/
+├── defaults/main.yml
+├── tasks/main.yml
+└── handlers/main.yml
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>1. defaults/main.yml</h2>
+        <pre>
+minikube_version: "latest"                 # or specific e.g. "v1.33.1"
+minikube_driver: "docker"                  # Recommended for headless servers
+minikube_cpus: 4
+minikube_memory: "8192mb"
+minikube_disk: "50g"
+minikube_addons:
+  - dashboard
+  - metrics-server
+  - ingress
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. tasks/main.yml</h2>
+        <pre>
+---
+- name: Install Minikube binary
+  get_url:
+    url: >-
+      {% if minikube_version == "latest" %}
+      https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+      {% else %}
+      https://storage.googleapis.com/minikube/releases/{{ minikube_version }}/minikube-linux-amd64
+      {% endif %}
+    dest: /usr/local/bin/minikube
+    mode: '0755'
+    owner: root
+    group: root
+
+- name: Install kubectl
+  shell: |
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    install kubectl /usr/local/bin/kubectl
+  args:
+    creates: /usr/local/bin/kubectl
+
+- name: Ensure docker group exists and user is member
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+
+- name: Start Minikube cluster
+  become: no                                       # Run as non-root user
+  command: >
+    minikube start
+    --driver={{ minikube_driver }}
+    --cpus={{ minikube_cpus }}
+    --memory={{ minikube_memory }}
+    --disk-size={{ minikube_disk }}
+    --force                                        # Use if non-root Docker
+  environment:
+    HOME: /home/{{ ansible_user }}
+  register: minikube_start
+  changed_when: "'Starting' in minikube_start.stdout or 'Restarting' in minikube_start.stdout"
+
+- name: Wait for cluster to be ready
+  become: no
+  command: minikube status --format="{{ '{{' }} .Node.Status {{ '}}' }}"
+  register: minikube_status
+  until: minikube_status.stdout == "Running"
+  retries: 20
+  delay: 10
+
+- name: Enable Minikube addons
+  become: no
+  command: minikube addons enable {{ item }}
+  loop: "{{ minikube_addons }}"
+  when: minikube_addons is defined
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. handlers/main.yml (optional)</h2>
+        <pre>
+---
+- name: Restart Minikube
+  become: no
+  command: minikube stop && minikube start
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Use in Playbook</h2>
+        <pre>
+---
+- name: Deploy Minikube Kubernetes Cluster
+  hosts: lab_servers
+  become: yes
+  pre_tasks:
+    - name: Ensure Docker is installed (prerequisite)
+      include_role:
+        name: docker
+
+  roles:
+    - role: minikube
+      minikube_cpus: 6
+      minikube_memory: "12g"
+      minikube_addons:
+        - dashboard
+        - metrics-server
+        - ingress
+        - storage-provisioner
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Verification Commands</h2>
+        <pre>
+# Check cluster status
+minikube status
+
+# List nodes
+kubectl get nodes
+
+# Access dashboard (tunnel needed on remote server)
+minikube dashboard --url
+
+# Or forward locally after SSH tunnel
+ssh -L 8001:127.0.0.1:8001 user@server
+# Then run on server: minikube dashboard --port=8001
+# Open http://localhost:8001 in browser
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Notes & Best Practices</h2>
+        <ul>
+            <li>Requires Docker role first (user in docker group)</li>
+            <li>Use <code>--force</code> flag for non-root Docker access</li>
+            <li>Idempotent: safe to rerun</li>
+            <li>Perfect for CI/CD agents, testing, or local dev clusters</li>
+            <li>Add <code>become: no</code> for minikube commands (runs as regular user)</li>
+        </ul>
+    </div>
+
+    <p><strong>Your servers now have fully automated, reproducible Minikube Kubernetes clusters — ready for app
+            deployment and testing!</strong></p>
+
+</body>
+
+</html>
+Save as ansible-minikube-role.html. This role is production-ready, idempotent, and integrates perfectly with your Docker
+and monitoring roles.
+
+Combine with previous Terraform integration to spin up servers → install Docker → deploy Minikube automatically.
+
+Let me know if you want Helm, ArgoCD, or sample app deployment to Minikube next!
+
+1.7s
+Ansible role for Helm installation
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Role: Helm Installation - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ansible Role: Helm Installation</h1>
+    <p><strong>January 04, 2026</strong> — Install and configure Helm (Kubernetes package manager) on Minikube-enabled
+        servers</p>
+
+    <div class="section">
+        <h2>Role Structure</h2>
+        <pre>
+ansible/roles/helm/
+├── defaults/main.yml
+├── tasks/main.yml
+└── handlers/main.yml (optional)
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>1. defaults/main.yml</h2>
+        <pre>
+helm_version: "v3.14.0"                    # Check latest at https://github.com/helm/helm/releases
+helm_install_dir: "/usr/local/bin"
+helm_binary_name: "helm"
+helm_repositories:
+  - name: stable
+    url: https://charts.helm.sh/stable
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  - name: ingress-nginx
+    url: https://kubernetes.github.io/ingress-nginx
+helm_plugins: []                           # e.g. ["helm-secrets", "helm-diff"]
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. tasks/main.yml</h2>
+        <pre>
+---
+- name: Download Helm binary
+  get_url:
+    url: "https://get.helm.sh/helm-{{ helm_version }}-linux-amd64.tar.gz"
+    dest: /tmp/helm.tar.gz
+    mode: '0644'
+
+- name: Extract Helm archive
+  unarchive:
+    src: /tmp/helm.tar.gz
+    dest: /tmp
+    remote_src: yes
+
+- name: Install Helm binary
+  copy:
+    src: "/tmp/linux-amd64/helm"
+    dest: "{{ helm_install_dir }}/{{ helm_binary_name }}"
+    mode: '0755'
+    remote_src: yes
+
+- name: Cleanup temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/helm.tar.gz
+    - /tmp/linux-amd64
+
+- name: Verify Helm installation
+  command: helm version --short
+  register: helm_version_check
+  changed_when: false
+
+- name: Add Helm repositories
+  command: helm repo add {{ item.name }} {{ item.url }}
+  loop: "{{ helm_repositories }}"
+  when: helm_repositories is defined
+  changed_when: true
+
+- name: Update Helm repo cache
+  command: helm repo update
+  when: helm_repositories is defined
+
+- name: Install Helm plugins (optional)
+  command: helm plugin install {{ item }}
+  loop: "{{ helm_plugins }}"
+  when: helm_plugins is defined and helm_plugins | length > 0
+  ignore_errors: yes   # Some plugins may already be installed
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Use in Playbook</h2>
+        <pre>
+---
+- name: Install Helm on Kubernetes Nodes
+  hosts: lab_servers
+  become: yes
+  pre_tasks:
+    - name: Ensure Minikube is running (prerequisite)
+      include_role:
+        name: minikube
+
+  roles:
+    - role: helm
+      helm_version: "v3.14.0"
+      helm_repositories:
+        - name: bitnami
+          url: https://charts.bitnami.com/bitnami
+        - name: prometheus-community
+          url: https://prometheus-community.github.io/helm-charts
+        - name: grafana
+          url: https://grafana.github.io/helm-charts
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Example: Deploy Nginx Ingress via Helm</h2>
+        <p>Add to a separate playbook or role:</p>
+        <pre>
+- name: Deploy NGINX Ingress Controller
+  kubernetes.core.helm:
+    name: nginx-ingress
+    chart_ref: ingress-nginx/ingress-nginx
+    release_namespace: ingress-nginx
+    create_namespace: true
+    values:
+      controller:
+        replicaCount: 2
+        service:
+          type: LoadBalancer
+</pre>
+        <p>Requires <code>community.kubernetes</code> collection:
+            <code>ansible-galaxy collection install kubernetes.core</code>
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>5. Verification</h2>
+        <pre>
+# Check Helm version
+helm version --short
+
+# List repositories
+helm repo list
+
+# Search for charts
+helm search repo nginx-ingress
+
+# List releases (in Minikube context)
+kubectl config use-context minikube
+helm ls --all-namespaces
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Notes</h2>
+        <ul>
+            <li>Idempotent: safe to rerun</li>
+            <li>Works perfectly after Minikube role</li>
+            <li>Use with <code>kubernetes.core.helm</code> module for chart deployments</li>
+            <li>Helm v3+ (no Tiller needed)</li>
+        </ul>
+    </div>
+
+    <p><strong>Helm is now fully installed and configured — ready for deploying production-grade applications to
+            Minikube!</strong></p>
+
+</body>
+
+</html>
+Save as ansible-helm-role.html. This role completes your Kubernetes toolchain: Minikube + kubectl + Helm.
+
+Now you can easily deploy complex apps (Prometheus, Grafana, Nginx, databases) via Helm charts.
+
+Next step? Let me know if you want a role for deploying a full monitoring stack (Prometheus + Grafana) via Helm!
+
+7s
+Ansible role for ArgoCD
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ansible Role: Argo CD Installation - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Ansible Role: Argo CD Installation</h1>
+    <p><strong>January 04, 2026</strong> — Deploy Argo CD on Minikube using Helm (recommended method)</p>
+
+    <div class="section">
+        <h2>Role Structure</h2>
+        <pre>
+ansible/roles/argocd/
+├── defaults/main.yml
+├── tasks/main.yml
+└── vars/main.yml   # For chart version/repo
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>1. vars/main.yml (Chart Details)</h2>
+        <pre>
+argocd_helm_repo: "https://argoproj.github.io/argo-helm"
+argocd_chart_name: "argo-cd"
+argocd_chart_version: "6.0.0"      # Check latest at argoproj.github.io/argo-helm
+argocd_release_name: "argocd"
+argocd_namespace: "argocd"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. defaults/main.yml</h2>
+        <pre>
+argocd_create_namespace: true
+argocd_admin_password: "admin"              # Change in production!
+argocd_server_insecure: false              # Set true for http access
+argocd_values: {}
+# Example overrides:
+# argocd_values:
+#   server:
+#     ingress:
+#       enabled: true
+#       hosts:
+#         - argocd.local
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. tasks/main.yml</h2>
+        <pre>
+---
+- name: Add Argo Helm repository
+  kubernetes.core.helm_repository:
+    name: argo
+    repo_url: "{{ argocd_helm_repo }}"
+
+- name: Deploy Argo CD via Helm
+  kubernetes.core.helm:
+    name: "{{ argocd_release_name }}"
+    chart_ref: "{{ argocd_chart_name }}"
+    chart_version: "{{ argocd_chart_version }}"
+    release_namespace: "{{ argocd_namespace }}"
+    create_namespace: "{{ argocd_create_namespace }}"
+    values: "{{ argocd_values | combine({
+      'server': {
+        'extraArgs': argocd_server_insecure | ternary(['--insecure'], [])
+      },
+      'configs': {
+        'secret': {
+          'argocdServerAdminPassword': "{{ argocd_admin_password | password_hash('bcrypt') }}"
+        }
+      }
+    }) }}"
+    state: present
+    wait: true
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Use in Playbook</h2>
+        <pre>
+---
+- name: Install Argo CD for GitOps
+  hosts: lab_servers
+  become: yes
+  pre_tasks:
+    - name: Ensure Helm and Minikube are ready
+      include_role:
+        name: helm
+    - include_role:
+        name: minikube
+
+  roles:
+    - role: argocd
+      argocd_admin_password: "supersecret123"
+      argocd_server_insecure: true   # For easy local access in Minikube
+      argocd_values:
+        server:
+          service:
+            type: NodePort
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Verification & Access</h2>
+        <pre>
+# Get admin password (if not set)
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+# Port-forward for UI access
+kubectl port-forward svc/argocd-server -n argocd 8080:80
+
+# Open browser: http://localhost:8080 (user: admin)
+
+# Or in Minikube
+minikube service argocd-server --url -n argocd
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Notes</h2>
+        <ul>
+            <li>Requires <code>kubernetes.core</code> collection:
+                <code>ansible-galaxy collection install kubernetes.core</code>
+            </li>
+            <li>Uses Helm (from previous role) — preferred over raw manifests</li>
+            <li>Idempotent and upgradable</li>
+            <li>For production: Use Ingress, proper secrets, RBAC</li>
+            <li>Argo CD enables full GitOps for your apps!</li>
+        </ul>
+    </div>
+
+    <p><strong>Argo CD is now deployed — manage all your Kubernetes apps declaratively via Git!</strong></p>
+
+</body>
+
+</html>
+Save as ansible-argocd-role.html. This role uses Helm for flexible, versioned deployments (best practice in 2026).
+
+Integrates seamlessly with your Minikube + Helm roles. Now you can bootstrap GitOps workflows in your lab.
+
+Let me know if you want an example Argo CD Application for deploying your Node.js app!
+
+5s
+Web page favicon
+Web page favicon
+Web page favicon
+35 sources
+more terraform and git
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>More Terraform + Git Best Practices - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>More Terraform + Git Integration</h1>
+    <p><strong>January 04, 2026</strong> — Advanced Terraform structure, remote state, workspaces, and Git workflows</p>
+
+    <div class="section">
+        <h2>1. Recommended Terraform Repository Layout</h2>
+        <pre>
+terraform/
+├── modules/                  # Reusable modules
+│   ├── vpc/
+│   ├── ec2_lab/
+│   └── security_group/
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── backend.tf
+│   │   └── terraform.tfvars
+│   ├── staging/
+│   └── prod/
+├── backend.tf                # Shared remote backend config
+├── versions.tf               # Provider/version constraints
+└── .terraform.lock.hcl       # Dependency lock file (committed)
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. versions.tf (Pin Versions)</h2>
+        <pre>
+terraform {
+  required_version = ">= 1.9.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.70"
+    }
+  }
+}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Remote Backend (S3 + DynamoDB) - backend.tf</h2>
+        <pre>
+terraform {
+  backend "s3" {
+    bucket         = "my-devops-lab-terraform-state"
+    key            = "env/{{ terraform.workspace }}/terraform.tfstate"
+    region         = "us-west-2"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
+  }
+}
+</pre>
+        <p>Initialize per environment:</p>
+        <pre>
+cd environments/dev
+terraform init -backend-config="bucket=my-devops-lab-terraform-state" \
+               -backend-config="dynamodb_table=terraform-locks"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Workspaces for Multi-Environment</h2>
+        <pre>
+# Create and switch
+terraform workspace new dev
+terraform workspace new staging
+terraform workspace select dev
+
+# Each has separate state (key includes workspace)
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Environment-Specific Variables (environments/dev/terraform.tfvars)</h2>
+        <pre>
+environment    = "dev"
+instance_count = 2
+instance_type  = "t3.medium"
+</pre>
+        <p>Staging/prod have different values.</p>
+    </div>
+
+    <div class="section">
+        <h2>6. Git Workflow for Terraform Changes</h2>
+        <pre>
+# Feature branch
+git checkout -b infra/add-monitoring-server
+
+# Make changes in environments/dev/main.tf
+git add environments/dev/main.tf
+git commit -m "infra(dev): add monitoring server instance"
+
+# Push and open PR
+git push origin infra/add-monitoring-server
+
+# PR checks: terraform plan in CI
+# Merge to main → CD runs terraform apply
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. GitHub Actions: Terraform CI/CD (Ultra-Concise)</h2>
+        <pre>
+# .github/workflows/terraform.yml
+name: Terraform
+
+on:
+  pull_request:
+    paths: ['terraform/**']
+  push:
+    branches: [main]
+    paths: ['terraform/**']
+
+jobs:
+  plan-apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.x
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/environments/${{ terraform.workspace || 'dev' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Terraform Plan (PR only)
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color
+
+      - name: Terraform Apply (main only)
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>8. .gitignore for Terraform</h2>
+        <pre>
+# Terraform
+.terraform/
+.terraform.lock.hcl          # Commit this one!
+*.tfstate
+*.tfstate.backup
+*.tfvars                     # Except example files
+crash.log
+override.tf
+*.tfplan
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>9. Best Practices Summary</h2>
+        <table>
+            <tr>
+                <th>Practice</th>
+                <th>Why</th>
+            </tr>
+            <tr>
+                <td>Remote backend + locking</td>
+                <td>Safe concurrent operations</td>
+            </tr>
+            <tr>
+                <td>Workspaces + env folders</td>
+                <td>Clear separation, promotion path</td>
+            </tr>
+            <tr>
+                <td>Commit .terraform.lock.hcl</td>
+                <td>Reproducible provider versions</td>
+            </tr>
+            <tr>
+                <td>PR plans, main applies</td>
+                <td>Review changes before apply</td>
+            </tr>
+            <tr>
+                <td>Branch naming: infra/*</td>
+                <td>Clear intent in Git history</td>
+            </tr>
+        </table>
+    </div>
+
+    <p><strong>Your Terraform setup is now enterprise-grade: multi-environment, secure state, Git-integrated
+            CI/CD.</strong></p>
+
+</body>
+
+</html>
+Save as more-terraform-git.html. This gives you advanced Terraform structure with proper Git integration, remote state,
+and automated CI/CD.
+
+Your infrastructure changes are now fully version-controlled, reviewed, and safely applied.
+
+Let me know if you want Terraform modules for EKS, VPC, or integration with Ansible dynamic inventory!
+
+3.4s
+Terraform EKS module example
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terraform EKS Module Example - DevOps Lab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Terraform EKS Module Example</h1>
+    <p><strong>January 04, 2026</strong> — Production-ready Amazon EKS cluster using the official Terraform AWS EKS
+        module</p>
+
+    <div class="section">
+        <h2>1. Repository Structure</h2>
+        <pre>
+terraform/
+└── environments/
+    └── prod/                  # or dev/staging
+        ├── main.tf
+        ├── variables.tf
+        ├── outputs.tf
+        ├── backend.tf
+        └── terraform.tfvars
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. main.tf - Using terraform-aws-modules/eks</h2>
+        <pre>
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"                 # Stable as of 2026
+
+  cluster_name                    = var.cluster_name
+  cluster_version                 = var.kubernetes_version
+  cluster_endpoint_public_access  = true
+  cluster_endpoint_private_access = true
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
+
+  # Enable cluster addons
+  cluster_addons = {
+    coredns = {}
+    kube-proxy = {}
+    vpc-cni = {}
+    aws-ebs-csi-driver = {}
+  }
+
+  # Managed node groups (recommended)
+  eks_managed_node_groups = {
+    default = {
+      desired_size = 3
+      min_size     = 2
+      max_size     = 6
+
+      instance_types = ["t3.medium"]
+      capacity_type  = "ON_DEMAND"
+
+      labels = {
+        role = "general"
+      }
+    }
+
+    monitoring = {
+      desired_size   = 2
+      instance_types = ["t3.large"]
+      labels = {
+        role = "monitoring"
+      }
+    }
+  }
+
+  # Optional: Fargate profiles
+  # fargate_profiles = { ... }
+
+  tags = {
+    Environment = var.environment
+    Terraform   = "true"
+  }
+}
+
+# Optional: Separate VPC module
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = "${var.cluster_name}-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = ["${var.region}a", "${var.region}b", "${var.region}c"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
+  tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "shared"
+  }
+}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. variables.tf</h2>
+        <pre>
+variable "region" {
+  default = "us-west-2"
+}
+
+variable "cluster_name" {
+  description = "Name of the EKS cluster"
+  type        = string
+}
+
+variable "kubernetes_version" {
+  default = "1.30"
+}
+
+variable "environment" {
+  default = "prod"
+}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. terraform.tfvars (Example)</h2>
+        <pre>
+cluster_name       = "devops-lab-eks"
+kubernetes_version = "1.30"
+region             = "us-west-2"
+environment        = "production"
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. outputs.tf</h2>
+        <pre>
+output "cluster_endpoint" {
+  value = module.eks.cluster_endpoint
+}
+
+output "cluster_certificate_authority_data" {
+  value = module.eks.cluster_certificate_authority_data
+}
+
+output "cluster_name" {
+  value = module.eks.cluster_name
+}
+
+output "update_kubeconfig_command" {
+  value = "aws eks update-kubeconfig --region ${var.region} --name ${module.eks.cluster_name}"
+}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>6. Initialize & Apply</h2>
+        <pre>
+cd terraform/environments/prod
+terraform init
+terraform plan
+terraform apply
+
+# After apply
+aws eks update-kubeconfig --region us-west-2 --name devops-lab-eks
+kubectl get nodes
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. GitHub Actions Integration (Terraform CI/CD)</h2>
+        <pre>
+# Add to existing workflow or separate
+- name: Terraform EKS Plan
+  if: github.event_name == 'pull_request'
+  run: terraform plan
+
+- name: Terraform EKS Apply
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  run: terraform apply -auto-approve
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>8. Best Practices Summary</h2>
+        <table>
+            <tr>
+                <th>Practice</th>
+                <th>Implementation</th>
+            </tr>
+            <tr>
+                <td>Official module</td>
+                <td>terraform-aws-modules/eks/aws</td>
+            </tr>
+            <tr>
+                <td>Managed node groups</td>
+                <td>Autoscaling, easy upgrades</td>
+            </tr>
+            <tr>
+                <td>Separate VPC</td>
+                <td>Isolated networking</td>
+            </tr>
+            <tr>
+                <td>Remote backend</td>
+                <td>S3 + DynamoDB locking</td>
+            </tr>
+            <tr>
+                <td>Version pinning</td>
+                <td>~> 20.0</td>
+            </tr>
+        </table>
+    </div>
+
+    <p><strong>You now have a fully managed, production-ready EKS cluster with Terraform!</strong><br>
+        Ready for Argo CD, Helm deployments, and your Node.js app.</p>
+
+</body>
+
+</html>
+Save as terraform-eks-module.html. This uses the official, battle-tested EKS module (maintained by the Terraform AWS
+team).
+
+Scales from lab to production with minimal changes. Combine with previous Ansible roles for full automation.
+
+Let me know if you want addons (Cluster Autoscaler, ALB Controller), IAM roles for service accounts, or integration with
+Argo CD!
+
+2.4s
+EKS IAM roles for service accounts
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EKS IAM Roles for Service Accounts (IRSA) - Terraform Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>EKS IAM Roles for Service Accounts (IRSA)</h1>
+    <p><strong>January 04, 2026</strong> — Secure pod access to AWS resources using Terraform</p>
+
+    <div class="section">
+        <h2>What is IRSA?</h2>
+        <p>IAM Roles for Service Accounts (IRSA) allows Kubernetes pods to assume IAM roles via OpenID Connect (OIDC).
+            This provides fine-grained, temporary AWS permissions without storing credentials in pods.</p>
+    </div>
+
+    <div class="section">
+        <h2>1. Enable IRSA in EKS Module</h2>
+        <p>In your EKS module (terraform-aws-modules/eks/aws ~> 20.0+):</p>
+        <pre>
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
+
+  cluster_name = var.cluster_name
+  # ... other config ...
+
+  enable_irsa = true   # Creates OIDC provider automatically
+}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. Create IRSA Role (Using Dedicated IAM Module)</h2>
+        <p>Best practice: Use terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks</p>
+        <pre>
+module "my_app_irsa" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "~> 5.0"
+
+  role_name = "my-app-s3-access"
+
+  # Attach managed or custom policies
+  attach_s3_policy = true
+  s3_bucket_arns   = ["arn:aws:s3:::my-app-bucket/*"]
+
+  # Or custom policy
+  # role_policy_arns = [aws_iam_policy.my_custom.arn]
+
+  oidc_providers = {
+    main = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["my-namespace:my-service-account"]
+    }
+  }
+
+  tags = {
+    Purpose = "my-app-s3-access"
+  }
+}
+</pre>
+        <p>Output role ARN: <code>module.my_app_irsa.iam_role_arn</code></p>
+    </div>
+
+    <div class="section">
+        <h2>3. Kubernetes Service Account (Apply via kubectl or Helm)</h2>
+        <pre>
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service-account
+  namespace: my-namespace
+  annotations:
+    eks.amazonaws.com/role-arn: ${module.my_app_irsa.iam_role_arn}
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Use in Deployment</h2>
+        <pre>
+spec:
+  serviceAccountName: my-service-account
+  containers:
+    - name: my-app
+      image: my-app:latest
+      # No AWS credentials needed!
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Common IRSA Examples</h2>
+        <table>
+            <tr>
+                <th>Use Case</th>
+                <th>Policy Attachment</th>
+                <th>Service Account</th>
+            </tr>
+            <tr>
+                <td>EBS CSI Driver</td>
+                <td><code>attach_ebs_csi_policy = true</code></td>
+                <td>kube-system:ebs-csi-controller-sa</td>
+            </tr>
+            <tr>
+                <td>Load Balancer Controller</td>
+                <td><code>attach_load_balancer_controller_policy = true</code></td>
+                <td>kube-system:aws-load-balancer-controller</td>
+            </tr>
+            <tr>
+                <td>Cluster Autoscaler</td>
+                <td><code>attach_cluster_autoscaler_policy = true</code></td>
+                <td>kube-system:cluster-autoscaler</td>
+            </tr>
+            <tr>
+                <td>S3 Access (Custom)</td>
+                <td><code>attach_s3_policy = true</code> + bucket ARNs</td>
+                <td>your-ns:your-sa</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>6. Verification</h2>
+        <pre>
+# Check pod assumes role
+kubectl exec -it &lt;pod&gt; -- env | grep AWS_ROLE_ARN
+
+# Test AWS access (example S3)
+kubectl exec -it &lt;pod&gt; -- aws s3 ls my-app-bucket
+</pre>
+    </div>
+
+    <div class="section">
+        <h2>7. Best Practices (2026)</h2>
+        <ul>
+            <li>Always enable IRSA in EKS module</li>
+            <li>Use dedicated IAM module for roles</li>
+            <li>Least privilege policies</li>
+            <li>Separate namespaces per app</li>
+            <li>Avoid node instance profiles for app permissions</li>
+        </ul>
+    </div>
+
+    <p><strong>IRSA is now configured — your pods securely access AWS resources without credentials!</strong></p>
+
+</body>
+
+</html>
+Save as eks-irsa-terraform.html. This follows current best practices using the official modules.
+
+Ready for production security in your EKS cluster. Let me know if you want Pod Identity (newer alternative) or specific
+addon examples!
+
+3.6s
+Web page favicon
+Web page favicon
+Web page favicon
+35 sources
+Add troubleshooting section
+
+HTML
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troubleshooting Section - DevOps Lab Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        pre {
+            background: #eee;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95em;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Troubleshooting Section</h1>
+    <p><strong>January 04, 2026</strong> — Common issues and fixes for your DevOps lab setup</p>
+
+    <div class="section">
+        <h2>1. General Linux Server Issues</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Can't SSH after hardening</td>
+                <td>Connection refused / timeout</td>
+                <td>Check UFW: <code>sudo ufw status</code><br>Allow SSH: <code>sudo ufw allow OpenSSH</code><br>Restart
+                    SSH: <code>sudo systemctl restart ssh</code></td>
+            </tr>
+            <tr>
+                <td>Package install fails</td>
+                <td>apt errors, key issues</td>
+                <td>Update cache: <code>sudo apt update</code><br>Fix keys: <code>sudo apt-key adv --refresh-keys</code>
+                </td>
+            </tr>
+            <tr>
+                <td>Disk full</td>
+                <td>No space left</td>
+                <td>Clean: <code>sudo apt autoremove && sudo journalctl --vacuum-time=2weeks</code><br>Check:
+                    <code>df -h</code>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>2. Docker Problems</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Permission denied</td>
+                <td>docker: permission denied</td>
+                <td>Add user to group: <code>sudo usermod -aG docker $USER</code><br>Log out/in</td>
+            </tr>
+            <tr>
+                <td>Container won't start</td>
+                <td>Port in use / crashloop</td>
+                <td>Check logs: <code>docker logs &lt;container&gt;</code><br>Free port: <code>sudo lsof -i :3000</code>
+                </td>
+            </tr>
+            <tr>
+                <td>Image pull fails</td>
+                <td>Unauthorized / timeout</td>
+                <td>Login: <code>docker login</code><br>Check internet/DNS</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>3. Minikube / Kubernetes Issues</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Minikube won't start</td>
+                <td>Failed to start / driver error</td>
+                <td>Reset: <code>minikube delete && minikube start --driver=docker --force</code><br>Check Docker
+                    running</td>
+            </tr>
+            <tr>
+                <td>Pods stuck in Pending</td>
+                <td>No nodes available</td>
+                <td>Check node: <code>kubectl get nodes</code><br>Status: <code>minikube status</code></td>
+            </tr>
+            <tr>
+                <td>Can't access service</td>
+                <td>Connection refused</td>
+                <td>Tunnel: <code>minikube service my-app --url</code><br>Or port-forward:
+                    <code>kubectl port-forward svc/my-app 3000:80</code>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>4. Ansible Problems</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Host unreachable</td>
+                <td>UNREACHABLE error</td>
+                <td>Ping: <code>ansible all -m ping</code><br>Check inventory IPs, SSH keys, firewall</td>
+            </tr>
+            <tr>
+                <td>Task fails repeatedly</td>
+                <td>Changed every run</td>
+                <td>Make idempotent (use <code>state: present</code>)<br>Dry-run: <code>--check</code></td>
+            </tr>
+            <tr>
+                <td>Python errors</td>
+                <td>No python interpreter</td>
+                <td>Install python on target: <code>sudo apt install python3</code></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>5. Terraform Issues</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>State lock error</td>
+                <td>Lock held by another process</td>
+                <td>Wait or force unlock: <code>terraform force-unlock &lt;lock_id&gt;</code></td>
+            </tr>
+            <tr>
+                <td>Provider errors</td>
+                <td>Version conflict</td>
+                <td>Run <code>terraform init -upgrade</code><br>Check .terraform.lock.hcl</td>
+            </tr>
+            <tr>
+                <td>Resource not found</td>
+                <td>Apply succeeds but missing</td>
+                <td>Import: <code>terraform import &lt;resource&gt; &lt;id&gt;</code><br>Or refresh:
+                    <code>terraform refresh</code>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>6. GitHub Actions / CI/CD</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Workflow fails</td>
+                <td>Red X in Actions tab</td>
+                <td>Click run → View logs → Search error</td>
+            </tr>
+            <tr>
+                <td>Secret not available</td>
+                <td>*** masked</td>
+                <td>Add secret in repo Settings → Secrets</td>
+            </tr>
+            <tr>
+                <td>Minikube timeout</td>
+                <td>Job exceeds time limit</td>
+                <td>Add <code>--force</code> or increase resources</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>7. Monitoring (Prometheus/Grafana)</h2>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Symptom</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>No metrics</td>
+                <td>Targets down in Prometheus</td>
+                <td>Check Node Exporter running: <code>systemctl status node_exporter</code><br>Port 9100 open</td>
+            </tr>
+            <tr>
+                <td>Grafana blank</td>
+                <td>No dashboards/data sources</td>
+                <td>Restart: <code>sudo systemctl restart grafana-server</code><br>Check provisioning files</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>8. Quick Debug Commands</h2>
+        <pre>
+# System
+journalctl -u docker -f
+sudo ufw status verbose
+df -h
+
+# Kubernetes
+kubectl get pods --all-namespaces
+kubectl logs &lt;pod&gt;
+minikube logs
+
+# Network
+sudo netstat -tulnp | grep 3000
+curl -v http://localhost:3000
+
+# Ansible
+ansible -m setup &lt;host&gt;    # Gather facts
+</pre>
+    </div>
+
+    <p><strong>Most issues are resolved with logs, status checks, and restarts. Keep calm and read the error
+            messages!</strong></p>
+
+</body>
+
+</html>
+Save as troubleshooting.html. This section covers the most common pain points across your entire lab stack.
+
+Add it to your main guide for quick reference when things go wrong (they always do in DevOps!).
+
+You're now fully equipped to build AND debug your lab. Happy automating!

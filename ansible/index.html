@@ -1,0 +1,3867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible Mastery — Complete Learning Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #0f1525;
+    --surface2: #141c30;
+    --border: #1e2d4a;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --accent4: #f59e0b;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --beginner: #10b981;
+    --intermediate: #f59e0b;
+    --advanced: #ef4444;
+    --code-bg: #060a14;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Lora', Georgia, serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 3px; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0;
+    width: 280px;
+    height: 100vh;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .sidebar-logo p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  .sidebar-nav { flex: 1; padding: 12px 0; }
+
+  .nav-section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 12px 20px 4px;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 6px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    color: var(--accent);
+    background: rgba(0,212,255,0.05);
+    border-left-color: var(--accent);
+  }
+
+  .nav-link.beginner { border-left-color: transparent; }
+  .nav-link.beginner:hover { border-left-color: var(--beginner); color: var(--beginner); background: rgba(16,185,129,0.05); }
+  .nav-link.intermediate:hover { border-left-color: var(--intermediate); color: var(--intermediate); background: rgba(245,158,11,0.05); }
+  .nav-link.advanced:hover { border-left-color: var(--advanced); color: var(--advanced); background: rgba(239,68,68,0.05); }
+
+  /* ── MAIN ── */
+  #main {
+    margin-left: 280px;
+    min-height: 100vh;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 80px 60px 60px;
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1a35 50%, #0a0e1a 100%);
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; right: -100px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,58,237,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; left: 200px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.25);
+    padding: 6px 16px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 3.8rem;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin-bottom: 36px;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 36px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.8rem;
+    color: var(--accent);
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  /* ── CONTENT ── */
+  .content { padding: 0; }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 56px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .section:nth-child(even) { background: var(--surface); }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 36px;
+  }
+
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-top: 6px;
+  }
+
+  .section-title-group h2 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.8rem;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .section-title-group p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+
+  .level-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+  }
+
+  .level-badge.beginner { color: var(--beginner); background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+  .level-badge.intermediate { color: var(--intermediate); background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+  .level-badge.advanced { color: var(--advanced); background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+
+  /* ── PROSE ── */
+  .prose h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--accent);
+    margin: 32px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(0,212,255,0.15);
+  }
+
+  .prose h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--accent4);
+    margin: 24px 0 8px;
+  }
+
+  .prose p {
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    max-width: 820px;
+  }
+
+  .prose ul, .prose ol {
+    color: var(--text-dim);
+    padding-left: 24px;
+    margin-bottom: 14px;
+    max-width: 820px;
+  }
+
+  .prose li { margin-bottom: 6px; }
+
+  .prose strong { color: var(--text); font-weight: 600; }
+
+  /* ── CODE BLOCKS ── */
+  .code-block {
+    margin: 20px 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #0d1220;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-filename {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .code-filename::before {
+    content: '⬡';
+    font-size: 0.8rem;
+    opacity: 0.6;
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .code-copy {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    padding: 3px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .code-copy:hover { background: rgba(0,212,255,0.15); }
+
+  pre {
+    background: var(--code-bg);
+    padding: 20px 20px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    tab-size: 2;
+  }
+
+  pre code { color: var(--text-dim); }
+
+  /* Syntax colors */
+  .kw { color: #7c3aed; }
+  .str { color: #10b981; }
+  .num { color: #f59e0b; }
+  .cm { color: #4a5568; font-style: italic; }
+  .key { color: #00d4ff; }
+  .bool { color: #ef4444; }
+  .var { color: #a78bfa; }
+  .tag { color: #f472b6; }
+
+  /* ── INFO BOXES ── */
+  .info-box {
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    border-left: 3px solid;
+    max-width: 820px;
+    font-size: 0.92rem;
+  }
+
+  .info-box.tip { border-color: var(--accent3); background: rgba(16,185,129,0.06); }
+  .info-box.warning { border-color: var(--intermediate); background: rgba(245,158,11,0.06); }
+  .info-box.danger { border-color: var(--accent5); background: rgba(239,68,68,0.06); }
+  .info-box.info { border-color: var(--accent); background: rgba(0,212,255,0.06); }
+
+  .info-box .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .info-box.tip .label { color: var(--accent3); }
+  .info-box.warning .label { color: var(--intermediate); }
+  .info-box.danger .label { color: var(--accent5); }
+  .info-box.info .label { color: var(--accent); }
+
+  /* ── CARDS ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--accent2); }
+
+  .card h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+  .card-icon {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  /* ── PROJECT BLOCKS ── */
+  .project-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 28px 0;
+  }
+
+  .project-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    background: #0d1220;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .project-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .project-header h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    margin: 0;
+    border: none;
+    padding: 0;
+  }
+
+  .project-body { padding: 22px; }
+
+  .project-body > p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    max-width: 100%;
+  }
+
+  .project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .meta-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 2px;
+  }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; margin: 20px 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  th {
+    background: #0d1220;
+    color: var(--accent);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+
+  tr:hover td { background: rgba(0,212,255,0.02); }
+
+  td code, th code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent3);
+    background: rgba(16,185,129,0.08);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  /* ── CHEATSHEET ── */
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+    margin: 20px 0;
+  }
+
+  .cheat-item {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 14px;
+  }
+
+  .cheat-item .cheat-cmd {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .cheat-item .cheat-desc {
+    font-family: 'Lora', serif;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* ── PROGRESS ROAD MAP ── */
+  .roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 24px 0;
+    position: relative;
+    padding-left: 30px;
+  }
+
+  .roadmap::before {
+    content: '';
+    position: absolute;
+    left: 9px; top: 12px; bottom: 12px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--beginner), var(--intermediate), var(--advanced));
+  }
+
+  .road-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .road-dot {
+    position: absolute;
+    left: -26px; top: 4px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+    background: var(--bg);
+    flex-shrink: 0;
+  }
+
+  .road-step.b .road-dot { border-color: var(--beginner); }
+  .road-step.i .road-dot { border-color: var(--intermediate); }
+  .road-step.a .road-dot { border-color: var(--advanced); }
+
+  .road-content h4 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #fff;
+    margin: 0 0 4px;
+  }
+
+  .road-content p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── TOC PANEL ── */
+  .toc-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+    max-width: 700px;
+  }
+
+  .toc-panel h3 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent);
+    border: none;
+    margin: 0 0 14px;
+    padding: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .toc-panel ol {
+    color: var(--text-muted);
+    padding-left: 20px;
+  }
+
+  .toc-panel li { margin-bottom: 4px; font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; }
+  .toc-panel a { color: var(--text-dim); text-decoration: none; }
+  .toc-panel a:hover { color: var(--accent); }
+
+  /* ── INLINE CODE ── */
+  p code, li code, td code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82em;
+    color: var(--accent3);
+    background: rgba(16,185,129,0.08);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .level-divider {
+    padding: 32px 60px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .level-divider-line { flex: 1; height: 1px; }
+  .level-divider-line.b { background: linear-gradient(to right, transparent, var(--beginner)); }
+  .level-divider-line.i { background: linear-gradient(to right, transparent, var(--intermediate)); }
+  .level-divider-line.a { background: linear-gradient(to right, transparent, var(--advanced)); }
+  .level-divider-line.b-right { background: linear-gradient(to left, transparent, var(--beginner)); }
+  .level-divider-line.i-right { background: linear-gradient(to left, transparent, var(--intermediate)); }
+  .level-divider-line.a-right { background: linear-gradient(to left, transparent, var(--advanced)); }
+
+  .level-divider-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    white-space: nowrap;
+  }
+
+  .level-divider-label.b { color: var(--beginner); }
+  .level-divider-label.i { color: var(--intermediate); }
+  .level-divider-label.a { color: var(--advanced); }
+
+  /* ── TABS ── */
+  .tabs { margin: 20px 0; }
+  .tab-buttons { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+  .tab-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    padding: 8px 18px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; padding: 20px 0 0; }
+  .tab-content.active { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    #sidebar { display: none; }
+    #main { margin-left: 0; }
+    .hero { padding: 40px 24px; }
+    .hero h1 { font-size: 2.4rem; }
+    .section { padding: 40px 24px; }
+    .level-divider { padding: 24px 24px 16px; }
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section { animation: fadeInUp 0.4s ease both; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h2>⬡ Ansible Mastery</h2>
+    <p>$ complete learning guide v1.0</p>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-link" href="#intro">Introduction</a>
+    <a class="nav-link" href="#architecture">Architecture</a>
+    <a class="nav-link" href="#install">Installation</a>
+
+    <div class="nav-section-label">— Beginner</div>
+    <a class="nav-link beginner" href="#inventory">Inventory Files</a>
+    <a class="nav-link beginner" href="#adhoc">Ad-Hoc Commands</a>
+    <a class="nav-link beginner" href="#playbooks-intro">Playbooks Intro</a>
+    <a class="nav-link beginner" href="#modules">Core Modules</a>
+    <a class="nav-link beginner" href="#variables">Variables & Facts</a>
+    <a class="nav-link beginner" href="#project1">Project 1: Web Server</a>
+    <a class="nav-link beginner" href="#project2">Project 2: User Mgmt</a>
+    <a class="nav-link beginner" href="#project3">Project 3: Package Deploy</a>
+
+    <div class="nav-section-label">— Intermediate</div>
+    <a class="nav-link intermediate" href="#templates">Templates (Jinja2)</a>
+    <a class="nav-link intermediate" href="#handlers">Handlers & Notify</a>
+    <a class="nav-link intermediate" href="#conditionals">Conditionals & Loops</a>
+    <a class="nav-link intermediate" href="#roles">Roles</a>
+    <a class="nav-link intermediate" href="#vault">Ansible Vault</a>
+    <a class="nav-link intermediate" href="#tags">Tags & Limits</a>
+    <a class="nav-link intermediate" href="#project4">Project 4: LAMP Stack</a>
+    <a class="nav-link intermediate" href="#project5">Project 5: Security Hardening</a>
+    <a class="nav-link intermediate" href="#project6">Project 6: DB Setup</a>
+    <a class="nav-link intermediate" href="#project7">Project 7: Docker Deploy</a>
+
+    <div class="nav-section-label">— Advanced</div>
+    <a class="nav-link advanced" href="#dynamic-inventory">Dynamic Inventory</a>
+    <a class="nav-link advanced" href="#custom-modules">Custom Modules</a>
+    <a class="nav-link advanced" href="#strategies">Execution Strategies</a>
+    <a class="nav-link advanced" href="#error-handling">Error Handling</a>
+    <a class="nav-link advanced" href="#collections">Collections & Galaxy</a>
+    <a class="nav-link advanced" href="#awx">AWX / Tower</a>
+    <a class="nav-link advanced" href="#testing">Testing Playbooks</a>
+    <a class="nav-link advanced" href="#project8">Project 8: K8s Deploy</a>
+    <a class="nav-link advanced" href="#project9">Project 9: CI/CD Pipeline</a>
+    <a class="nav-link advanced" href="#project10">Project 10: Cloud Infra</a>
+    <a class="nav-link advanced" href="#project11">Project 11: Full Stack App</a>
+
+    <div class="nav-section-label">Reference</div>
+    <a class="nav-link" href="#cheatsheet">Cheat Sheet</a>
+    <a class="nav-link" href="#best-practices">Best Practices</a>
+    <a class="nav-link" href="#troubleshooting">Troubleshooting</a>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">Complete Learning Guide · 2025</div>
+    <h1>Ansible<br><span>Mastery</span></h1>
+    <p class="hero-subtitle">From zero to expert — infrastructure automation, orchestration, and configuration management with real-world projects and playbooks.</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num">11</span><span class="stat-label">Projects</span></div>
+      <div class="stat"><span class="stat-num">50+</span><span class="stat-label">Playbooks</span></div>
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Skill Levels</span></div>
+      <div class="stat"><span class="stat-num">∞</span><span class="stat-label">Automation</span></div>
+    </div>
+  </div>
+
+  <div class="content">
+
+  <!-- ═══════════════════════════════════════════ INTRO ═══ -->
+  <section class="section" id="intro">
+    <div class="section-header">
+      <div class="section-number">00</div>
+      <div class="section-title-group">
+        <h2>What Is Ansible?</h2>
+        <p>The agentless automation engine every DevOps engineer needs</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Ansible is an open-source <strong>IT automation tool</strong> developed by Red Hat. It enables you to automate provisioning, configuration management, application deployment, orchestration, and many other IT tasks. It uses <strong>YAML</strong> (a human-readable data serialization language) to describe automation jobs, called <strong>playbooks</strong>.</p>
+
+      <div class="toc-panel">
+        <h3>Table of Contents</h3>
+        <ol>
+          <li><a href="#intro">Introduction & Architecture</a></li>
+          <li><a href="#install">Installation & Setup</a></li>
+          <li><a href="#inventory">Beginner: Inventory, Ad-Hoc, Playbooks</a></li>
+          <li><a href="#project1">Beginner Projects (1–3)</a></li>
+          <li><a href="#templates">Intermediate: Templates, Roles, Vault</a></li>
+          <li><a href="#project4">Intermediate Projects (4–7)</a></li>
+          <li><a href="#dynamic-inventory">Advanced: Modules, Collections, AWX</a></li>
+          <li><a href="#project8">Advanced Projects (8–11)</a></li>
+          <li><a href="#cheatsheet">Reference: Cheat Sheet & Best Practices</a></li>
+        </ol>
+      </div>
+
+      <h3>Why Ansible over other tools?</h3>
+      <div class="card-grid">
+        <div class="card">
+          <h4><span class="card-icon" style="background:rgba(0,212,255,0.1)">🚫</span>Agentless</h4>
+          <p>No agent software required on managed nodes. Uses SSH (Linux) or WinRM (Windows).</p>
+        </div>
+        <div class="card">
+          <h4><span class="card-icon" style="background:rgba(16,185,129,0.1)">📖</span>Human-readable</h4>
+          <p>YAML playbooks are easy to read, write, and understand — no DSL to learn.</p>
+        </div>
+        <div class="card">
+          <h4><span class="card-icon" style="background:rgba(124,58,237,0.1)">⚖️</span>Idempotent</h4>
+          <p>Running a playbook multiple times produces the same result. Safe to re-run anytime.</p>
+        </div>
+        <div class="card">
+          <h4><span class="card-icon" style="background:rgba(245,158,11,0.1)">🔌</span>3000+ Modules</h4>
+          <p>Manage files, packages, services, clouds (AWS/GCP/Azure), databases, and more.</p>
+        </div>
+        <div class="card">
+          <h4><span class="card-icon" style="background:rgba(239,68,68,0.1)">🏗️</span>Ansible Galaxy</h4>
+          <p>Thousands of community roles and collections — don't reinvent the wheel.</p>
+        </div>
+        <div class="card">
+          <h4><span class="card-icon" style="background:rgba(0,212,255,0.1)">🔒</span>Vault</h4>
+          <p>Built-in secret management with AES-256 encryption for sensitive data.</p>
+        </div>
+      </div>
+
+      <h3>Comparison</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Feature</th><th>Ansible</th><th>Chef</th><th>Puppet</th><th>Terraform</th></tr>
+          <tr><td>Language</td><td>YAML</td><td>Ruby DSL</td><td>Puppet DSL</td><td>HCL</td></tr>
+          <tr><td>Agent</td><td>Agentless</td><td>Required</td><td>Required</td><td>Agentless</td></tr>
+          <tr><td>Push/Pull</td><td>Push</td><td>Pull</td><td>Pull</td><td>Push</td></tr>
+          <tr><td>Learning Curve</td><td>Low</td><td>High</td><td>High</td><td>Medium</td></tr>
+          <tr><td>Best For</td><td>Config + Orchestration</td><td>Config</td><td>Config</td><td>Provisioning</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ ARCHITECTURE ═══ -->
+  <section class="section" id="architecture">
+    <div class="section-header">
+      <div class="section-number">01</div>
+      <div class="section-title-group">
+        <h2>Ansible Architecture</h2>
+        <p>Control node, managed nodes, and how they connect</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Ansible's architecture is simple: a <strong>control node</strong> connects over SSH to one or more <strong>managed nodes</strong> and executes tasks. No agent, no daemon — just SSH.</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">architecture-overview.txt</span>
+          <span class="code-lang">ASCII</span>
+        </div>
+        <pre><code>
+  ┌─────────────────────────────────────────────────────────┐
+  │                    CONTROL NODE                         │
+  │                                                         │
+  │   ansible.cfg    inventory/      playbooks/             │
+  │   roles/         collections/    group_vars/            │
+  │                                                         │
+  │         [ Ansible Engine (Python) ]                     │
+  └──────────┬────────────┬───────────────┬─────────────────┘
+             │ SSH        │ SSH           │ SSH
+             ▼            ▼               ▼
+    ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+    │  Managed     │ │  Managed     │ │  Managed     │
+    │  Node #1     │ │  Node #2     │ │  Node #3     │
+    │  webserver   │ │  dbserver    │ │  appserver   │
+    └──────────────┘ └──────────────┘ └──────────────┘
+        </code></pre>
+      </div>
+
+      <h3>Core Components</h3>
+      <div class="card-grid">
+        <div class="card">
+          <h4>📋 Inventory</h4>
+          <p>A list of managed hosts, in INI or YAML format. Can be static files or dynamic scripts.</p>
+        </div>
+        <div class="card">
+          <h4>📜 Playbooks</h4>
+          <p>YAML files describing the desired state. Contain one or more plays targeting host groups.</p>
+        </div>
+        <div class="card">
+          <h4>🔧 Modules</h4>
+          <p>Units of work: <code>apt</code>, <code>copy</code>, <code>service</code>, <code>template</code>, <code>file</code>, etc.</p>
+        </div>
+        <div class="card">
+          <h4>🔌 Plugins</h4>
+          <p>Extend Ansible: connection, callback, filter, lookup, and more.</p>
+        </div>
+        <div class="card">
+          <h4>📦 Roles</h4>
+          <p>Reusable, structured playbook units. Standard directory layout for sharing.</p>
+        </div>
+        <div class="card">
+          <h4>⚙️ ansible.cfg</h4>
+          <p>Configuration file for defaults: inventory path, SSH settings, forks, etc.</p>
+        </div>
+      </div>
+
+      <h3>ansible.cfg — Project-level Config</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">ansible.cfg</span>
+          <span class="code-lang">INI</span>
+          <button class="code-copy" onclick="copyCode(this)">copy</button>
+        </div>
+        <pre><code><span class="cm"># ansible.cfg — place in project root</span>
+[defaults]
+inventory       = ./inventory/hosts.ini
+remote_user     = ansible
+private_key_file = ~/.ssh/ansible_key
+host_key_checking = False
+forks           = 10
+timeout         = 30
+retry_files_enabled = False
+stdout_callback = yaml
+roles_path      = ./roles
+
+[privilege_escalation]
+become          = True
+become_method   = sudo
+become_user     = root
+become_ask_pass = False
+
+[ssh_connection]
+ssh_args        = -o ControlMaster=auto -o ControlPersist=60s
+pipelining      = True</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ INSTALL ═══ -->
+  <section class="section" id="install">
+    <div class="section-header">
+      <div class="section-number">02</div>
+      <div class="section-title-group">
+        <h2>Installation & Setup</h2>
+        <p>Get Ansible running on your control node in minutes</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" onclick="switchTab(this,'ubuntu')">Ubuntu/Debian</button>
+          <button class="tab-btn" onclick="switchTab(this,'rhel')">RHEL/CentOS</button>
+          <button class="tab-btn" onclick="switchTab(this,'mac')">macOS</button>
+          <button class="tab-btn" onclick="switchTab(this,'pip')">pip (any OS)</button>
+        </div>
+        <div class="tab-content active" id="tab-ubuntu">
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">install-ubuntu.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+            <pre><code><span class="cm"># Ubuntu / Debian installation</span>
+sudo apt update
+sudo apt install -y software-properties-common
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+sudo apt install -y ansible
+
+<span class="cm"># Verify</span>
+ansible --version</code></pre>
+          </div>
+        </div>
+        <div class="tab-content" id="tab-rhel">
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">install-rhel.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+            <pre><code><span class="cm"># RHEL / CentOS / Rocky Linux</span>
+sudo dnf install -y epel-release
+sudo dnf install -y ansible
+
+<span class="cm"># Or for RHEL 8+</span>
+sudo subscription-manager repos --enable ansible-2.9-for-rhel-8-x86_64-rpms
+sudo dnf install -y ansible</code></pre>
+          </div>
+        </div>
+        <div class="tab-content" id="tab-mac">
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">install-mac.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+            <pre><code><span class="cm"># macOS with Homebrew</span>
+brew install ansible
+
+<span class="cm"># Or with pip inside a venv</span>
+python3 -m venv ansible-env
+source ansible-env/bin/activate
+pip install ansible</code></pre>
+          </div>
+        </div>
+        <div class="tab-content" id="tab-pip">
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">install-pip.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+            <pre><code><span class="cm"># Any OS with Python 3.8+</span>
+python3 -m venv ~/.venvs/ansible
+source ~/.venvs/ansible/bin/activate
+pip install ansible ansible-lint
+
+<span class="cm"># Install useful collections</span>
+ansible-galaxy collection install community.general
+ansible-galaxy collection install ansible.posix</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <h3>Setting up SSH Key Authentication</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">setup-ssh.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># 1. Generate SSH key pair on control node</span>
+ssh-keygen -t ed25519 -C "ansible-control" -f ~/.ssh/ansible_key
+
+<span class="cm"># 2. Copy public key to each managed node</span>
+ssh-copy-id -i ~/.ssh/ansible_key.pub ansible@192.168.1.10
+ssh-copy-id -i ~/.ssh/ansible_key.pub ansible@192.168.1.11
+ssh-copy-id -i ~/.ssh/ansible_key.pub ansible@192.168.1.12
+
+<span class="cm"># 3. Test connection</span>
+ansible all -i "192.168.1.10," -m ping --private-key=~/.ssh/ansible_key -u ansible
+
+<span class="cm"># Expected output:
+# 192.168.1.10 | SUCCESS => {
+#     "changed": false,
+#     "ping": "pong"
+# }</span></code></pre>
+      </div>
+
+      <div class="info-box tip">
+        <div class="label">💡 Tip</div>
+        Create a dedicated <code>ansible</code> user on all managed nodes with passwordless sudo. This is the most common production pattern.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ BEGINNER DIVIDER ═══════════════ -->
+  <div class="level-divider" id="beginner-level">
+    <div class="level-divider-line b"></div>
+    <div class="level-divider-label b">🌱 Beginner</div>
+    <div class="level-divider-line b-right"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ INVENTORY ═══ -->
+  <section class="section" id="inventory">
+    <div class="section-header">
+      <div class="section-number">03</div>
+      <div class="section-title-group">
+        <div class="level-badge beginner">Beginner</div>
+        <h2>Inventory Files</h2>
+        <p>Telling Ansible which hosts to manage</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>The inventory is Ansible's source of truth about what hosts exist. It can be a simple INI file, YAML, or a dynamic script that queries your cloud provider.</p>
+
+      <h3>INI Format (Most Common)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">inventory/hosts.ini</span><span class="code-lang">INI</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># Single host</span>
+mail.example.com
+
+<span class="cm"># Group of web servers</span>
+[webservers]
+web1.example.com
+web2.example.com
+web3 ansible_host=192.168.1.13 ansible_port=2222
+
+<span class="cm"># Group of DB servers</span>
+[dbservers]
+db1.example.com ansible_user=ubuntu
+db2.example.com ansible_user=ec2-user
+
+<span class="cm"># Groups can contain other groups</span>
+[production:children]
+webservers
+dbservers
+
+<span class="cm"># Variables for a group</span>
+[webservers:vars]
+http_port=80
+max_requests=1000
+ansible_python_interpreter=/usr/bin/python3</code></pre>
+      </div>
+
+      <h3>YAML Format</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">inventory/hosts.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="key">all</span><span class="str">:</span>
+  <span class="key">children</span><span class="str">:</span>
+    <span class="key">webservers</span><span class="str">:</span>
+      <span class="key">hosts</span><span class="str">:</span>
+        <span class="key">web1.example.com</span><span class="str">:</span>
+          <span class="key">ansible_host</span><span class="str">: 192.168.1.10</span>
+          <span class="key">http_port</span><span class="str">: 80</span>
+        <span class="key">web2.example.com</span><span class="str">:</span>
+          <span class="key">ansible_host</span><span class="str">: 192.168.1.11</span>
+    <span class="key">dbservers</span><span class="str">:</span>
+      <span class="key">hosts</span><span class="str">:</span>
+        <span class="key">db1.example.com</span><span class="str">:</span>
+          <span class="key">ansible_host</span><span class="str">: 192.168.1.20</span>
+          <span class="key">ansible_user</span><span class="str">: ubuntu</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">ansible_user</span><span class="str">: ansible</span>
+    <span class="key">ansible_ssh_private_key_file</span><span class="str">: ~/.ssh/ansible_key</span></code></pre>
+      </div>
+
+      <h3>Inventory Testing Commands</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">test-inventory.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># List all hosts</span>
+ansible-inventory --list
+
+<span class="cm"># Show inventory as a graph</span>
+ansible-inventory --graph
+
+<span class="cm"># Show a specific host's variables</span>
+ansible-inventory --host web1.example.com
+
+<span class="cm"># Ping all hosts</span>
+ansible all -m ping
+
+<span class="cm"># Ping only webservers group</span>
+ansible webservers -m ping
+
+<span class="cm"># Check with a pattern</span>
+ansible 'webservers:&production' -m ping   <span class="cm"># intersection</span>
+ansible 'webservers:!staging' -m ping      <span class="cm"># exclusion</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ AD-HOC ═══ -->
+  <section class="section" id="adhoc">
+    <div class="section-header">
+      <div class="section-number">04</div>
+      <div class="section-title-group">
+        <div class="level-badge beginner">Beginner</div>
+        <h2>Ad-Hoc Commands</h2>
+        <p>Run one-off tasks without writing a playbook</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Ad-hoc commands let you execute a single task against hosts directly from the command line. Great for quick checks and one-off operations.</p>
+      <p>Syntax: <code>ansible [pattern] -m [module] -a "[arguments]"</code></p>
+
+      <h3>Common Ad-Hoc Examples</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">ad-hoc-examples.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># ── Connectivity ──────────────────────────────────────</span>
+ansible all -m ping
+
+<span class="cm"># ── Gather Facts ──────────────────────────────────────</span>
+ansible web1 -m gather_facts
+ansible web1 -m setup -a "filter=ansible_distribution*"
+
+<span class="cm"># ── Run Shell Commands ────────────────────────────────</span>
+ansible webservers -m shell -a "uptime"
+ansible webservers -m command -a "df -h"
+ansible all -m shell -a "free -m | grep Mem"
+
+<span class="cm"># ── File Operations ───────────────────────────────────</span>
+ansible webservers -m copy -a "src=/etc/hosts dest=/tmp/hosts"
+ansible webservers -m file -a "path=/tmp/test state=touch"
+ansible webservers -m file -a "path=/tmp/test state=absent"
+
+<span class="cm"># ── Package Management ────────────────────────────────</span>
+ansible webservers -m apt  -a "name=nginx state=present" --become
+ansible webservers -m yum  -a "name=nginx state=latest"  --become
+ansible webservers -m apt  -a "name=nginx state=absent"  --become
+
+<span class="cm"># ── Service Management ────────────────────────────────</span>
+ansible webservers -m service -a "name=nginx state=started"  --become
+ansible webservers -m service -a "name=nginx state=restarted" --become
+ansible webservers -m service -a "name=nginx enabled=yes"    --become
+
+<span class="cm"># ── User Management ───────────────────────────────────</span>
+ansible all -m user -a "name=deploy state=present shell=/bin/bash" --become
+ansible all -m user -a "name=deploy state=absent remove=yes" --become
+
+<span class="cm"># ── Transfer and Extract ──────────────────────────────</span>
+ansible webservers -m unarchive -a \
+  "src=/tmp/app.tar.gz dest=/var/www/app remote_src=yes" --become
+
+<span class="cm"># ── Parallel execution with forks ─────────────────────</span>
+ansible webservers -m ping -f 20    <span class="cm"># 20 parallel connections</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ PLAYBOOKS INTRO ═══ -->
+  <section class="section" id="playbooks-intro">
+    <div class="section-header">
+      <div class="section-number">05</div>
+      <div class="section-title-group">
+        <div class="level-badge beginner">Beginner</div>
+        <h2>Playbooks — Introduction</h2>
+        <p>YAML automation scripts: the heart of Ansible</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>A playbook is a YAML file with one or more <strong>plays</strong>. Each play maps a set of tasks to a group of hosts. Tasks call modules to do the actual work.</p>
+
+      <h3>Playbook Structure</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">structure-explained.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm">---  # YAML document start</span>
+<span class="cm"># A playbook is a list of plays</span>
+- <span class="key">name</span><span class="str">: First play — configure web servers</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>          <span class="cm"># target host group</span>
+  <span class="key">become</span><span class="str">: true</span>              <span class="cm"># use sudo/privilege escalation</span>
+  <span class="key">gather_facts</span><span class="str">: true</span>        <span class="cm"># collect host info (default)</span>
+
+  <span class="key">vars</span><span class="str">:</span>                       <span class="cm"># play-level variables</span>
+    <span class="key">app_port</span><span class="str">: 8080</span>
+
+  <span class="key">tasks</span><span class="str">:</span>                     <span class="cm"># ordered list of tasks</span>
+    - <span class="key">name</span><span class="str">: Install nginx</span>    <span class="cm"># descriptive task name</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>  <span class="cm"># fully qualified module name</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Start nginx service</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+- <span class="key">name</span><span class="str">: Second play — configure DB servers</span>
+  <span class="key">hosts</span><span class="str">: dbservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install MySQL</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: mysql-server</span>
+        <span class="key">state</span><span class="str">: present</span></code></pre>
+      </div>
+
+      <h3>Running Playbooks</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">run-playbook.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># Basic run</span>
+ansible-playbook playbook.yml
+
+<span class="cm"># Specify inventory</span>
+ansible-playbook -i inventory/hosts.ini playbook.yml
+
+<span class="cm"># Dry run (check mode — no changes made)</span>
+ansible-playbook playbook.yml --check
+
+<span class="cm"># Dry run + show diffs</span>
+ansible-playbook playbook.yml --check --diff
+
+<span class="cm"># Verbose output (up to -vvvv)</span>
+ansible-playbook playbook.yml -v
+ansible-playbook playbook.yml -vvv
+
+<span class="cm"># Limit to specific host or group</span>
+ansible-playbook playbook.yml --limit web1
+ansible-playbook playbook.yml --limit webservers
+
+<span class="cm"># Pass extra variables on command line</span>
+ansible-playbook playbook.yml -e "app_version=2.1.0 env=production"
+
+<span class="cm"># Ask for sudo password</span>
+ansible-playbook playbook.yml --ask-become-pass
+
+<span class="cm"># Start at a specific task</span>
+ansible-playbook playbook.yml --start-at-task "Install nginx"
+
+<span class="cm"># Step through tasks one by one</span>
+ansible-playbook playbook.yml --step</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ MODULES ═══ -->
+  <section class="section" id="modules">
+    <div class="section-header">
+      <div class="section-number">06</div>
+      <div class="section-title-group">
+        <div class="level-badge beginner">Beginner</div>
+        <h2>Core Modules</h2>
+        <p>The building blocks of every playbook</p>
+      </div>
+    </div>
+    <div class="prose">
+      <h3>File & Copy Modules</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">file-modules.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: File and copy operations</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+
+    - <span class="key">name</span><span class="str">: Create a directory</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /opt/myapp</span>
+        <span class="key">state</span><span class="str">: directory</span>
+        <span class="key">owner</span><span class="str">: www-data</span>
+        <span class="key">group</span><span class="str">: www-data</span>
+        <span class="key">mode</span><span class="str">: '0755'</span>
+
+    - <span class="key">name</span><span class="str">: Copy a file from control node</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: files/nginx.conf</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/nginx.conf</span>
+        <span class="key">owner</span><span class="str">: root</span>
+        <span class="key">group</span><span class="str">: root</span>
+        <span class="key">mode</span><span class="str">: '0644'</span>
+        <span class="key">backup</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Write inline content to file</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          Hello from Ansible!
+          Managed by automation.</span>
+        <span class="key">dest</span><span class="str">: /etc/motd</span>
+
+    - <span class="key">name</span><span class="str">: Fetch a file from remote host</span>
+      <span class="key">ansible.builtin.fetch</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: /var/log/nginx/error.log</span>
+        <span class="key">dest</span><span class="str">: logs/{{ inventory_hostname }}/</span>
+        <span class="key">flat</span><span class="str">: false</span>
+
+    - <span class="key">name</span><span class="str">: Add a line to a file (idempotent)</span>
+      <span class="key">ansible.builtin.lineinfile</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/hosts</span>
+        <span class="key">line</span><span class="str">: '10.0.0.5 appserver'</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Replace text using regex</span>
+      <span class="key">ansible.builtin.replace</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/nginx/nginx.conf</span>
+        <span class="key">regexp</span><span class="str">: 'worker_processes\s+\d+'</span>
+        <span class="key">replace</span><span class="str">: 'worker_processes 4'</span>
+
+    - <span class="key">name</span><span class="str">: Unarchive a tarball</span>
+      <span class="key">ansible.builtin.unarchive</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: files/app-v2.tar.gz</span>
+        <span class="key">dest</span><span class="str">: /opt/myapp</span>
+        <span class="key">owner</span><span class="str">: www-data</span></code></pre>
+      </div>
+
+      <h3>Package & Service Modules</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">package-service.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Package and service management</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+
+    - <span class="key">name</span><span class="str">: Install multiple packages (apt)</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">:</span>
+          - nginx
+          - curl
+          - git
+          - vim
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+        <span class="key">cache_valid_time</span><span class="str">: 3600</span>  <span class="cm"># only update if > 1hr old</span>
+
+    - <span class="key">name</span><span class="str">: Install package on any distro (generic)</span>
+      <span class="key">ansible.builtin.package</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: git</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Upgrade all packages</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">upgrade</span><span class="str">: dist</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Ensure nginx is started and enabled</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Restart a service</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: restarted</span>
+
+    - <span class="key">name</span><span class="str">: Install pip package</span>
+      <span class="key">ansible.builtin.pip</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: flask</span>
+        <span class="key">version</span><span class="str">: '2.3.0'</span>
+        <span class="key">virtualenv</span><span class="str">: /opt/myapp/venv</span></code></pre>
+      </div>
+
+      <h3>User & Group Modules</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">user-modules.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: User and group management</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+
+    - <span class="key">name</span><span class="str">: Create a group</span>
+      <span class="key">ansible.builtin.group</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: developers</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">gid</span><span class="str">: 1500</span>
+
+    - <span class="key">name</span><span class="str">: Create a system user</span>
+      <span class="key">ansible.builtin.user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: deploy</span>
+        <span class="key">comment</span><span class="str">: Deployment User</span>
+        <span class="key">shell</span><span class="str">: /bin/bash</span>
+        <span class="key">groups</span><span class="str">: developers,sudo</span>
+        <span class="key">create_home</span><span class="str">: true</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Add SSH key to user</span>
+      <span class="key">ansible.posix.authorized_key</span><span class="str">:</span>
+        <span class="key">user</span><span class="str">: deploy</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">key</span><span class="str">: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ VARIABLES ═══ -->
+  <section class="section" id="variables">
+    <div class="section-header">
+      <div class="section-number">07</div>
+      <div class="section-title-group">
+        <div class="level-badge beginner">Beginner</div>
+        <h2>Variables & Facts</h2>
+        <p>Dynamic data — the key to reusable playbooks</p>
+      </div>
+    </div>
+    <div class="prose">
+      <h3>Variable Types & Precedence (lowest → highest)</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Priority</th><th>Location</th><th>Example</th></tr>
+          <tr><td>1 (lowest)</td><td>Role defaults</td><td><code>roles/myrole/defaults/main.yml</code></td></tr>
+          <tr><td>2</td><td>Inventory group_vars</td><td><code>group_vars/all.yml</code></td></tr>
+          <tr><td>3</td><td>Inventory host_vars</td><td><code>host_vars/web1.yml</code></td></tr>
+          <tr><td>4</td><td>Playbook vars</td><td><code>vars: {key: val}</code></td></tr>
+          <tr><td>5</td><td>vars_files</td><td><code>vars_files: [vars.yml]</code></td></tr>
+          <tr><td>6</td><td>Role vars</td><td><code>roles/myrole/vars/main.yml</code></td></tr>
+          <tr><td>7</td><td>Task vars</td><td><code>vars: in task block</code></td></tr>
+          <tr><td>8</td><td>set_fact</td><td><code>ansible.builtin.set_fact</code></td></tr>
+          <tr><td>9 (highest)</td><td>-e extra vars</td><td><code>ansible-playbook -e "key=val"</code></td></tr>
+        </table>
+      </div>
+
+      <h3>Variable Files (group_vars / host_vars)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">group_vars/webservers.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm">---</span>
+<span class="key">http_port</span><span class="str">: 80</span>
+<span class="key">https_port</span><span class="str">: 443</span>
+<span class="key">max_connections</span><span class="str">: 1000</span>
+<span class="key">nginx_worker_processes</span><span class="str">: "{{ ansible_processor_vcpus }}"</span>
+<span class="key">document_root</span><span class="str">: /var/www/html</span>
+<span class="key">app_packages</span><span class="str">:</span>
+  - nginx
+  - curl
+  - python3
+  - python3-pip</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">variables-demo.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Variables demonstration</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">app_name</span><span class="str">: mywebapp</span>
+    <span class="key">app_version</span><span class="str">: "2.1.0"</span>
+    <span class="key">db_config</span><span class="str">:</span>       <span class="cm"># dict variable</span>
+      <span class="key">host</span><span class="str">: localhost</span>
+      <span class="key">port</span><span class="str">: 5432</span>
+      <span class="key">name</span><span class="str">: appdb</span>
+    <span class="key">allowed_ips</span><span class="str">:</span>     <span class="cm"># list variable</span>
+      - 10.0.0.1
+      - 10.0.0.2
+      - 192.168.1.0/24
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Print variable</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "Deploying {{ app_name }} v{{ app_version }}"</span>
+
+    - <span class="key">name</span><span class="str">: Access dict variable</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "DB: {{ db_config.host }}:{{ db_config.port }}"</span>
+
+    - <span class="key">name</span><span class="str">: Use a fact (auto-discovered)</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: |
+          Host: {{ inventory_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          CPUs: {{ ansible_processor_vcpus }}
+          RAM: {{ ansible_memtotal_mb }} MB
+          IP: {{ ansible_default_ipv4.address }}</span>
+
+    - <span class="key">name</span><span class="str">: Set a computed fact</span>
+      <span class="key">ansible.builtin.set_fact</span><span class="str">:</span>
+        <span class="key">deploy_path</span><span class="str">: "/opt/{{ app_name }}/{{ app_version }}"</span>
+
+    - <span class="key">name</span><span class="str">: Register command output as variable</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: date</span>
+      <span class="key">register</span><span class="str">: current_date</span>
+
+    - <span class="key">name</span><span class="str">: Use registered variable</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "Current date: {{ current_date.stdout }}"</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ PROJECT 1 ═══ -->
+  <section class="section" id="project1">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 01</span>
+        <span class="level-badge beginner">Beginner</span>
+        <h3>Automated Web Server Setup</h3>
+      </div>
+      <div class="project-body">
+        <p>Deploy a fully configured Nginx web server with a custom homepage, firewall rules, and SSL-ready structure — from a single playbook.</p>
+        <div class="project-meta">
+          <span class="meta-tag">nginx</span>
+          <span class="meta-tag">ufw</span>
+          <span class="meta-tag">templates</span>
+          <span class="meta-tag">handlers</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project1-webserver.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Deploy and configure Nginx web server</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">server_name</span><span class="str">: "{{ inventory_hostname }}"</span>
+    <span class="key">web_root</span><span class="str">: /var/www/html</span>
+    <span class="key">http_port</span><span class="str">: 80</span>
+    <span class="key">app_title</span><span class="str">: "My Ansible-Deployed Site"</span>
+
+  <span class="key">handlers</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Restart nginx</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: restarted</span>
+
+    - <span class="key">name</span><span class="str">: Reload nginx</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: reloaded</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Update apt cache</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+        <span class="key">cache_valid_time</span><span class="str">: 3600</span>
+
+    - <span class="key">name</span><span class="str">: Install required packages</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">:</span>
+          - nginx
+          - ufw
+          - curl
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Configure UFW — allow SSH</span>
+      <span class="key">community.general.ufw</span><span class="str">:</span>
+        <span class="key">rule</span><span class="str">: allow</span>
+        <span class="key">name</span><span class="str">: OpenSSH</span>
+
+    - <span class="key">name</span><span class="str">: Configure UFW — allow HTTP</span>
+      <span class="key">community.general.ufw</span><span class="str">:</span>
+        <span class="key">rule</span><span class="str">: allow</span>
+        <span class="key">port</span><span class="str">: "{{ http_port }}"</span>
+        <span class="key">proto</span><span class="str">: tcp</span>
+
+    - <span class="key">name</span><span class="str">: Enable UFW</span>
+      <span class="key">community.general.ufw</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: enabled</span>
+        <span class="key">policy</span><span class="str">: deny</span>
+
+    - <span class="key">name</span><span class="str">: Create web root directory</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: "{{ web_root }}"</span>
+        <span class="key">state</span><span class="str">: directory</span>
+        <span class="key">owner</span><span class="str">: www-data</span>
+        <span class="key">group</span><span class="str">: www-data</span>
+        <span class="key">mode</span><span class="str">: '0755'</span>
+
+    - <span class="key">name</span><span class="str">: Deploy custom homepage</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          &lt;!DOCTYPE html&gt;
+          &lt;html&gt;&lt;head&gt;&lt;title&gt;{{ app_title }}&lt;/title&gt;&lt;/head&gt;
+          &lt;body&gt;
+            &lt;h1&gt;{{ app_title }}&lt;/h1&gt;
+            &lt;p&gt;Deployed by Ansible on {{ ansible_date_time.iso8601 }}&lt;/p&gt;
+            &lt;p&gt;Server: {{ inventory_hostname }} ({{ ansible_default_ipv4.address }})&lt;/p&gt;
+          &lt;/body&gt;&lt;/html&gt;</span>
+        <span class="key">dest</span><span class="str">: "{{ web_root }}/index.html"</span>
+        <span class="key">owner</span><span class="str">: www-data</span>
+        <span class="key">mode</span><span class="str">: '0644'</span>
+      <span class="key">notify</span><span class="str">: Reload nginx</span>
+
+    - <span class="key">name</span><span class="str">: Configure nginx virtual host</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          server {
+              listen {{ http_port }};
+              server_name {{ server_name }};
+              root {{ web_root }};
+              index index.html;
+              location / {
+                  try_files $uri $uri/ =404;
+              }
+              access_log /var/log/nginx/{{ server_name }}_access.log;
+              error_log  /var/log/nginx/{{ server_name }}_error.log;
+          }</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/sites-available/mysite</span>
+      <span class="key">notify</span><span class="str">: Restart nginx</span>
+
+    - <span class="key">name</span><span class="str">: Enable nginx site</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: /etc/nginx/sites-available/mysite</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/sites-enabled/mysite</span>
+        <span class="key">state</span><span class="str">: link</span>
+      <span class="key">notify</span><span class="str">: Restart nginx</span>
+
+    - <span class="key">name</span><span class="str">: Remove default nginx site</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/nginx/sites-enabled/default</span>
+        <span class="key">state</span><span class="str">: absent</span>
+      <span class="key">notify</span><span class="str">: Restart nginx</span>
+
+    - <span class="key">name</span><span class="str">: Ensure nginx is started and enabled</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Test nginx is serving content</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "http://{{ ansible_default_ipv4.address }}"</span>
+        <span class="key">status_code</span><span class="str">: 200</span>
+      <span class="key">register</span><span class="str">: result</span>
+
+    - <span class="key">name</span><span class="str">: Show result</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "✅ Web server responding: {{ result.status }}"</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 2 -->
+  <section class="section" id="project2">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 02</span>
+        <span class="level-badge beginner">Beginner</span>
+        <h3>User Management & SSH Hardening</h3>
+      </div>
+      <div class="project-body">
+        <p>Create multiple users with proper groups, deploy SSH keys, and harden SSH configuration across all servers.</p>
+        <div class="project-meta">
+          <span class="meta-tag">users</span>
+          <span class="meta-tag">ssh</span>
+          <span class="meta-tag">security</span>
+          <span class="meta-tag">sudo</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project2-users.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: User management and SSH hardening</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">admin_users</span><span class="str">:</span>
+      - <span class="key">name</span><span class="str">: alice</span>
+        <span class="key">comment</span><span class="str">: "Alice Admin"</span>
+        <span class="key">groups</span><span class="str">: "sudo,developers"</span>
+        <span class="key">ssh_key</span><span class="str">: "ssh-ed25519 AAAAC3NzaC... alice@laptop"</span>
+      - <span class="key">name</span><span class="str">: bob</span>
+        <span class="key">comment</span><span class="str">: "Bob Dev"</span>
+        <span class="key">groups</span><span class="str">: "developers"</span>
+        <span class="key">ssh_key</span><span class="str">: "ssh-ed25519 AAAAC3NzaC... bob@laptop"</span>
+    <span class="key">removed_users</span><span class="str">:</span>
+      - olduser
+      - testaccount
+
+  <span class="key">handlers</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Restart sshd</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: sshd</span>
+        <span class="key">state</span><span class="str">: restarted</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Create developers group</span>
+      <span class="key">ansible.builtin.group</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: developers</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Create admin users</span>
+      <span class="key">ansible.builtin.user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item.name }}"</span>
+        <span class="key">comment</span><span class="str">: "{{ item.comment }}"</span>
+        <span class="key">groups</span><span class="str">: "{{ item.groups }}"</span>
+        <span class="key">shell</span><span class="str">: /bin/bash</span>
+        <span class="key">create_home</span><span class="str">: true</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">loop</span><span class="str">: "{{ admin_users }}"</span>
+
+    - <span class="key">name</span><span class="str">: Deploy SSH authorized keys</span>
+      <span class="key">ansible.posix.authorized_key</span><span class="str">:</span>
+        <span class="key">user</span><span class="str">: "{{ item.name }}"</span>
+        <span class="key">key</span><span class="str">: "{{ item.ssh_key }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">exclusive</span><span class="str">: true</span>  <span class="cm"># remove other keys</span>
+      <span class="key">loop</span><span class="str">: "{{ admin_users }}"</span>
+
+    - <span class="key">name</span><span class="str">: Configure sudoers for sudo group</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL\n"</span>
+        <span class="key">dest</span><span class="str">: /etc/sudoers.d/sudo-group</span>
+        <span class="key">validate</span><span class="str">: /usr/sbin/visudo -cf %s</span>
+        <span class="key">mode</span><span class="str">: '0440'</span>
+
+    - <span class="key">name</span><span class="str">: Remove old/unwanted users</span>
+      <span class="key">ansible.builtin.user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item }}"</span>
+        <span class="key">state</span><span class="str">: absent</span>
+        <span class="key">remove</span><span class="str">: true</span>
+      <span class="key">loop</span><span class="str">: "{{ removed_users }}"</span>
+
+    - <span class="key">name</span><span class="str">: Harden SSH configuration</span>
+      <span class="key">ansible.builtin.blockinfile</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/ssh/sshd_config</span>
+        <span class="key">block</span><span class="str">: |
+          PermitRootLogin no
+          PasswordAuthentication no
+          PubkeyAuthentication yes
+          MaxAuthTries 3
+          X11Forwarding no
+          AllowTcpForwarding no
+          ClientAliveInterval 300
+          ClientAliveCountMax 2</span>
+        <span class="key">backup</span><span class="str">: true</span>
+      <span class="key">notify</span><span class="str">: Restart sshd</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 3 -->
+  <section class="section" id="project3">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 03</span>
+        <span class="level-badge beginner">Beginner</span>
+        <h3>Multi-Server Package Deployment</h3>
+      </div>
+      <div class="project-body">
+        <p>Deploy different packages to different server groups based on role — all in one playbook run.</p>
+        <div class="project-meta">
+          <span class="meta-tag">apt/yum</span>
+          <span class="meta-tag">multi-play</span>
+          <span class="meta-tag">conditionals</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project3-packages.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Configure web servers</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install web packages</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [nginx, certbot, python3-certbot-nginx]</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+      <span class="key">when</span><span class="str">: ansible_os_family == "Debian"</span>
+
+    - <span class="key">name</span><span class="str">: Install web packages (RHEL)</span>
+      <span class="key">ansible.builtin.dnf</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [nginx, certbot]</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">when</span><span class="str">: ansible_os_family == "RedHat"</span>
+
+- <span class="key">name</span><span class="str">: Configure database servers</span>
+  <span class="key">hosts</span><span class="str">: dbservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install MySQL / MariaDB</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [mysql-server, python3-mysqldb]</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">when</span><span class="str">: ansible_os_family == "Debian"</span>
+
+    - <span class="key">name</span><span class="str">: Ensure MySQL is started</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: mysql</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+- <span class="key">name</span><span class="str">: Configure monitoring on all servers</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install monitoring agents</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [htop, iotop, sysstat, netdata]</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Ensure sysstat is collecting data</span>
+      <span class="key">ansible.builtin.lineinfile</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/default/sysstat</span>
+        <span class="key">regexp</span><span class="str">: '^ENABLED='</span>
+        <span class="key">line</span><span class="str">: 'ENABLED="true"'</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ INTERMEDIATE DIVIDER ═══════════════ -->
+  <div class="level-divider" id="intermediate-level">
+    <div class="level-divider-line i"></div>
+    <div class="level-divider-label i">⚡ Intermediate</div>
+    <div class="level-divider-line i-right"></div>
+  </div>
+
+  <!-- TEMPLATES -->
+  <section class="section" id="templates">
+    <div class="section-header">
+      <div class="section-number">08</div>
+      <div class="section-title-group">
+        <div class="level-badge intermediate">Intermediate</div>
+        <h2>Jinja2 Templates</h2>
+        <p>Generate dynamic configuration files from variables</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Jinja2 is the templating engine Ansible uses. Templates (<code>.j2</code> files) contain placeholders that get replaced with actual variable values when deployed.</p>
+
+      <h3>Nginx Config Template</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">templates/nginx.conf.j2</span><span class="code-lang">Jinja2</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm">{# nginx.conf.j2 — Jinja2 template #}</span>
+user www-data;
+worker_processes <span class="var">{{ nginx_worker_processes | default(ansible_processor_vcpus) }}</span>;
+pid /run/nginx.pid;
+
+events {
+    worker_connections <span class="var">{{ nginx_worker_connections | default(1024) }}</span>;
+    multi_accept on;
+}
+
+http {
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+
+    <span class="cm">{# Loop over virtual hosts #}</span>
+    <span class="var">{% for vhost in virtual_hosts %}</span>
+    server {
+        listen 80;
+        server_name <span class="var">{{ vhost.domain }}</span>;
+        root <span class="var">{{ vhost.root | default('/var/www/' + vhost.domain) }}</span>;
+
+        <span class="var">{% if vhost.ssl is defined and vhost.ssl %}</span>
+        listen 443 ssl;
+        ssl_certificate /etc/ssl/<span class="var">{{ vhost.domain }}</span>/cert.pem;
+        ssl_certificate_key /etc/ssl/<span class="var">{{ vhost.domain }}</span>/key.pem;
+        <span class="var">{% endif %}</span>
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+
+        <span class="var">{% if vhost.proxy_pass is defined %}</span>
+        location /api {
+            proxy_pass <span class="var">{{ vhost.proxy_pass }}</span>;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+        <span class="var">{% endif %}</span>
+    }
+    <span class="var">{% endfor %}</span>
+}</code></pre>
+      </div>
+
+      <h3>Using Templates in Playbooks</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">use-templates.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Deploy configs using templates</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">nginx_worker_processes</span><span class="str">: 4</span>
+    <span class="key">virtual_hosts</span><span class="str">:</span>
+      - <span class="key">domain</span><span class="str">: example.com</span>
+        <span class="key">root</span><span class="str">: /var/www/example</span>
+        <span class="key">ssl</span><span class="str">: true</span>
+      - <span class="key">domain</span><span class="str">: api.example.com</span>
+        <span class="key">proxy_pass</span><span class="str">: http://127.0.0.1:3000</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Deploy nginx config from template</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/nginx.conf.j2</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/nginx.conf</span>
+        <span class="key">owner</span><span class="str">: root</span>
+        <span class="key">mode</span><span class="str">: '0644'</span>
+        <span class="key">validate</span><span class="str">: nginx -t -c %s</span>
+      <span class="key">notify</span><span class="str">: Restart nginx</span></code></pre>
+      </div>
+
+      <h3>Jinja2 Filters (Essential)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">jinja2-filters.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="key">tasks</span><span class="str">:</span>
+  - <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+      <span class="key">msg</span><span class="str">: "{{ items }}"</span>
+    <span class="key">vars</span><span class="str">:</span>
+      items:
+        <span class="cm"># String filters</span>
+        upper:    "{{ 'hello' | upper }}"        <span class="cm"># HELLO</span>
+        lower:    "{{ 'WORLD' | lower }}"        <span class="cm"># world</span>
+        replace:  "{{ 'foo bar' | replace('foo','baz') }}" <span class="cm"># baz bar</span>
+        trim:     "{{ '  hi  ' | trim }}"        <span class="cm"># hi</span>
+
+        <span class="cm"># List filters</span>
+        join:     "{{ ['a','b','c'] | join(',') }}"     <span class="cm"># a,b,c</span>
+        length:   "{{ [1,2,3] | length }}"              <span class="cm"># 3</span>
+        sorted:   "{{ [3,1,2] | sort }}"                <span class="cm"># [1,2,3]</span>
+        unique:   "{{ [1,1,2,2] | unique }}"            <span class="cm"># [1,2]</span>
+        select:   "{{ [1,2,3,4] | select('gt', 2) | list }}" <span class="cm"># [3,4]</span>
+
+        <span class="cm"># Default / conditional</span>
+        default:  "{{ undefined_var | default('fallback') }}"
+        ternary:  "{{ true | ternary('yes','no') }}"    <span class="cm"># yes</span>
+
+        <span class="cm"># Path/misc</span>
+        basename: "{{ '/etc/nginx/nginx.conf' | basename }}" <span class="cm"># nginx.conf</span>
+        dirname:  "{{ '/etc/nginx/nginx.conf' | dirname }}"  <span class="cm"># /etc/nginx</span>
+        b64encode: "{{ 'secret' | b64encode }}"</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- HANDLERS -->
+  <section class="section" id="handlers">
+    <div class="section-header">
+      <div class="section-number">09</div>
+      <div class="section-title-group">
+        <div class="level-badge intermediate">Intermediate</div>
+        <h2>Handlers & Notify</h2>
+        <p>Run tasks only when something changes</p>
+      </div>
+    </div>
+    <div class="prose">
+      <p>Handlers are tasks that run <strong>only when notified</strong> and <strong>only once</strong> at the end of the play — even if notified multiple times. Perfect for service restarts.</p>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">handlers-demo.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Handlers demonstration</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+
+  <span class="key">handlers</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Restart nginx</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: restarted</span>
+
+    - <span class="key">name</span><span class="str">: Reload nginx</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: reloaded</span>
+
+    - <span class="key">name</span><span class="str">: Send deploy notification</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "https://hooks.slack.com/services/YOUR/WEBHOOK"</span>
+        <span class="key">method</span><span class="str">: POST</span>
+        <span class="key">body_format</span><span class="str">: json</span>
+        <span class="key">body</span><span class="str">:</span>
+          <span class="key">text</span><span class="str">: "Nginx restarted on {{ inventory_hostname }}"</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Update nginx config</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: nginx.conf.j2</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/nginx.conf</span>
+      <span class="key">notify</span><span class="str">:</span>          <span class="cm"># notify multiple handlers</span>
+        - Restart nginx
+        - Send deploy notification
+
+    - <span class="key">name</span><span class="str">: Update site config</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: site.conf</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/sites-available/site</span>
+      <span class="key">notify</span><span class="str">: Reload nginx</span>  <span class="cm"># only reload for site changes</span>
+
+    - <span class="key">name</span><span class="str">: Force handler run now (flush)</span>
+      <span class="key">ansible.builtin.meta</span><span class="str">: flush_handlers</span>
+
+    - <span class="key">name</span><span class="str">: Check nginx is up after restart</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: http://localhost</span>
+        <span class="key">status_code</span><span class="str">: 200</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONDITIONALS & LOOPS -->
+  <section class="section" id="conditionals">
+    <div class="section-header">
+      <div class="section-number">10</div>
+      <div class="section-title-group">
+        <div class="level-badge intermediate">Intermediate</div>
+        <h2>Conditionals & Loops</h2>
+        <p>when, loop, with_items, until, and more</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">conditionals-loops.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Conditionals and loops</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">users</span><span class="str">:</span>
+      - { name: alice, role: admin }
+      - { name: bob,   role: dev }
+      - { name: carol, role: dev }
+    <span class="key">packages</span><span class="str">: [vim, git, htop, tree]</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    <span class="cm"># ── CONDITIONALS ───────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Install on Ubuntu only</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: snap</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">when</span><span class="str">: ansible_distribution == "Ubuntu"</span>
+
+    - <span class="key">name</span><span class="str">: Multiple conditions (AND)</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "Ubuntu 22 server with 8+ GB RAM"</span>
+      <span class="key">when</span><span class="str">:</span>
+        - ansible_distribution == "Ubuntu"
+        - ansible_distribution_version == "22.04"
+        - ansible_memtotal_mb >= 8192
+
+    - <span class="key">name</span><span class="str">: Condition using registered variable</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: which docker</span>
+      <span class="key">register</span><span class="str">: docker_check</span>
+      <span class="key">ignore_errors</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Docker is available</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "Docker found at {{ docker_check.stdout }}"</span>
+      <span class="key">when</span><span class="str">: docker_check.rc == 0</span>
+
+    <span class="cm"># ── SIMPLE LOOP ────────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Install multiple packages</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">loop</span><span class="str">: "{{ packages }}"</span>
+
+    <span class="cm"># ── LOOP WITH DICT ─────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Create users with roles</span>
+      <span class="key">ansible.builtin.user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item.name }}"</span>
+        <span class="key">groups</span><span class="str">: "{{ 'sudo' if item.role == 'admin' else 'users' }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">loop</span><span class="str">: "{{ users }}"</span>
+      <span class="key">loop_control</span><span class="str">:</span>
+        <span class="key">label</span><span class="str">: "{{ item.name }}"</span>  <span class="cm"># clean output</span>
+
+    <span class="cm"># ── LOOP WITH INDEX ────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Create numbered directories</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: "/opt/service-{{ item }}"</span>
+        <span class="key">state</span><span class="str">: directory</span>
+      <span class="key">loop</span><span class="str">: "{{ range(1, 6) | list }}"</span>  <span class="cm"># 1-5</span>
+
+    <span class="cm"># ── UNTIL LOOP (retry) ────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Wait for service to be ready</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: http://localhost:8080/health</span>
+      <span class="key">register</span><span class="str">: health_check</span>
+      <span class="key">until</span><span class="str">: health_check.status == 200</span>
+      <span class="key">retries</span><span class="str">: 10</span>
+      <span class="key">delay</span><span class="str">: 5</span>  <span class="cm"># seconds between tries</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES -->
+  <section class="section" id="roles">
+    <div class="section-header">
+      <div class="section-number">11</div>
+      <div class="section-title-group">
+        <div class="level-badge intermediate">Intermediate</div>
+        <h2>Roles — Reusable Automation</h2>
+        <p>Organize playbooks into reusable, shareable units</p>
+      </div>
+    </div>
+    <div class="prose">
+      <h3>Role Directory Structure</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">role-structure.txt</span><span class="code-lang">tree</span></div>
+        <pre><code>roles/
+└── nginx/                    <span class="cm"># role name</span>
+    ├── tasks/
+    │   ├── main.yml          <span class="cm"># entry point — required</span>
+    │   ├── install.yml       <span class="cm"># optional subtask file</span>
+    │   └── configure.yml
+    ├── handlers/
+    │   └── main.yml          <span class="cm"># handlers</span>
+    ├── templates/
+    │   └── nginx.conf.j2     <span class="cm"># Jinja2 templates</span>
+    ├── files/
+    │   └── index.html        <span class="cm"># static files</span>
+    ├── vars/
+    │   └── main.yml          <span class="cm"># high-priority vars</span>
+    ├── defaults/
+    │   └── main.yml          <span class="cm"># low-priority defaults</span>
+    ├── meta/
+    │   └── main.yml          <span class="cm"># role dependencies</span>
+    └── README.md</code></pre>
+      </div>
+
+      <h3>Creating a Role</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">create-role.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># Scaffold a new role automatically</span>
+ansible-galaxy role init roles/nginx
+ansible-galaxy role init roles/mysql
+ansible-galaxy role init roles/nodejs</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">roles/nginx/defaults/main.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>---
+<span class="key">nginx_port</span><span class="str">: 80</span>
+<span class="key">nginx_user</span><span class="str">: www-data</span>
+<span class="key">nginx_worker_processes</span><span class="str">: auto</span>
+<span class="key">nginx_document_root</span><span class="str">: /var/www/html</span>
+<span class="key">nginx_sites</span><span class="str">: []</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">roles/nginx/tasks/main.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>---
+- <span class="key">name</span><span class="str">: Include install tasks</span>
+  <span class="key">ansible.builtin.include_tasks</span><span class="str">: install.yml</span>
+
+- <span class="key">name</span><span class="str">: Include configure tasks</span>
+  <span class="key">ansible.builtin.include_tasks</span><span class="str">: configure.yml</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">site.yml — using roles</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>---
+- <span class="key">name</span><span class="str">: Configure web servers</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">roles</span><span class="str">:</span>
+    - role: nginx                  <span class="cm"># simple</span>
+    - role: nginx                  <span class="cm"># with vars</span>
+      <span class="key">vars</span><span class="str">:</span>
+        <span class="key">nginx_port</span><span class="str">: 8080</span>
+    - role: certbot
+      <span class="key">when</span><span class="str">: enable_ssl | default(false)</span>
+
+- <span class="key">name</span><span class="str">: Configure DB servers</span>
+  <span class="key">hosts</span><span class="str">: dbservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">roles</span><span class="str">:</span>
+    - mysql
+    - role: backup
+      <span class="key">vars</span><span class="str">:</span>
+        <span class="key">backup_schedule</span><span class="str">: "0 2 * * *"</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- VAULT -->
+  <section class="section" id="vault">
+    <div class="section-header">
+      <div class="section-number">12</div>
+      <div class="section-title-group">
+        <div class="level-badge intermediate">Intermediate</div>
+        <h2>Ansible Vault — Secret Management</h2>
+        <p>Encrypt sensitive data with AES-256</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">vault-commands.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># Create a new encrypted file</span>
+ansible-vault create secrets.yml
+
+<span class="cm"># Encrypt an existing file</span>
+ansible-vault encrypt group_vars/all/secrets.yml
+
+<span class="cm"># View encrypted file</span>
+ansible-vault view secrets.yml
+
+<span class="cm"># Edit encrypted file</span>
+ansible-vault edit secrets.yml
+
+<span class="cm"># Decrypt a file</span>
+ansible-vault decrypt secrets.yml
+
+<span class="cm"># Encrypt a single string (for inline use)</span>
+ansible-vault encrypt_string 'my_secret_password' --name 'db_password'
+
+<span class="cm"># Use a vault password file (for CI/CD)</span>
+echo "my_vault_pass" > .vault_pass
+chmod 600 .vault_pass
+ansible-playbook site.yml --vault-password-file .vault_pass
+
+<span class="cm"># Run playbook with vault</span>
+ansible-playbook site.yml --ask-vault-pass</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">group_vars/all/secrets.yml (contents)</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm">---  # This file is encrypted with ansible-vault</span>
+<span class="key">db_root_password</span><span class="str">: "SuperSecretPass123!"</span>
+<span class="key">db_app_password</span><span class="str">: "AppDBPass456@"</span>
+<span class="key">api_secret_key</span><span class="str">: "your-django-secret-key-here"</span>
+<span class="key">aws_access_key</span><span class="str">: "AKIAIOSFODNN7EXAMPLE"</span>
+<span class="key">aws_secret_key</span><span class="str">: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"</span>
+<span class="key">slack_webhook_url</span><span class="str">: "https://hooks.slack.com/services/T00/B00/xxx"</span></code></pre>
+      </div>
+
+      <div class="info-box tip">
+        <div class="label">💡 Best Practice</div>
+        Keep a <code>group_vars/all/vars.yml</code> (unencrypted) and a separate <code>group_vars/all/vault.yml</code> (encrypted). Reference vault vars in the plain file using <code>db_password: "{{ vault_db_password }}"</code> for easy grepping.
+      </div>
+    </div>
+  </section>
+
+  <!-- TAGS -->
+  <section class="section" id="tags">
+    <div class="section-header">
+      <div class="section-number">13</div>
+      <div class="section-title-group">
+        <div class="level-badge intermediate">Intermediate</div>
+        <h2>Tags & Limits</h2>
+        <p>Run specific subsets of your playbook</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">tags-demo.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Deployment playbook with tags</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install packages</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: nginx</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">tags</span><span class="str">: [install, packages]</span>
+
+    - <span class="key">name</span><span class="str">: Configure nginx</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: nginx.conf.j2</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/nginx.conf</span>
+      <span class="key">tags</span><span class="str">: [configure, nginx]</span>
+
+    - <span class="key">name</span><span class="str">: Deploy application code</span>
+      <span class="key">ansible.builtin.git</span><span class="str">:</span>
+        <span class="key">repo</span><span class="str">: https://github.com/org/app.git</span>
+        <span class="key">dest</span><span class="str">: /opt/app</span>
+        <span class="key">version</span><span class="str">: "{{ app_version }}"</span>
+      <span class="key">tags</span><span class="str">: [deploy, code]</span>
+
+    - <span class="key">name</span><span class="str">: Run database migrations</span>
+      <span class="key">ansible.builtin.command</span><span class="str">:</span>
+        <span class="key">cmd</span><span class="str">: python manage.py migrate</span>
+        <span class="key">chdir</span><span class="str">: /opt/app</span>
+      <span class="key">tags</span><span class="str">: [migrate, database]</span>
+      <span class="key">become_user</span><span class="str">: www-data</span>
+
+<span class="cm">---
+# Run only install tasks:
+# ansible-playbook playbook.yml --tags install
+
+# Run configure + deploy (skip install):
+# ansible-playbook playbook.yml --tags "configure,deploy"
+
+# Skip migrations:
+# ansible-playbook playbook.yml --skip-tags migrate
+
+# List available tags:
+# ansible-playbook playbook.yml --list-tags</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 4: LAMP STACK -->
+  <section class="section" id="project4">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 04</span>
+        <span class="level-badge intermediate">Intermediate</span>
+        <h3>LAMP Stack Deployment</h3>
+      </div>
+      <div class="project-body">
+        <p>Automate a complete Linux-Apache-MySQL-PHP stack with virtual hosts, database creation, and PHP application deployment.</p>
+        <div class="project-meta">
+          <span class="meta-tag">apache</span>
+          <span class="meta-tag">mysql</span>
+          <span class="meta-tag">php</span>
+          <span class="meta-tag">roles</span>
+          <span class="meta-tag">vault</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project4-lamp.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Deploy complete LAMP stack</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars_files</span><span class="str">:</span>
+    - group_vars/all/vault.yml  <span class="cm"># encrypted DB passwords</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">mysql_root_password</span><span class="str">: "{{ vault_mysql_root_password }}"</span>
+    <span class="key">app_db_name</span><span class="str">: appdb</span>
+    <span class="key">app_db_user</span><span class="str">: appuser</span>
+    <span class="key">app_db_password</span><span class="str">: "{{ vault_app_db_password }}"</span>
+    <span class="key">php_packages</span><span class="str">:</span>
+      - php8.1
+      - php8.1-mysql
+      - php8.1-curl
+      - php8.1-gd
+      - php8.1-mbstring
+      - php8.1-xml
+      - libapache2-mod-php8.1
+
+  <span class="key">handlers</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Restart Apache</span>
+      <span class="key">ansible.builtin.service</span><span class="str">: name=apache2 state=restarted</span>
+    - <span class="key">name</span><span class="str">: Restart MySQL</span>
+      <span class="key">ansible.builtin.service</span><span class="str">: name=mysql state=restarted</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    <span class="cm"># ── Apache ────────────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Install Apache</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [apache2, apache2-utils]</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Enable Apache modules</span>
+      <span class="key">community.general.apache2_module</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">loop</span><span class="str">: [rewrite, ssl, headers, deflate]</span>
+      <span class="key">notify</span><span class="str">: Restart Apache</span>
+
+    <span class="cm"># ── PHP ───────────────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Install PHP and extensions</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ php_packages }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">notify</span><span class="str">: Restart Apache</span>
+
+    - <span class="key">name</span><span class="str">: Configure PHP settings</span>
+      <span class="key">ansible.builtin.lineinfile</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/php/8.1/apache2/php.ini</span>
+        <span class="key">regexp</span><span class="str">: "{{ item.regexp }}"</span>
+        <span class="key">line</span><span class="str">: "{{ item.line }}"</span>
+      <span class="key">loop</span><span class="str">:</span>
+        - { regexp: '^upload_max_filesize', line: 'upload_max_filesize = 64M' }
+        - { regexp: '^post_max_size',       line: 'post_max_size = 64M' }
+        - { regexp: '^memory_limit',        line: 'memory_limit = 256M' }
+        - { regexp: '^max_execution_time',  line: 'max_execution_time = 120' }
+      <span class="key">notify</span><span class="str">: Restart Apache</span>
+
+    <span class="cm"># ── MySQL ─────────────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Install MySQL server</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [mysql-server, python3-pymysql]</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Ensure MySQL is running</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: mysql</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Set MySQL root password</span>
+      <span class="key">community.mysql.mysql_user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: root</span>
+        <span class="key">password</span><span class="str">: "{{ mysql_root_password }}"</span>
+        <span class="key">login_unix_socket</span><span class="str">: /var/run/mysqld/mysqld.sock</span>
+        <span class="key">host</span><span class="str">: localhost</span>
+
+    - <span class="key">name</span><span class="str">: Create application database</span>
+      <span class="key">community.mysql.mysql_db</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ app_db_name }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">login_user</span><span class="str">: root</span>
+        <span class="key">login_password</span><span class="str">: "{{ mysql_root_password }}"</span>
+
+    - <span class="key">name</span><span class="str">: Create application DB user</span>
+      <span class="key">community.mysql.mysql_user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ app_db_user }}"</span>
+        <span class="key">password</span><span class="str">: "{{ app_db_password }}"</span>
+        <span class="key">priv</span><span class="str">: "{{ app_db_name }}.*:ALL"</span>
+        <span class="key">host</span><span class="str">: localhost</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">login_user</span><span class="str">: root</span>
+        <span class="key">login_password</span><span class="str">: "{{ mysql_root_password }}"</span>
+
+    <span class="cm"># ── Apache Virtual Host ───────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Deploy Apache vhost config</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/apache-vhost.conf.j2</span>
+        <span class="key">dest</span><span class="str">: /etc/apache2/sites-available/myapp.conf</span>
+      <span class="key">notify</span><span class="str">: Restart Apache</span>
+
+    - <span class="key">name</span><span class="str">: Enable vhost</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: a2ensite myapp.conf</span>
+      <span class="key">args</span><span class="str">:</span>
+        <span class="key">creates</span><span class="str">: /etc/apache2/sites-enabled/myapp.conf</span>
+      <span class="key">notify</span><span class="str">: Restart Apache</span>
+
+    - <span class="key">name</span><span class="str">: Verify LAMP stack is functional</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "http://{{ ansible_default_ipv4.address }}"</span>
+        <span class="key">status_code</span><span class="str">: 200</span>
+      <span class="key">tags</span><span class="str">: verify</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 5: SECURITY HARDENING -->
+  <section class="section" id="project5">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 05</span>
+        <span class="level-badge intermediate">Intermediate</span>
+        <h3>CIS Security Hardening Playbook</h3>
+      </div>
+      <div class="project-body">
+        <p>Apply CIS benchmark-inspired security hardening: kernel parameters, sysctl, audit rules, and more.</p>
+        <div class="project-meta">
+          <span class="meta-tag">security</span>
+          <span class="meta-tag">sysctl</span>
+          <span class="meta-tag">auditd</span>
+          <span class="meta-tag">cis-benchmark</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project5-hardening.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Server security hardening</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">become</span><span class="str">: true</span>
+
+  <span class="key">handlers</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Reload sysctl</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: sysctl --system</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Set secure sysctl parameters</span>
+      <span class="key">ansible.posix.sysctl</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item.name }}"</span>
+        <span class="key">value</span><span class="str">: "{{ item.value }}"</span>
+        <span class="key">sysctl_file</span><span class="str">: /etc/sysctl.d/99-hardening.conf</span>
+        <span class="key">reload</span><span class="str">: true</span>
+      <span class="key">loop</span><span class="str">:</span>
+        - { name: net.ipv4.ip_forward,                    value: '0' }
+        - { name: net.ipv4.conf.all.send_redirects,       value: '0' }
+        - { name: net.ipv4.conf.all.accept_source_route,  value: '0' }
+        - { name: net.ipv4.conf.all.accept_redirects,     value: '0' }
+        - { name: net.ipv4.conf.all.log_martians,         value: '1' }
+        - { name: net.ipv4.tcp_syncookies,                value: '1' }
+        - { name: kernel.randomize_va_space,              value: '2' }
+        - { name: fs.suid_dumpable,                       value: '0' }
+
+    - <span class="key">name</span><span class="str">: Install auditd</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [auditd, audispd-plugins]</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Configure audit rules</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          # Audit privileged command execution
+          -a always,exit -F arch=b64 -S execve -F euid=0 -k root_commands
+          # Audit file deletions
+          -a always,exit -F arch=b64 -S unlink,unlinkat,rename -F auid>=1000 -k file_deletions
+          # Audit sudoers changes
+          -w /etc/sudoers -p wa -k sudoers
+          # Audit passwd changes
+          -w /etc/passwd -p wa -k passwd_changes
+          # Audit SSH keys
+          -w /etc/ssh/sshd_config -p warx -k sshd_config
+          # Audit login/logout
+          -w /var/log/lastlog -p wa -k logins
+          -w /var/run/faillock -p wa -k logins</span>
+        <span class="key">dest</span><span class="str">: /etc/audit/rules.d/hardening.rules</span>
+
+    - <span class="key">name</span><span class="str">: Disable core dumps</span>
+      <span class="key">ansible.builtin.blockinfile</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /etc/security/limits.conf</span>
+        <span class="key">block</span><span class="str">: |
+          * hard core 0
+          * soft core 0</span>
+
+    - <span class="key">name</span><span class="str">: Ensure auditd is running</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: auditd</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Set login banner</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          *************** AUTHORIZED ACCESS ONLY ***************
+          This system is monitored. Unauthorized access is prohibited.
+          All activity is logged and may be reported to authorities.</span>
+        <span class="key">dest</span><span class="str">: /etc/issue.net</span>
+
+    - <span class="key">name</span><span class="str">: Remove world-writable files (find & fix)</span>
+      <span class="key">ansible.builtin.shell</span><span class="str">: |
+        find / -xdev -type f -perm -0002 \
+          ! -path "/proc/*" ! -path "/sys/*" \
+          -exec chmod o-w {} \;</span>
+      <span class="key">changed_when</span><span class="str">: false</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 6 -->
+  <section class="section" id="project6">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 06</span>
+        <span class="level-badge intermediate">Intermediate</span>
+        <h3>PostgreSQL Database Setup & Backup</h3>
+      </div>
+      <div class="project-body">
+        <p>Deploy PostgreSQL, create databases and roles, configure pg_hba.conf, and set up automated backups with cron.</p>
+        <div class="project-meta">
+          <span class="meta-tag">postgresql</span>
+          <span class="meta-tag">backup</span>
+          <span class="meta-tag">cron</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project6-postgres.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: PostgreSQL setup and backup</span>
+  <span class="key">hosts</span><span class="str">: dbservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">pg_version</span><span class="str">: "15"</span>
+    <span class="key">databases</span><span class="str">:</span>
+      - { name: appdb,     owner: appuser }
+      - { name: analyticsdb, owner: analyst }
+    <span class="key">pg_users</span><span class="str">:</span>
+      - { name: appuser,  password: "{{ vault_appuser_pass }}",  role: CREATEDB }
+      - { name: analyst,  password: "{{ vault_analyst_pass }}",  role: '' }
+      - { name: readonly, password: "{{ vault_readonly_pass }}", role: '' }
+    <span class="key">backup_dir</span><span class="str">: /var/backups/postgresql</span>
+    <span class="key">backup_retention_days</span><span class="str">: 7</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install PostgreSQL</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">:</span>
+          - "postgresql-{{ pg_version }}"
+          - python3-psycopg2
+          - postgresql-client
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Ensure PostgreSQL is running</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: postgresql</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Create PostgreSQL users</span>
+      <span class="key">community.postgresql.postgresql_user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item.name }}"</span>
+        <span class="key">password</span><span class="str">: "{{ item.password }}"</span>
+        <span class="key">role_attr_flags</span><span class="str">: "{{ item.role }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">become_user</span><span class="str">: postgres</span>
+      <span class="key">loop</span><span class="str">: "{{ pg_users }}"</span>
+
+    - <span class="key">name</span><span class="str">: Create databases</span>
+      <span class="key">community.postgresql.postgresql_db</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item.name }}"</span>
+        <span class="key">owner</span><span class="str">: "{{ item.owner }}"</span>
+        <span class="key">encoding</span><span class="str">: UTF8</span>
+        <span class="key">lc_collate</span><span class="str">: en_US.UTF-8</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">become_user</span><span class="str">: postgres</span>
+      <span class="key">loop</span><span class="str">: "{{ databases }}"</span>
+
+    - <span class="key">name</span><span class="str">: Grant readonly access to appdb</span>
+      <span class="key">community.postgresql.postgresql_privs</span><span class="str">:</span>
+        <span class="key">db</span><span class="str">: appdb</span>
+        <span class="key">role</span><span class="str">: readonly</span>
+        <span class="key">objs</span><span class="str">: ALL_IN_SCHEMA</span>
+        <span class="key">privs</span><span class="str">: SELECT</span>
+      <span class="key">become_user</span><span class="str">: postgres</span>
+
+    - <span class="key">name</span><span class="str">: Create backup directory</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: "{{ backup_dir }}"</span>
+        <span class="key">state</span><span class="str">: directory</span>
+        <span class="key">owner</span><span class="str">: postgres</span>
+        <span class="key">mode</span><span class="str">: '0750'</span>
+
+    - <span class="key">name</span><span class="str">: Deploy backup script</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          #!/bin/bash
+          BACKUP_DIR="{{ backup_dir }}"
+          DATE=$(date +%Y%m%d_%H%M%S)
+          for db in {{ databases | map(attribute='name') | join(' ') }}; do
+            pg_dump "$db" | gzip > "$BACKUP_DIR/${db}_${DATE}.sql.gz"
+            echo "Backed up $db to $BACKUP_DIR/${db}_${DATE}.sql.gz"
+          done
+          # Remove old backups
+          find "$BACKUP_DIR" -name "*.sql.gz" -mtime +{{ backup_retention_days }} -delete</span>
+        <span class="key">dest</span><span class="str">: /usr/local/bin/pg_backup.sh</span>
+        <span class="key">owner</span><span class="str">: postgres</span>
+        <span class="key">mode</span><span class="str">: '0750'</span>
+
+    - <span class="key">name</span><span class="str">: Schedule nightly backup</span>
+      <span class="key">ansible.builtin.cron</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: PostgreSQL nightly backup</span>
+        <span class="key">hour</span><span class="str">: "2"</span>
+        <span class="key">minute</span><span class="str">: "0"</span>
+        <span class="key">job</span><span class="str">: /usr/local/bin/pg_backup.sh >> /var/log/pg_backup.log 2>&1</span>
+        <span class="key">user</span><span class="str">: postgres</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 7 -->
+  <section class="section" id="project7">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 07</span>
+        <span class="level-badge intermediate">Intermediate</span>
+        <h3>Docker & Docker Compose Deployment</h3>
+      </div>
+      <div class="project-body">
+        <p>Install Docker, configure daemon, deploy apps using Docker Compose, and manage container lifecycle.</p>
+        <div class="project-meta">
+          <span class="meta-tag">docker</span>
+          <span class="meta-tag">containers</span>
+          <span class="meta-tag">compose</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project7-docker.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Install and configure Docker</span>
+  <span class="key">hosts</span><span class="str">: appservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">docker_users</span><span class="str">: [deploy, ubuntu]</span>
+    <span class="key">app_dir</span><span class="str">: /opt/myapp</span>
+    <span class="key">registry</span><span class="str">: registry.example.com</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Install Docker prerequisites</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [ca-certificates, curl, gnupg, lsb-release]</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Add Docker GPG key</span>
+      <span class="key">ansible.builtin.apt_key</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: https://download.docker.com/linux/ubuntu/gpg</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Add Docker repository</span>
+      <span class="key">ansible.builtin.apt_repository</span><span class="str">:</span>
+        <span class="key">repo</span><span class="str">: "deb https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Install Docker CE</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Configure Docker daemon</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: |
+          {
+            "log-driver": "json-file",
+            "log-opts": { "max-size": "50m", "max-file": "3" },
+            "default-ulimits": { "nofile": { "Hard": 64000, "Name": "nofile", "Soft": 64000 } },
+            "live-restore": true,
+            "storage-driver": "overlay2"
+          }</span>
+        <span class="key">dest</span><span class="str">: /etc/docker/daemon.json</span>
+
+    - <span class="key">name</span><span class="str">: Add users to docker group</span>
+      <span class="key">ansible.builtin.user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item }}"</span>
+        <span class="key">groups</span><span class="str">: docker</span>
+        <span class="key">append</span><span class="str">: true</span>
+      <span class="key">loop</span><span class="str">: "{{ docker_users }}"</span>
+
+    - <span class="key">name</span><span class="str">: Ensure Docker is running</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: docker</span>
+        <span class="key">state</span><span class="str">: started</span>
+        <span class="key">enabled</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Create app directory</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: "{{ app_dir }}"</span>
+        <span class="key">state</span><span class="str">: directory</span>
+        <span class="key">owner</span><span class="str">: deploy</span>
+
+    - <span class="key">name</span><span class="str">: Deploy docker-compose.yml</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/docker-compose.yml.j2</span>
+        <span class="key">dest</span><span class="str">: "{{ app_dir }}/docker-compose.yml"</span>
+        <span class="key">owner</span><span class="str">: deploy</span>
+
+    - <span class="key">name</span><span class="str">: Pull latest images</span>
+      <span class="key">community.docker.docker_compose_v2</span><span class="str">:</span>
+        <span class="key">project_src</span><span class="str">: "{{ app_dir }}"</span>
+        <span class="key">pull</span><span class="str">: always</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">become_user</span><span class="str">: deploy</span>
+
+    - <span class="key">name</span><span class="str">: Verify containers are running</span>
+      <span class="key">community.docker.docker_container_info</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ item }}"</span>
+      <span class="key">loop</span><span class="str">: [app, nginx, redis]</span>
+      <span class="key">register</span><span class="str">: container_info</span>
+
+    - <span class="key">name</span><span class="str">: Report container status</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "{{ item.item }}: {{ item.container.State.Status }}"</span>
+      <span class="key">loop</span><span class="str">: "{{ container_info.results }}"</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ ADVANCED DIVIDER ═══════════════ -->
+  <div class="level-divider" id="advanced-level">
+    <div class="level-divider-line a"></div>
+    <div class="level-divider-label a">🔥 Advanced</div>
+    <div class="level-divider-line a-right"></div>
+  </div>
+
+  <!-- DYNAMIC INVENTORY -->
+  <section class="section" id="dynamic-inventory">
+    <div class="section-header">
+      <div class="section-number">14</div>
+      <div class="section-title-group">
+        <div class="level-badge advanced">Advanced</div>
+        <h2>Dynamic Inventory</h2>
+        <p>Automatically discover hosts from cloud providers</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">inventory/aws_ec2.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># AWS EC2 dynamic inventory plugin</span>
+<span class="key">plugin</span><span class="str">: amazon.aws.aws_ec2</span>
+<span class="key">regions</span><span class="str">:</span>
+  - us-east-1
+  - us-west-2
+
+<span class="key">filters</span><span class="str">:</span>
+  <span class="key">instance-state-name</span><span class="str">: running</span>
+  <span class="key">tag:Environment</span><span class="str">: production</span>
+
+<span class="key">keyed_groups</span><span class="str">:</span>
+  - <span class="key">key</span><span class="str">: tags.Role</span>       <span class="cm"># group by Role tag</span>
+    <span class="key">prefix</span><span class="str">: role</span>
+  - <span class="key">key</span><span class="str">: instance_type</span>
+    <span class="key">prefix</span><span class="str">: instance</span>
+  - <span class="key">key</span><span class="str">: placement.region</span>
+    <span class="key">separator</span><span class="str">: ''</span>
+
+<span class="key">compose</span><span class="str">:</span>
+  <span class="key">ansible_host</span><span class="str">: public_ip_address</span>
+
+<span class="key">hostnames</span><span class="str">:</span>
+  - tag:Name
+  - private-dns-name</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">custom-dynamic-inventory.py</span><span class="code-lang">Python</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>#!/usr/bin/env python3
+"""Custom dynamic inventory script example."""
+import json
+import sys
+import requests  <span class="cm"># query your CMDB or API</span>
+
+def get_inventory():
+    <span class="cm"># Could fetch from CMDB, Consul, etc.</span>
+    <span class="cm"># Example: query a hypothetical CMDB API</span>
+    hosts_data = {
+        "webservers": {
+            "hosts": ["web1.example.com", "web2.example.com"],
+            "vars": {"http_port": 80}
+        },
+        "dbservers": {
+            "hosts": ["db1.example.com"],
+            "vars": {"mysql_port": 3306}
+        },
+        "_meta": {
+            "hostvars": {
+                "web1.example.com": {
+                    "ansible_host": "10.0.1.10",
+                    "region": "us-east-1"
+                },
+                "web2.example.com": {
+                    "ansible_host": "10.0.1.11",
+                    "region": "us-east-1"
+                }
+            }
+        }
+    }
+    return hosts_data
+
+if __name__ == "__main__":
+    if len(sys.argv) == 2 and sys.argv[1] == "--list":
+        print(json.dumps(get_inventory(), indent=2))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--host":
+        inv = get_inventory()
+        host = sys.argv[2]
+        print(json.dumps(inv.get("_meta", {}).get("hostvars", {}).get(host, {})))
+    else:
+        print(json.dumps({}))</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- CUSTOM MODULES -->
+  <section class="section" id="custom-modules">
+    <div class="section-header">
+      <div class="section-number">15</div>
+      <div class="section-title-group">
+        <div class="level-badge advanced">Advanced</div>
+        <h2>Custom Modules</h2>
+        <p>Write your own Ansible modules in Python</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">library/my_app_config.py</span><span class="code-lang">Python</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>#!/usr/bin/python3
+"""Custom Ansible module: manage application configuration."""
+
+from ansible.module_utils.basic import AnsibleModule
+import json, os
+
+DOCUMENTATION = r"""
+---
+module: my_app_config
+short_description: Manage app JSON config file
+options:
+  path:
+    description: Path to config file
+    required: true
+  key:
+    description: Config key
+    required: true
+  value:
+    description: Config value
+    required: true
+  state:
+    description: present or absent
+    default: present
+"""
+
+def run_module():
+    module_args = dict(
+        path=dict(type='str', required=True),
+        key=dict(type='str', required=True),
+        value=dict(type='str', required=False),
+        state=dict(type='str', default='present', choices=['present', 'absent']),
+    )
+    result = dict(changed=False, message='')
+    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+
+    path  = module.params['path']
+    key   = module.params['key']
+    value = module.params['value']
+    state = module.params['state']
+
+    config = {}
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            config = json.load(f)
+
+    if state == 'present':
+        if config.get(key) != value:
+            config[key] = value
+            result['changed'] = True
+            result['message'] = f'Set {key}={value}'
+    elif state == 'absent':
+        if key in config:
+            del config[key]
+            result['changed'] = True
+            result['message'] = f'Removed {key}'
+
+    if result['changed'] and not module.check_mode:
+        with open(path, 'w') as f:
+            json.dump(config, f, indent=2)
+
+    module.exit_json(**result)
+
+if __name__ == '__main__':
+    run_module()</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">use-custom-module.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Use custom module</span>
+  <span class="key">hosts</span><span class="str">: appservers</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Set app config key</span>
+      <span class="key">my_app_config</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: /opt/app/config.json</span>
+        <span class="key">key</span><span class="str">: database_url</span>
+        <span class="key">value</span><span class="str">: "postgresql://appuser:pass@db:5432/appdb"</span>
+        <span class="key">state</span><span class="str">: present</span>
+      <span class="key">register</span><span class="str">: config_result</span>
+
+    - <span class="key">name</span><span class="str">: Show result</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "{{ config_result.message }}"</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ERROR HANDLING -->
+  <section class="section" id="error-handling">
+    <div class="section-header">
+      <div class="section-number">16</div>
+      <div class="section-title-group">
+        <div class="level-badge advanced">Advanced</div>
+        <h2>Error Handling & Fault Tolerance</h2>
+        <p>ignore_errors, rescue, block, failed_when, changed_when</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">error-handling.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Error handling examples</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    <span class="cm"># ── ignore_errors ─────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Optional task — ignore if fails</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: /opt/maybe-exists.sh</span>
+      <span class="key">ignore_errors</span><span class="str">: true</span>
+
+    <span class="cm"># ── custom failed_when ────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Fail only if stderr has "ERROR"</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: /usr/local/bin/healthcheck.sh</span>
+      <span class="key">register</span><span class="str">: check</span>
+      <span class="key">failed_when</span><span class="str">: "'ERROR' in check.stderr"</span>
+
+    <span class="cm"># ── custom changed_when ───────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Only report changed if output says "changed"</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: /usr/local/bin/check-state.sh</span>
+      <span class="key">register</span><span class="str">: state_check</span>
+      <span class="key">changed_when</span><span class="str">: "'modified' in state_check.stdout"</span>
+
+    <span class="cm"># ── block / rescue / always ───────────────────────</span>
+    - <span class="key">block</span><span class="str">:</span>
+        - <span class="key">name</span><span class="str">: Attempt deployment</span>
+          <span class="key">ansible.builtin.command</span><span class="str">: /opt/deploy.sh</span>
+          <span class="key">register</span><span class="str">: deploy_result</span>
+
+        - <span class="key">name</span><span class="str">: Run post-deploy checks</span>
+          <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+            <span class="key">url</span><span class="str">: http://localhost/health</span>
+            <span class="key">status_code</span><span class="str">: 200</span>
+
+      <span class="key">rescue</span><span class="str">:</span>
+        - <span class="key">name</span><span class="str">: 🚨 Deployment failed — rolling back</span>
+          <span class="key">ansible.builtin.command</span><span class="str">: /opt/rollback.sh</span>
+
+        - <span class="key">name</span><span class="str">: Alert team via Slack</span>
+          <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+            <span class="key">url</span><span class="str">: "{{ slack_webhook }}"</span>
+            <span class="key">method</span><span class="str">: POST</span>
+            <span class="key">body_format</span><span class="str">: json</span>
+            <span class="key">body</span><span class="str">:</span>
+              <span class="key">text</span><span class="str">: "❌ Deploy failed on {{ inventory_hostname }}, rollback triggered"</span>
+
+      <span class="key">always</span><span class="str">:</span>
+        - <span class="key">name</span><span class="str">: Write deployment log</span>
+          <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+            <span class="key">content</span><span class="str">: "Deploy at {{ ansible_date_time.iso8601 }}: {{ deploy_result.rc | default('failed') }}\n"</span>
+            <span class="key">dest</span><span class="str">: /var/log/deployments.log</span>
+            <span class="key">mode</span><span class="str">: '0644'</span>
+
+    <span class="cm"># ── any_errors_fatal ──────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Critical task — abort all hosts if one fails</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: /opt/critical.sh</span>
+      <span class="key">any_errors_fatal</span><span class="str">: true</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXECUTION STRATEGIES -->
+  <section class="section" id="strategies">
+    <div class="section-header">
+      <div class="section-number">17</div>
+      <div class="section-title-group">
+        <div class="level-badge advanced">Advanced</div>
+        <h2>Execution Strategies & Rolling Updates</h2>
+        <p>Control how Ansible runs across multiple hosts</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">rolling-update.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>---
+- <span class="key">name</span><span class="str">: Zero-downtime rolling update</span>
+  <span class="key">hosts</span><span class="str">: webservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">serial</span><span class="str">: "25%"</span>        <span class="cm"># update 25% of hosts at a time</span>
+  <span class="key">max_fail_percentage</span><span class="str">: 20</span>  <span class="cm"># abort if >20% fail</span>
+
+  <span class="key">pre_tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Remove host from load balancer</span>
+      <span class="key">community.general.haproxy</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: disabled</span>
+        <span class="key">host</span><span class="str">: "{{ inventory_hostname }}"</span>
+        <span class="key">socket</span><span class="str">: /var/run/haproxy/admin.sock</span>
+      <span class="key">delegate_to</span><span class="str">: loadbalancer</span>
+
+    - <span class="key">name</span><span class="str">: Wait for connections to drain</span>
+      <span class="key">ansible.builtin.pause</span><span class="str">:</span>
+        <span class="key">seconds</span><span class="str">: 15</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Deploy new application version</span>
+      <span class="key">ansible.builtin.git</span><span class="str">:</span>
+        <span class="key">repo</span><span class="str">: https://github.com/org/app.git</span>
+        <span class="key">dest</span><span class="str">: /opt/app</span>
+        <span class="key">version</span><span class="str">: "{{ app_version }}"</span>
+        <span class="key">force</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Restart application service</span>
+      <span class="key">ansible.builtin.service</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: myapp</span>
+        <span class="key">state</span><span class="str">: restarted</span>
+
+    - <span class="key">name</span><span class="str">: Wait for app to be healthy</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "http://localhost:8080/health"</span>
+        <span class="key">status_code</span><span class="str">: 200</span>
+      <span class="key">retries</span><span class="str">: 10</span>
+      <span class="key">delay</span><span class="str">: 5</span>
+      <span class="key">until</span><span class="str">: health.status == 200</span>
+      <span class="key">register</span><span class="str">: health</span>
+
+  <span class="key">post_tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Re-add host to load balancer</span>
+      <span class="key">community.general.haproxy</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: enabled</span>
+        <span class="key">host</span><span class="str">: "{{ inventory_hostname }}"</span>
+        <span class="key">socket</span><span class="str">: /var/run/haproxy/admin.sock</span>
+      <span class="key">delegate_to</span><span class="str">: loadbalancer</span>
+
+    - <span class="key">name</span><span class="str">: Verify host is serving traffic</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "✅ {{ inventory_hostname }} updated and back in rotation"</span></code></pre>
+      </div>
+
+      <h3>Async Tasks & Polling</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">async-tasks.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>- <span class="key">name</span><span class="str">: Async operations</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Start long running task (async)</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: /opt/long-script.sh</span>
+      <span class="key">async</span><span class="str">: 3600</span>    <span class="cm"># max runtime: 1 hour</span>
+      <span class="key">poll</span><span class="str">: 0</span>       <span class="cm"># fire and forget</span>
+      <span class="key">register</span><span class="str">: long_task</span>
+
+    - <span class="key">name</span><span class="str">: Do other work while task runs</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: echo "Doing other things..."</span>
+
+    - <span class="key">name</span><span class="str">: Wait for async task to complete</span>
+      <span class="key">ansible.builtin.async_status</span><span class="str">:</span>
+        <span class="key">jid</span><span class="str">: "{{ long_task.ansible_job_id }}"</span>
+      <span class="key">register</span><span class="str">: job_result</span>
+      <span class="key">until</span><span class="str">: job_result.finished</span>
+      <span class="key">retries</span><span class="str">: 60</span>
+      <span class="key">delay</span><span class="str">: 30</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLLECTIONS -->
+  <section class="section" id="collections">
+    <div class="section-header">
+      <div class="section-number">18</div>
+      <div class="section-title-group">
+        <div class="level-badge advanced">Advanced</div>
+        <h2>Collections & Galaxy</h2>
+        <p>Package, share, and consume reusable Ansible content</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">requirements.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm">---</span>
+<span class="key">collections</span><span class="str">:</span>
+  - <span class="key">name</span><span class="str">: community.general</span>
+    <span class="key">version</span><span class="str">: ">=7.0.0"</span>
+  - <span class="key">name</span><span class="str">: community.mysql</span>
+  - <span class="key">name</span><span class="str">: community.postgresql</span>
+  - <span class="key">name</span><span class="str">: community.docker</span>
+  - <span class="key">name</span><span class="str">: ansible.posix</span>
+  - <span class="key">name</span><span class="str">: amazon.aws</span>
+  - <span class="key">name</span><span class="str">: azure.azcollection</span>
+  - <span class="key">name</span><span class="str">: google.cloud</span>
+  - <span class="key">name</span><span class="str">: kubernetes.core</span>
+
+<span class="key">roles</span><span class="str">:</span>
+  - <span class="key">name</span><span class="str">: geerlingguy.docker</span>
+  - <span class="key">name</span><span class="str">: geerlingguy.nginx</span>
+  - <span class="key">name</span><span class="str">: geerlingguy.mysql</span>
+    <span class="key">version</span><span class="str">: 4.3.1</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">galaxy-commands.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># Install all requirements</span>
+ansible-galaxy install -r requirements.yml
+ansible-galaxy collection install -r requirements.yml
+
+<span class="cm"># Search Galaxy</span>
+ansible-galaxy search nginx --author geerlingguy
+
+<span class="cm"># Install specific role</span>
+ansible-galaxy role install geerlingguy.nginx
+
+<span class="cm"># Create a new collection skeleton</span>
+ansible-galaxy collection init mycompany.mytools
+
+<span class="cm"># Publish your collection</span>
+ansible-galaxy collection build
+ansible-galaxy collection publish mycompany-mytools-1.0.0.tar.gz \
+  --token YOUR_GALAXY_TOKEN</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTING -->
+  <section class="section" id="testing">
+    <div class="section-header">
+      <div class="section-number">19</div>
+      <div class="section-title-group">
+        <div class="level-badge advanced">Advanced</div>
+        <h2>Testing Playbooks — Molecule</h2>
+        <p>Test roles in Docker containers automatically</p>
+      </div>
+    </div>
+    <div class="prose">
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">molecule/default/molecule.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>---
+<span class="key">dependency</span><span class="str">:</span>
+  <span class="key">name</span><span class="str">: galaxy</span>
+
+<span class="key">driver</span><span class="str">:</span>
+  <span class="key">name</span><span class="str">: docker</span>
+
+<span class="key">platforms</span><span class="str">:</span>
+  - <span class="key">name</span><span class="str">: ubuntu22</span>
+    <span class="key">image</span><span class="str">: geerlingguy/docker-ubuntu2204-ansible</span>
+    <span class="key">pre_build_image</span><span class="str">: true</span>
+  - <span class="key">name</span><span class="str">: rocky9</span>
+    <span class="key">image</span><span class="str">: geerlingguy/docker-rockylinux9-ansible</span>
+    <span class="key">pre_build_image</span><span class="str">: true</span>
+
+<span class="key">provisioner</span><span class="str">:</span>
+  <span class="key">name</span><span class="str">: ansible</span>
+  <span class="key">inventory</span><span class="str">:</span>
+    <span class="key">group_vars</span><span class="str">:</span>
+      <span class="key">all</span><span class="str">:</span>
+        <span class="key">nginx_port</span><span class="str">: 80</span>
+
+<span class="key">verifier</span><span class="str">:</span>
+  <span class="key">name</span><span class="str">: ansible</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">molecule/default/verify.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code>---
+- <span class="key">name</span><span class="str">: Verify nginx role</span>
+  <span class="key">hosts</span><span class="str">: all</span>
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Gather package info</span>
+      <span class="key">ansible.builtin.package_facts</span><span class="str">:</span>
+        <span class="key">manager</span><span class="str">: auto</span>
+
+    - <span class="key">name</span><span class="str">: Assert nginx is installed</span>
+      <span class="key">ansible.builtin.assert</span><span class="str">:</span>
+        <span class="key">that</span><span class="str">: "'nginx' in ansible_facts.packages"</span>
+        <span class="key">fail_msg</span><span class="str">: "nginx is NOT installed!"</span>
+        <span class="key">success_msg</span><span class="str">: "✅ nginx is installed"</span>
+
+    - <span class="key">name</span><span class="str">: Check nginx is running</span>
+      <span class="key">ansible.builtin.service_facts</span><span class="str">:</span>
+
+    - <span class="key">name</span><span class="str">: Assert nginx service is active</span>
+      <span class="key">ansible.builtin.assert</span><span class="str">:</span>
+        <span class="key">that</span><span class="str">: ansible_facts.services['nginx.service'].state == 'running'"</span>
+
+    - <span class="key">name</span><span class="str">: Check HTTP response</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: http://localhost</span>
+        <span class="key">status_code</span><span class="str">: 200</span></code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">molecule-commands.sh</span><span class="code-lang">bash</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+        <pre><code><span class="cm"># Install Molecule</span>
+pip install molecule molecule-docker ansible-lint
+
+<span class="cm"># Initialize molecule in a role</span>
+cd roles/nginx && molecule init scenario
+
+<span class="cm"># Full test cycle (create → converge → verify → destroy)</span>
+molecule test
+
+<span class="cm"># Just create containers and run playbook</span>
+molecule converge
+
+<span class="cm"># Run verifier only</span>
+molecule verify
+
+<span class="cm"># Login to test container</span>
+molecule login --host ubuntu22
+
+<span class="cm"># Destroy test containers</span>
+molecule destroy
+
+<span class="cm"># Lint playbooks</span>
+ansible-lint site.yml</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 8: Kubernetes -->
+  <section class="section" id="project8">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 08</span>
+        <span class="level-badge advanced">Advanced</span>
+        <h3>Kubernetes Application Deployment</h3>
+      </div>
+      <div class="project-body">
+        <p>Deploy a microservices app to Kubernetes using the kubernetes.core collection — deployments, services, ConfigMaps, and secrets.</p>
+        <div class="project-meta">
+          <span class="meta-tag">kubernetes</span>
+          <span class="meta-tag">k8s</span>
+          <span class="meta-tag">microservices</span>
+          <span class="meta-tag">helm</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project8-k8s.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Deploy application to Kubernetes</span>
+  <span class="key">hosts</span><span class="str">: localhost</span>
+  <span class="key">gather_facts</span><span class="str">: false</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">namespace</span><span class="str">: production</span>
+    <span class="key">app_name</span><span class="str">: myapp</span>
+    <span class="key">app_image</span><span class="str">: registry.example.com/myapp</span>
+    <span class="key">app_version</span><span class="str">: "{{ lookup('env', 'APP_VERSION') | default('latest') }}"</span>
+    <span class="key">replicas</span><span class="str">: 3</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Ensure namespace exists</span>
+      <span class="key">kubernetes.core.k8s</span><span class="str">:</span>
+        <span class="key">api_version</span><span class="str">: v1</span>
+        <span class="key">kind</span><span class="str">: Namespace</span>
+        <span class="key">name</span><span class="str">: "{{ namespace }}"</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Create app ConfigMap</span>
+      <span class="key">kubernetes.core.k8s</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">definition</span><span class="str">:</span>
+          <span class="key">apiVersion</span><span class="str">: v1</span>
+          <span class="key">kind</span><span class="str">: ConfigMap</span>
+          <span class="key">metadata</span><span class="str">:</span>
+            <span class="key">name</span><span class="str">: "{{ app_name }}-config"</span>
+            <span class="key">namespace</span><span class="str">: "{{ namespace }}"</span>
+          <span class="key">data</span><span class="str">:</span>
+            <span class="key">DATABASE_HOST</span><span class="str">: postgres-service</span>
+            <span class="key">REDIS_HOST</span><span class="str">: redis-service</span>
+            <span class="key">LOG_LEVEL</span><span class="str">: INFO</span>
+
+    - <span class="key">name</span><span class="str">: Create app Secret</span>
+      <span class="key">kubernetes.core.k8s</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">definition</span><span class="str">:</span>
+          <span class="key">apiVersion</span><span class="str">: v1</span>
+          <span class="key">kind</span><span class="str">: Secret</span>
+          <span class="key">metadata</span><span class="str">:</span>
+            <span class="key">name</span><span class="str">: "{{ app_name }}-secrets"</span>
+            <span class="key">namespace</span><span class="str">: "{{ namespace }}"</span>
+          <span class="key">type</span><span class="str">: Opaque</span>
+          <span class="key">stringData</span><span class="str">:</span>
+            <span class="key">DATABASE_URL</span><span class="str">: "{{ vault_db_url }}"</span>
+            <span class="key">SECRET_KEY</span><span class="str">: "{{ vault_secret_key }}"</span>
+
+    - <span class="key">name</span><span class="str">: Deploy application</span>
+      <span class="key">kubernetes.core.k8s</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">definition</span><span class="str">:</span>
+          <span class="key">apiVersion</span><span class="str">: apps/v1</span>
+          <span class="key">kind</span><span class="str">: Deployment</span>
+          <span class="key">metadata</span><span class="str">:</span>
+            <span class="key">name</span><span class="str">: "{{ app_name }}"</span>
+            <span class="key">namespace</span><span class="str">: "{{ namespace }}"</span>
+          <span class="key">spec</span><span class="str">:</span>
+            <span class="key">replicas</span><span class="str">: "{{ replicas }}"</span>
+            <span class="key">selector</span><span class="str">:</span>
+              <span class="key">matchLabels</span><span class="str">:</span>
+                <span class="key">app</span><span class="str">: "{{ app_name }}"</span>
+            <span class="key">template</span><span class="str">:</span>
+              <span class="key">metadata</span><span class="str">:</span>
+                <span class="key">labels</span><span class="str">:</span>
+                  <span class="key">app</span><span class="str">: "{{ app_name }}"</span>
+                  <span class="key">version</span><span class="str">: "{{ app_version }}"</span>
+              <span class="key">spec</span><span class="str">:</span>
+                <span class="key">containers</span><span class="str">:</span>
+                  - <span class="key">name</span><span class="str">: "{{ app_name }}"</span>
+                    <span class="key">image</span><span class="str">: "{{ app_image }}:{{ app_version }}"</span>
+                    <span class="key">ports</span><span class="str">: [{ containerPort: 8080 }]</span>
+                    <span class="key">envFrom</span><span class="str">:</span>
+                      - <span class="key">configMapRef</span><span class="str">:</span>
+                          <span class="key">name</span><span class="str">: "{{ app_name }}-config"</span>
+                      - <span class="key">secretRef</span><span class="str">:</span>
+                          <span class="key">name</span><span class="str">: "{{ app_name }}-secrets"</span>
+                    <span class="key">livenessProbe</span><span class="str">:</span>
+                      <span class="key">httpGet</span><span class="str">: { path: /health, port: 8080 }</span>
+                      <span class="key">initialDelaySeconds</span><span class="str">: 30</span>
+                    <span class="key">resources</span><span class="str">:</span>
+                      <span class="key">requests</span><span class="str">: { memory: 128Mi, cpu: 100m }</span>
+                      <span class="key">limits</span><span class="str">: { memory: 512Mi, cpu: 500m }</span>
+
+    - <span class="key">name</span><span class="str">: Create app Service</span>
+      <span class="key">kubernetes.core.k8s</span><span class="str">:</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">definition</span><span class="str">:</span>
+          <span class="key">apiVersion</span><span class="str">: v1</span>
+          <span class="key">kind</span><span class="str">: Service</span>
+          <span class="key">metadata</span><span class="str">:</span>
+            <span class="key">name</span><span class="str">: "{{ app_name }}-service"</span>
+            <span class="key">namespace</span><span class="str">: "{{ namespace }}"</span>
+          <span class="key">spec</span><span class="str">:</span>
+            <span class="key">selector</span><span class="str">:</span>
+              <span class="key">app</span><span class="str">: "{{ app_name }}"</span>
+            <span class="key">ports</span><span class="str">: [{ port: 80, targetPort: 8080 }]</span>
+
+    - <span class="key">name</span><span class="str">: Wait for deployment to be ready</span>
+      <span class="key">kubernetes.core.k8s_info</span><span class="str">:</span>
+        <span class="key">kind</span><span class="str">: Deployment</span>
+        <span class="key">name</span><span class="str">: "{{ app_name }}"</span>
+        <span class="key">namespace</span><span class="str">: "{{ namespace }}"</span>
+        <span class="key">wait</span><span class="str">: true</span>
+        <span class="key">wait_condition</span><span class="str">:</span>
+          <span class="key">type</span><span class="str">: Available</span>
+          <span class="key">status</span><span class="str">: "True"</span>
+        <span class="key">wait_timeout</span><span class="str">: 120</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 9 -->
+  <section class="section" id="project9">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 09</span>
+        <span class="level-badge advanced">Advanced</span>
+        <h3>CI/CD Pipeline Integration</h3>
+      </div>
+      <div class="project-body">
+        <p>Integrate Ansible with GitHub Actions for automated blue/green deployments with smoke tests and Slack notifications.</p>
+        <div class="project-meta">
+          <span class="meta-tag">ci/cd</span>
+          <span class="meta-tag">github-actions</span>
+          <span class="meta-tag">blue-green</span>
+          <span class="meta-tag">notifications</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">.github/workflows/deploy.yml (GitHub Actions)</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>name: Deploy with Ansible
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with: { python-version: '3.11' }
+
+      - name: Install Ansible
+        run: pip install ansible ansible-lint
+
+      - name: Install Galaxy requirements
+        run: ansible-galaxy install -r requirements.yml
+
+      - name: Write SSH key
+        run: |
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
+      - name: Write vault password
+        run: echo "${{ secrets.VAULT_PASS }}" > /tmp/.vault_pass
+
+      - name: Run Ansible lint
+        run: ansible-lint playbooks/site.yml
+
+      - name: Deploy to production
+        run: |
+          ansible-playbook \
+            -i inventory/production.yml \
+            --vault-password-file /tmp/.vault_pass \
+            --private-key /tmp/deploy_key \
+            -e "app_version=${{ github.sha }}" \
+            playbooks/deploy.yml</code></pre>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">playbooks/deploy.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Blue/Green deployment</span>
+  <span class="key">hosts</span><span class="str">: appservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">serial</span><span class="str">: 1</span>
+
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">current_slot</span><span class="str">: "{{ lookup('file', '/opt/app/.active-slot') | default('blue') }}"</span>
+    <span class="key">new_slot</span><span class="str">: "{{ 'green' if current_slot == 'blue' else 'blue' }}"</span>
+    <span class="key">deploy_dir</span><span class="str">: "/opt/app/{{ new_slot }}"</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Deploy to {{ new_slot }} slot</span>
+      <span class="key">ansible.builtin.git</span><span class="str">:</span>
+        <span class="key">repo</span><span class="str">: https://github.com/org/app.git</span>
+        <span class="key">dest</span><span class="str">: "{{ deploy_dir }}"</span>
+        <span class="key">version</span><span class="str">: "{{ app_version }}"</span>
+
+    - <span class="key">name</span><span class="str">: Install dependencies</span>
+      <span class="key">ansible.builtin.pip</span><span class="str">:</span>
+        <span class="key">requirements</span><span class="str">: "{{ deploy_dir }}/requirements.txt"</span>
+        <span class="key">virtualenv</span><span class="str">: "{{ deploy_dir }}/venv"</span>
+
+    - <span class="key">name</span><span class="str">: Run database migrations</span>
+      <span class="key">ansible.builtin.command</span><span class="str">:</span>
+        <span class="key">cmd</span><span class="str">: "{{ deploy_dir }}/venv/bin/python manage.py migrate --noinput"</span>
+        <span class="key">chdir</span><span class="str">: "{{ deploy_dir }}"</span>
+
+    - <span class="key">name</span><span class="str">: Smoke test new slot</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "http://localhost:{{ '8081' if new_slot == 'green' else '8082' }}/health"</span>
+        <span class="key">status_code</span><span class="str">: 200</span>
+      <span class="key">register</span><span class="str">: smoke_test</span>
+
+    - <span class="key">name</span><span class="str">: Switch active slot</span>
+      <span class="key">ansible.builtin.copy</span><span class="str">:</span>
+        <span class="key">content</span><span class="str">: "{{ new_slot }}"</span>
+        <span class="key">dest</span><span class="str">: /opt/app/.active-slot</span>
+      <span class="key">when</span><span class="str">: smoke_test.status == 200</span>
+
+    - <span class="key">name</span><span class="str">: Update nginx upstream to new slot</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/nginx-upstream.conf.j2</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/conf.d/upstream.conf</span>
+      <span class="key">notify</span><span class="str">: Reload nginx</span>
+
+    - <span class="key">name</span><span class="str">: Notify Slack on success</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "{{ vault_slack_webhook }}"</span>
+        <span class="key">method</span><span class="str">: POST</span>
+        <span class="key">body_format</span><span class="str">: json</span>
+        <span class="key">body</span><span class="str">:</span>
+          <span class="key">text</span><span class="str">: "✅ Deployed {{ app_version }} to {{ inventory_hostname }} ({{ new_slot }} slot)"</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 10 -->
+  <section class="section" id="project10">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 10</span>
+        <span class="level-badge advanced">Advanced</span>
+        <h3>AWS Cloud Infrastructure Provisioning</h3>
+      </div>
+      <div class="project-body">
+        <p>Provision EC2 instances, VPC, security groups, and RDS database on AWS using the amazon.aws collection.</p>
+        <div class="project-meta">
+          <span class="meta-tag">aws</span>
+          <span class="meta-tag">ec2</span>
+          <span class="meta-tag">vpc</span>
+          <span class="meta-tag">rds</span>
+          <span class="meta-tag">cloud</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project10-aws.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Provision AWS infrastructure</span>
+  <span class="key">hosts</span><span class="str">: localhost</span>
+  <span class="key">gather_facts</span><span class="str">: false</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">aws_region</span><span class="str">: us-east-1</span>
+    <span class="key">vpc_cidr</span><span class="str">: "10.0.0.0/16"</span>
+    <span class="key">app_name</span><span class="str">: myapp-prod</span>
+    <span class="key">instance_type</span><span class="str">: t3.medium</span>
+    <span class="key">ami_id</span><span class="str">: ami-0c7217cdde317cfec</span>  <span class="cm"># Ubuntu 22.04 LTS</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Create VPC</span>
+      <span class="key">amazon.aws.ec2_vpc_net</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ app_name }}-vpc"</span>
+        <span class="key">cidr_block</span><span class="str">: "{{ vpc_cidr }}"</span>
+        <span class="key">region</span><span class="str">: "{{ aws_region }}"</span>
+        <span class="key">tags</span><span class="str">: { Project: "{{ app_name }}", Env: production }</span>
+      <span class="key">register</span><span class="str">: vpc_info</span>
+
+    - <span class="key">name</span><span class="str">: Create public subnet</span>
+      <span class="key">amazon.aws.ec2_vpc_subnet</span><span class="str">:</span>
+        <span class="key">vpc_id</span><span class="str">: "{{ vpc_info.vpc.id }}"</span>
+        <span class="key">cidr</span><span class="str">: "10.0.1.0/24"</span>
+        <span class="key">az</span><span class="str">: "{{ aws_region }}a"</span>
+        <span class="key">map_public</span><span class="str">: true</span>
+        <span class="key">tags</span><span class="str">: { Name: "{{ app_name }}-public-1a" }</span>
+      <span class="key">register</span><span class="str">: public_subnet</span>
+
+    - <span class="key">name</span><span class="str">: Create security group for web</span>
+      <span class="key">amazon.aws.ec2_security_group</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ app_name }}-web-sg"</span>
+        <span class="key">description</span><span class="str">: Web server security group</span>
+        <span class="key">vpc_id</span><span class="str">: "{{ vpc_info.vpc.id }}"</span>
+        <span class="key">rules</span><span class="str">:</span>
+          - <span class="key">proto</span><span class="str">: tcp</span>
+            <span class="key">ports</span><span class="str">: [22, 80, 443]</span>
+            <span class="key">cidr_ip</span><span class="str">: 0.0.0.0/0</span>
+        <span class="key">rules_egress</span><span class="str">:</span>
+          - <span class="key">proto</span><span class="str">: all</span>
+            <span class="key">cidr_ip</span><span class="str">: 0.0.0.0/0</span>
+      <span class="key">register</span><span class="str">: web_sg</span>
+
+    - <span class="key">name</span><span class="str">: Launch EC2 instances</span>
+      <span class="key">amazon.aws.ec2_instance</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ app_name }}-web-{{ item }}"</span>
+        <span class="key">image_id</span><span class="str">: "{{ ami_id }}"</span>
+        <span class="key">instance_type</span><span class="str">: "{{ instance_type }}"</span>
+        <span class="key">subnet_id</span><span class="str">: "{{ public_subnet.subnet.id }}"</span>
+        <span class="key">security_group</span><span class="str">: "{{ web_sg.group_id }}"</span>
+        <span class="key">key_name</span><span class="str">: my-ssh-keypair</span>
+        <span class="key">tags</span><span class="str">:</span>
+          <span class="key">Role</span><span class="str">: webserver</span>
+          <span class="key">Environment</span><span class="str">: production</span>
+        <span class="key">user_data</span><span class="str">: |
+          #!/bin/bash
+          apt-get update
+          apt-get install -y python3</span>
+        <span class="key">wait</span><span class="str">: true</span>
+        <span class="key">state</span><span class="str">: running</span>
+      <span class="key">loop</span><span class="str">: [1, 2, 3]</span>
+      <span class="key">register</span><span class="str">: ec2_instances</span>
+
+    - <span class="key">name</span><span class="str">: Provision RDS PostgreSQL instance</span>
+      <span class="key">amazon.aws.rds_instance</span><span class="str">:</span>
+        <span class="key">db_instance_identifier</span><span class="str">: "{{ app_name }}-db"</span>
+        <span class="key">db_instance_class</span><span class="str">: db.t3.micro</span>
+        <span class="key">engine</span><span class="str">: postgres</span>
+        <span class="key">engine_version</span><span class="str">: "15.4"</span>
+        <span class="key">master_username</span><span class="str">: dbadmin</span>
+        <span class="key">master_user_password</span><span class="str">: "{{ vault_db_password }}"</span>
+        <span class="key">allocated_storage</span><span class="str">: 20</span>
+        <span class="key">multi_az</span><span class="str">: true</span>
+        <span class="key">storage_encrypted</span><span class="str">: true</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    - <span class="key">name</span><span class="str">: Show instance IPs</span>
+      <span class="key">ansible.builtin.debug</span><span class="str">:</span>
+        <span class="key">msg</span><span class="str">: "Instance {{ item.instances[0].tags.Name }}: {{ item.instances[0].public_ip_address }}"</span>
+      <span class="key">loop</span><span class="str">: "{{ ec2_instances.results }}"</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECT 11 -->
+  <section class="section" id="project11">
+    <div class="project-block">
+      <div class="project-header">
+        <span class="project-num">PROJECT 11</span>
+        <span class="level-badge advanced">Advanced</span>
+        <h3>Full-Stack Node.js + React Application</h3>
+      </div>
+      <div class="project-body">
+        <p>Deploy a full production-ready Node.js API + React frontend with Nginx reverse proxy, SSL, PM2 process management, and Redis caching.</p>
+        <div class="project-meta">
+          <span class="meta-tag">nodejs</span>
+          <span class="meta-tag">react</span>
+          <span class="meta-tag">nginx</span>
+          <span class="meta-tag">ssl</span>
+          <span class="meta-tag">pm2</span>
+          <span class="meta-tag">redis</span>
+        </div>
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">project11-fullstack.yml</span><span class="code-lang">YAML</span><button class="code-copy" onclick="copyCode(this)">copy</button></div>
+          <pre><code>---
+- <span class="key">name</span><span class="str">: Deploy full-stack Node.js + React app</span>
+  <span class="key">hosts</span><span class="str">: appservers</span>
+  <span class="key">become</span><span class="str">: true</span>
+  <span class="key">vars</span><span class="str">:</span>
+    <span class="key">domain</span><span class="str">: app.example.com</span>
+    <span class="key">app_dir</span><span class="str">: /opt/fullstack</span>
+    <span class="key">api_port</span><span class="str">: 3001</span>
+    <span class="key">node_version</span><span class="str">: "20"</span>
+    <span class="key">app_user</span><span class="str">: nodeapp</span>
+    <span class="key">repo_url</span><span class="str">: https://github.com/org/fullstack-app.git</span>
+    <span class="key">app_version</span><span class="str">: "{{ lookup('env', 'APP_VERSION') | default('HEAD') }}"</span>
+
+  <span class="key">handlers</span><span class="str">:</span>
+    - <span class="key">name</span><span class="str">: Reload nginx</span>
+      <span class="key">ansible.builtin.service</span><span class="str">: name=nginx state=reloaded</span>
+
+  <span class="key">tasks</span><span class="str">:</span>
+    <span class="cm"># ── Node.js via NVM ──────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Install build tools</span>
+      <span class="key">ansible.builtin.apt</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: [git, curl, build-essential, nginx, redis-server, certbot, python3-certbot-nginx]</span>
+        <span class="key">state</span><span class="str">: present</span>
+        <span class="key">update_cache</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Create app user</span>
+      <span class="key">ansible.builtin.user</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: "{{ app_user }}"</span>
+        <span class="key">shell</span><span class="str">: /bin/bash</span>
+        <span class="key">create_home</span><span class="str">: true</span>
+
+    - <span class="key">name</span><span class="str">: Install Node.js via NodeSource</span>
+      <span class="key">ansible.builtin.shell</span><span class="str">: |
+        curl -fsSL https://deb.nodesource.com/setup_{{ node_version }}.x | bash -
+        apt-get install -y nodejs</span>
+      <span class="key">args</span><span class="str">:</span>
+        <span class="key">creates</span><span class="str">: /usr/bin/node</span>
+
+    - <span class="key">name</span><span class="str">: Install PM2 globally</span>
+      <span class="key">community.general.npm</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: pm2</span>
+        <span class="key">global</span><span class="str">: true</span>
+        <span class="key">state</span><span class="str">: present</span>
+
+    <span class="cm"># ── App Deployment ───────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Clone/update repository</span>
+      <span class="key">ansible.builtin.git</span><span class="str">:</span>
+        <span class="key">repo</span><span class="str">: "{{ repo_url }}"</span>
+        <span class="key">dest</span><span class="str">: "{{ app_dir }}"</span>
+        <span class="key">version</span><span class="str">: "{{ app_version }}"</span>
+        <span class="key">force</span><span class="str">: true</span>
+      <span class="key">become_user</span><span class="str">: "{{ app_user }}"</span>
+
+    - <span class="key">name</span><span class="str">: Install API dependencies</span>
+      <span class="key">community.general.npm</span><span class="str">:</span>
+        <span class="key">path</span><span class="str">: "{{ app_dir }}/api"</span>
+        <span class="key">ci</span><span class="str">: true</span>  <span class="cm"># use npm ci for reproducibility</span>
+      <span class="key">become_user</span><span class="str">: "{{ app_user }}"</span>
+
+    - <span class="key">name</span><span class="str">: Build React frontend</span>
+      <span class="key">ansible.builtin.shell</span><span class="str">: |
+        npm ci
+        NODE_ENV=production npm run build</span>
+      <span class="key">args</span><span class="str">:</span>
+        <span class="key">chdir</span><span class="str">: "{{ app_dir }}/frontend"</span>
+      <span class="key">become_user</span><span class="str">: "{{ app_user }}"</span>
+
+    - <span class="key">name</span><span class="str">: Deploy .env file</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/api.env.j2</span>
+        <span class="key">dest</span><span class="str">: "{{ app_dir }}/api/.env"</span>
+        <span class="key">owner</span><span class="str">: "{{ app_user }}"</span>
+        <span class="key">mode</span><span class="str">: '0600'</span>
+
+    - <span class="key">name</span><span class="str">: Deploy PM2 ecosystem config</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/ecosystem.config.js.j2</span>
+        <span class="key">dest</span><span class="str">: "{{ app_dir }}/ecosystem.config.js"</span>
+        <span class="key">owner</span><span class="str">: "{{ app_user }}"</span>
+
+    - <span class="key">name</span><span class="str">: Start/reload API with PM2</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: |
+        pm2 startOrReload {{ app_dir }}/ecosystem.config.js --update-env</span>
+      <span class="key">become_user</span><span class="str">: "{{ app_user }}"</span>
+
+    - <span class="key">name</span><span class="str">: Save PM2 process list</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: pm2 save</span>
+      <span class="key">become_user</span><span class="str">: "{{ app_user }}"</span>
+
+    - <span class="key">name</span><span class="str">: Setup PM2 startup on boot</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: pm2 startup systemd -u {{ app_user }} --hp /home/{{ app_user }}</span>
+
+    <span class="cm"># ── Nginx & SSL ──────────────────────────────────</span>
+    - <span class="key">name</span><span class="str">: Deploy Nginx config</span>
+      <span class="key">ansible.builtin.template</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: templates/fullstack-nginx.conf.j2</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/sites-available/{{ domain }}</span>
+        <span class="key">validate</span><span class="str">: nginx -t -c %s</span>
+      <span class="key">notify</span><span class="str">: Reload nginx</span>
+
+    - <span class="key">name</span><span class="str">: Enable Nginx site</span>
+      <span class="key">ansible.builtin.file</span><span class="str">:</span>
+        <span class="key">src</span><span class="str">: /etc/nginx/sites-available/{{ domain }}</span>
+        <span class="key">dest</span><span class="str">: /etc/nginx/sites-enabled/{{ domain }}</span>
+        <span class="key">state</span><span class="str">: link</span>
+      <span class="key">notify</span><span class="str">: Reload nginx</span>
+
+    - <span class="key">name</span><span class="str">: Obtain SSL certificate from Let's Encrypt</span>
+      <span class="key">ansible.builtin.command</span><span class="str">: >
+        certbot --nginx
+        -d {{ domain }}
+        --non-interactive
+        --agree-tos
+        --email admin@{{ domain }}
+        --redirect</span>
+      <span class="key">args</span><span class="str">:</span>
+        <span class="key">creates</span><span class="str">: /etc/letsencrypt/live/{{ domain }}/cert.pem</span>
+      <span class="key">notify</span><span class="str">: Reload nginx</span>
+
+    - <span class="key">name</span><span class="str">: Schedule SSL renewal</span>
+      <span class="key">ansible.builtin.cron</span><span class="str">:</span>
+        <span class="key">name</span><span class="str">: certbot renewal</span>
+        <span class="key">hour</span><span class="str">: "3"</span>
+        <span class="key">minute</span><span class="str">: "30"</span>
+        <span class="key">job</span><span class="str">: certbot renew --quiet --post-hook "systemctl reload nginx"</span>
+
+    - <span class="key">name</span><span class="str">: Verify app is responding</span>
+      <span class="key">ansible.builtin.uri</span><span class="str">:</span>
+        <span class="key">url</span><span class="str">: "https://{{ domain }}/api/health"</span>
+        <span class="key">status_code</span><span class="str">: 200</span>
+        <span class="key">validate_certs</span><span class="str">: true</span>
+      <span class="key">register</span><span class="str">: api_health</span>
+      <span class="key">retries</span><span class="str">: 5</span>
+      <span class="key">delay</span><span class="str">: 5</span>
+      <span class="key">until</span><span class="str">: api_health.status == 200</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════ CHEAT SHEET ═══ -->
+  <section class="section" id="cheatsheet">
+    <div class="section-header">
+      <div class="section-number">REF</div>
+      <div class="section-title-group">
+        <h2>Ansible Cheat Sheet</h2>
+        <p>Quick reference for the most common commands and patterns</p>
+      </div>
+    </div>
+    <div class="prose">
+      <h3>ansible-playbook Flags</h3>
+      <div class="cheat-grid">
+        <div class="cheat-item"><div class="cheat-cmd">-i inventory/hosts.ini</div><div class="cheat-desc">Specify inventory file</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--check</div><div class="cheat-desc">Dry run — no changes made</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--diff</div><div class="cheat-desc">Show file diffs</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">-v / -vv / -vvv</div><div class="cheat-desc">Verbose output (1-4 levels)</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--limit web1</div><div class="cheat-desc">Run on specific host/group</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--tags install</div><div class="cheat-desc">Run only tagged tasks</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--skip-tags migrate</div><div class="cheat-desc">Skip tagged tasks</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">-e "key=val"</div><div class="cheat-desc">Pass extra variables</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--ask-vault-pass</div><div class="cheat-desc">Prompt for vault password</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">--start-at-task "name"</div><div class="
