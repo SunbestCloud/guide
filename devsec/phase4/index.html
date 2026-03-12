@@ -1,0 +1,3330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevSecOps Phase 4 — SIEM & Incident Response</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Source+Code+Pro:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0a0505;
+  --bg2:       #0f0808;
+  --bg3:       #150b0b;
+  --panel:     #1a0e0e;
+  --panel2:    #200f0f;
+  --border:    #2d1515;
+  --border2:   #3d1f1f;
+  --border3:   #4d2828;
+  --crimson:   #dc2626;
+  --crimson2:  #ef4444;
+  --crimson3:  #fca5a5;
+  --red-dim:   rgba(220,38,38,0.12);
+  --orange:    #f97316;
+  --yellow:    #fbbf24;
+  --green:     #22c55e;
+  --green2:    #4ade80;
+  --teal:      #14b8a6;
+  --blue:      #3b82f6;
+  --purple:    #a855f7;
+  --text:      #f5e6e6;
+  --text2:     #9d7070;
+  --text3:     #5a3535;
+  --code-bg:   #070303;
+  --glow:      0 0 20px rgba(220,38,38,0.15);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Source Code Pro', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* SCANLINE EFFECT */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* NOISE TEXTURE */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:0.4;
+}
+
+.wrap { max-width:1160px; margin:0 auto; padding:0 28px; position:relative; z-index:1; }
+
+/* ══ TOP STATUS BAR ══ */
+.status-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+  position: relative;
+  z-index:2;
+}
+.status-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+}
+.sb-left { display:flex; align-items:center; gap:20px; }
+.sb-dot { width:6px; height:6px; border-radius:50%; background:var(--crimson); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.sb-live { color:var(--crimson2); font-weight:700; letter-spacing:0.15em; }
+.sb-right { display:flex; gap:16px; }
+.sb-stat { display:flex; gap:6px; }
+.sb-stat .lbl { color:var(--text3); }
+.sb-stat .val { color:var(--yellow); font-weight:600; }
+
+/* ══ HEADER ══ */
+header {
+  padding: 56px 0 52px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+header::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--crimson), transparent);
+}
+
+.phase-tag {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--crimson);
+  font-weight: 700;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.phase-tag::before {
+  content:'';
+  width: 24px;
+  height: 1px;
+  background: var(--crimson);
+}
+
+h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(36px, 6vw, 72px);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+h1 .accent { color: var(--crimson2); }
+h1 .sub-line {
+  display: block;
+  font-size: 0.42em;
+  font-family: 'Source Code Pro', monospace;
+  font-weight: 400;
+  color: var(--text3);
+  letter-spacing: 0.05em;
+  margin-top: 10px;
+}
+
+.header-desc {
+  max-width: 700px;
+  color: var(--text2);
+  font-family: 'Lora', serif;
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 24px 0 32px;
+  font-style: italic;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  padding: 7px 14px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+.sp-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+.sp-lbl { color: var(--text3); }
+.sp-val { color: var(--text); font-weight: 600; }
+.sp-dot.r { background:var(--crimson); }
+.sp-dot.o { background:var(--orange); }
+.sp-dot.y { background:var(--yellow); }
+.sp-dot.g { background:var(--green); }
+.sp-dot.t { background:var(--teal); }
+
+/* ══ NAV ══ */
+.nav-bar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(10,5,5,0.95);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 0;
+}
+.nav-inner::-webkit-scrollbar { display:none; }
+
+.nb {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text3);
+  font-family: 'Source Code Pro', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 13px 20px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.nb:hover { color: var(--text2); }
+.nb.active { color: var(--crimson2); border-bottom-color: var(--crimson); }
+
+/* ══ CONTENT ══ */
+.content { padding: 48px 0 120px; }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:none} }
+
+/* ══ SECTION HEAD ══ */
+.sh {
+  margin-bottom: 36px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sh-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--crimson);
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.sh h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(22px, 4vw, 38px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.sh p {
+  color: var(--text2);
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ══ CONCEPT PANELS ══ */
+.concept {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 28px 32px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.concept::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:2px;
+  background: var(--crimson);
+}
+.concept.orange::before { background:var(--orange); }
+.concept.yellow::before { background:var(--yellow); }
+.concept.green::before { background:var(--green); }
+.concept.teal::before { background:var(--teal); }
+.concept.blue::before { background:var(--blue); }
+.concept.purple::before { background:var(--purple); }
+
+.concept h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+}
+.concept p {
+  color: var(--text2);
+  font-family: 'Lora', serif;
+  font-size: 14px;
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+.concept p:last-child { margin-bottom:0; }
+.concept strong { color:var(--text); font-weight:600; font-family:'Source Code Pro',monospace; font-size:13px; }
+
+/* ══ TIMELINE / OVERVIEW ══ */
+.timeline {
+  position: relative;
+  padding-left: 40px;
+  margin: 28px 0;
+}
+.timeline::before {
+  content:'';
+  position:absolute;
+  left:8px; top:0; bottom:0;
+  width:1px;
+  background: linear-gradient(to bottom, var(--crimson), transparent);
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 28px;
+}
+.tl-item::before {
+  content:'';
+  position:absolute;
+  left:-34px;
+  top:5px;
+  width:12px; height:12px;
+  border-radius:50%;
+  background: var(--crimson);
+  box-shadow: 0 0 12px rgba(220,38,38,0.5);
+}
+.tl-num {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--crimson);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.tl-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.tl-desc { color:var(--text2); font-size:13px; font-family:'Lora',serif; font-style:italic; }
+
+/* ══ THREAT MATRIX ══ */
+.threat-matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin: 20px 0;
+}
+.tm-cell {
+  background: var(--panel);
+  padding: 16px;
+  position: relative;
+}
+.tm-cell::after {
+  content:'';
+  position:absolute;
+  top:0; left:0;
+  width:3px; height:100%;
+}
+.tm-cell.critical::after { background:var(--crimson); }
+.tm-cell.high::after { background:var(--orange); }
+.tm-cell.med::after { background:var(--yellow); }
+.tm-cell.low::after { background:var(--green); }
+
+.tm-sev {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.critical .tm-sev { color:var(--crimson2); }
+.high .tm-sev { color:var(--orange); }
+.med .tm-sev { color:var(--yellow); }
+.low .tm-sev { color:var(--green); }
+.tm-cell h5 { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.tm-cell p { font-size:11px; color:var(--text3); line-height:1.5; }
+
+/* ══ OVERVIEW GRID ══ */
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin: 24px 0;
+}
+.ov-card {
+  background: var(--panel);
+  padding: 22px;
+  transition: background 0.2s;
+  cursor: default;
+}
+.ov-card:hover { background: var(--panel2); }
+.ov-num {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: var(--text3);
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.ov-icon { font-size: 24px; margin-bottom: 10px; }
+.ov-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+.ov-card p { font-size:12px; color:var(--text3); line-height:1.6; }
+
+/* ══ PROJECT CARDS ══ */
+.proj-list { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); }
+
+.pc {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.pc:last-child { border-bottom:none; }
+
+.pc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px 28px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+.pc:hover .pc-head { background: var(--panel); }
+.pc.open .pc-head { background: var(--panel2); }
+
+.pnum {
+  flex-shrink: 0;
+  font-family: 'Syne', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--crimson);
+  width: 40px;
+  line-height: 1;
+  margin-top: 3px;
+  opacity: 0.6;
+}
+.pc.open .pnum { opacity: 1; }
+
+.pc-meta { flex: 1; min-width: 0; }
+.pc-meta h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+.pc-meta p { color: var(--text2); font-size: 13px; font-family:'Lora',serif; font-style:italic; line-height:1.6; }
+
+.pc-footer { display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap; }
+.ptag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid;
+}
+.ptag.r { color:var(--crimson2); border-color:var(--border2); background:rgba(220,38,38,0.08); }
+.ptag.o { color:var(--orange); border-color:rgba(249,115,22,0.2); background:rgba(249,115,22,0.06); }
+.ptag.y { color:var(--yellow); border-color:rgba(251,191,36,0.2); background:rgba(251,191,36,0.06); }
+.ptag.g { color:var(--green); border-color:rgba(34,197,94,0.2); background:rgba(34,197,94,0.06); }
+.ptag.t { color:var(--teal); border-color:rgba(20,184,166,0.2); background:rgba(20,184,166,0.06); }
+.ptag.b { color:var(--blue); border-color:rgba(59,130,246,0.2); background:rgba(59,130,246,0.06); }
+.ptag.p { color:var(--purple); border-color:rgba(168,85,247,0.2); background:rgba(168,85,247,0.06); }
+.ptag.n { color:var(--text3); border-color:var(--border); }
+
+.diff {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 8px;
+  border: 1px solid;
+}
+.diff.easy { color:var(--green); border-color:rgba(34,197,94,0.3); }
+.diff.med { color:var(--yellow); border-color:rgba(251,191,36,0.3); }
+.diff.hard { color:var(--crimson2); border-color:rgba(220,38,38,0.3); }
+
+.ptime { font-size:10px; color:var(--text3); }
+
+.pc-arrow {
+  flex-shrink:0;
+  color:var(--text3);
+  font-size:12px;
+  transition:transform 0.3s;
+  margin-top:4px;
+  font-family:'Source Code Pro',monospace;
+}
+.pc.open .pc-arrow { transform:rotate(90deg); color:var(--crimson2); }
+
+.pc-body {
+  display:none;
+  padding:8px 28px 36px 88px;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+}
+.pc.open .pc-body { display:block; animation:fadeUp 0.3s ease; }
+
+/* ══ STEPS ══ */
+.steps { margin-top: 24px; }
+.step {
+  display: flex;
+  gap: 20px;
+  padding-bottom: 28px;
+  position: relative;
+}
+.step:not(:last-child)::before {
+  content:'';
+  position:absolute;
+  left:13px; top:30px; bottom:0;
+  width:1px;
+  background: var(--border);
+}
+.sn {
+  flex-shrink:0;
+  width:28px; height:28px;
+  border:1px solid var(--border2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:700;
+  color:var(--crimson2);
+  z-index:1;
+  background:var(--bg3);
+}
+.sb { flex:1; min-width:0; }
+.sb h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.sb p {
+  color: var(--text2);
+  font-family: 'Lora', serif;
+  font-size: 13.5px;
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+.sb p strong { color:var(--text); font-family:'Source Code Pro',monospace; font-size:12.5px; font-weight:600; font-style:normal; }
+
+/* ══ CODE BLOCKS ══ */
+.cb {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  margin: 12px 0;
+  overflow: hidden;
+}
+.cb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(220,38,38,0.04);
+}
+.cb-lang {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.cb-lang .hl { color: var(--crimson2); }
+.cpbtn {
+  background:none;
+  border:1px solid var(--border2);
+  color:var(--text3);
+  font-family:'Source Code Pro',monospace;
+  font-size:10px;
+  padding:3px 10px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.cpbtn:hover { color:var(--text2); border-color:var(--text3); }
+.cpbtn.ok { color:var(--green); border-color:var(--green); }
+pre {
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: #c8b8b8;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+.kw { color: #f87171; }
+.str { color: #86efac; }
+.cm { color: #4a2d2d; font-style: italic; }
+.fn { color: #fcd34d; }
+.num { color: #93c5fd; }
+.var { color: #e9d5ff; }
+.res { color: #2dd4bf; }
+code {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--crimson3);
+  padding: 2px 7px;
+}
+
+/* ══ CALLOUTS ══ */
+.note {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  font-family: 'Lora', serif;
+  line-height: 1.7;
+  border-left: 3px solid;
+}
+.note-i { flex-shrink:0; font-size:16px; }
+.note p { margin:0; }
+.note.info { background:rgba(59,130,246,0.08); border-color:var(--blue); color:#93c5fd; }
+.note.warn { background:rgba(251,191,36,0.08); border-color:var(--yellow); color:#fde68a; }
+.note.ok { background:rgba(34,197,94,0.08); border-color:var(--green); color:#86efac; }
+.note.danger { background:rgba(220,38,38,0.1); border-color:var(--crimson); color:var(--crimson3); }
+.note.teal { background:rgba(20,184,166,0.08); border-color:var(--teal); color:#5eead4; }
+.note.purple { background:rgba(168,85,247,0.08); border-color:var(--purple); color:#d8b4fe; }
+
+/* ══ TABLE ══ */
+.dt {
+  width:100%;
+  border-collapse:collapse;
+  font-size:12.5px;
+  margin:16px 0;
+  border:1px solid var(--border);
+}
+.dt th {
+  text-align:left;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--text3);
+  padding:10px 14px;
+  border-bottom:1px solid var(--border2);
+  background:var(--panel);
+}
+.dt td {
+  padding:11px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--text2);
+  vertical-align:top;
+  line-height:1.6;
+}
+.dt tr:hover td { background:rgba(220,38,38,0.04); }
+.dt td:first-child { font-family:'Source Code Pro',monospace; font-size:11.5px; color:var(--crimson2); font-weight:600; white-space:nowrap; }
+
+/* ══ PLAYBOOK CARD ══ */
+.playbook {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  padding: 0;
+  margin: 16px 0;
+  overflow: hidden;
+}
+.pb-head {
+  background: var(--panel2);
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pb-sev {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border: 1px solid;
+}
+.pb-sev.p1 { color:var(--crimson2); border-color:rgba(220,38,38,0.4); background:rgba(220,38,38,0.1); }
+.pb-sev.p2 { color:var(--orange); border-color:rgba(249,115,22,0.4); background:rgba(249,115,22,0.1); }
+.pb-sev.p3 { color:var(--yellow); border-color:rgba(251,191,36,0.4); background:rgba(251,191,36,0.1); }
+
+.pb-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:var(--text); }
+.pb-body { padding: 18px; }
+.pb-steps { list-style:none; display:flex; flex-direction:column; gap:8px; }
+.pb-steps li {
+  display:flex;
+  gap:10px;
+  font-size:12.5px;
+  color:var(--text2);
+  font-family:'Lora',serif;
+  line-height:1.6;
+}
+.pb-steps li .step-num {
+  flex-shrink:0;
+  font-family:'Source Code Pro',monospace;
+  font-size:10px;
+  color:var(--crimson);
+  font-weight:700;
+  margin-top:3px;
+  min-width:28px;
+}
+
+/* ══ PROGRESS ══ */
+.prog-wrap {
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:24px 28px;
+  margin-bottom:24px;
+}
+.prog-wrap h4 {
+  font-size:10px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:18px;
+  font-weight:700;
+}
+.pb-item { margin-bottom:14px; }
+.pb-row { display:flex; justify-content:space-between; margin-bottom:5px; }
+.pb-name { font-size:12px; font-weight:600; color:var(--text2); }
+.pb-pct { font-size:11px; color:var(--text3); }
+.pb-bg { height:4px; background:var(--bg3); overflow:hidden; }
+.pb-fill { height:100%; background:linear-gradient(90deg, var(--crimson), var(--orange)); }
+
+/* ══ TWO COL ══ */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:14px 0; }
+@media(max-width:640px){ .two-col{grid-template-columns:1fr;} }
+.mini-panel {
+  background:var(--bg3);
+  border:1px solid var(--border);
+  padding:16px;
+}
+.mini-panel h5 {
+  font-size:10px;
+  letter-spacing:0.15em;
+  font-weight:700;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:10px;
+}
+.mini-panel p { font-size:12.5px; color:var(--text2); font-family:'Lora',serif; line-height:1.65; }
+
+/* ══ CHECKLIST ══ */
+.chklist { list-style:none; }
+.chklist li {
+  display:flex;
+  gap:12px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  font-size:13px;
+  color:var(--text2);
+  font-family:'Lora',serif;
+  line-height:1.6;
+}
+.chklist li:last-child{border-bottom:none;}
+.ck-box {
+  flex-shrink:0;
+  width:16px; height:16px;
+  border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:9px;
+  color:var(--crimson2);
+  margin-top:3px;
+}
+.chklist strong { color:var(--text); font-family:'Source Code Pro',monospace; font-weight:600; font-size:12px; }
+
+/* ══ HR ══ */
+hr { border:none; border-top:1px solid var(--border); margin:28px 0; }
+
+/* ══ FOOTER ══ */
+footer {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 24px 0;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+}
+footer span { color: var(--crimson2); }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+<div class="wrap">
+<div class="status-inner">
+  <div class="sb-left">
+    <div class="sb-dot"></div>
+    <span class="sb-live">● LIVE</span>
+    <span>DEVSECOPS MASTERY — PHASE 4</span>
+    <span>SIEM & INCIDENT RESPONSE</span>
+  </div>
+  <div class="sb-right">
+    <div class="sb-stat"><span class="lbl">PROJECTS:</span><span class="val">12</span></div>
+    <div class="sb-stat"><span class="lbl">LEVEL:</span><span class="val">BEGINNER → EXPERT</span></div>
+    <div class="sb-stat"><span class="lbl">DURATION:</span><span class="val">10–14 WEEKS</span></div>
+  </div>
+</div>
+</div>
+</div>
+
+<header>
+<div class="wrap">
+  <div class="phase-tag">Phase 4 of 4 — Final Phase</div>
+  <h1>SIEM &<br><span class="accent">Incident</span> Response
+    <span class="sub-line">// OpenSearch · GuardDuty · AWS Security Hub · Threat Hunting · Forensics · Zero to Expert</span>
+  </h1>
+
+  <p class="header-desc">"The question is not if you will be breached — it's whether you'll know about it, and how fast you'll respond." You have no SIEM experience. We start from first principles: what is a log? What is a detection rule? What do you do at 3am when an alert fires? By the end, you'll run a complete Security Operations workflow.</p>
+
+  <div class="stat-row">
+    <div class="stat-pill"><div class="sp-dot r"></div><span class="sp-lbl">PHASE:</span><span class="sp-val">4 / 4 — FINAL</span></div>
+    <div class="stat-pill"><div class="sp-dot o"></div><span class="sp-lbl">PROJECTS:</span><span class="sp-val">12 HANDS-ON</span></div>
+    <div class="stat-pill"><div class="sp-dot y"></div><span class="sp-lbl">TOOLS:</span><span class="sp-val">OpenSearch, GuardDuty, Splunk, MITRE ATT&CK</span></div>
+    <div class="stat-pill"><div class="sp-dot g"></div><span class="sp-lbl">RESULT:</span><span class="sp-val">CERTIFIED SOC ENGINEER LEVEL</span></div>
+    <div class="stat-pill"><div class="sp-dot t"></div><span class="sp-lbl">DURATION:</span><span class="sp-val">10–14 WEEKS</span></div>
+  </div>
+</div>
+</header>
+
+<div class="nav-bar">
+<div class="wrap">
+<div class="nav-inner">
+  <button class="nb active" onclick="st('overview',this)">Start Here</button>
+  <button class="nb" onclick="st('siem101',this)">SIEM 101</button>
+  <button class="nb" onclick="st('mitre',this)">MITRE ATT&CK</button>
+  <button class="nb" onclick="st('all',this)">All 12 Projects</button>
+  <button class="nb" onclick="st('p1p3',this)">P1–P3 · Foundations</button>
+  <button class="nb" onclick="st('p4p6',this)">P4–P6 · Detection</button>
+  <button class="nb" onclick="st('p7p9',this)">P7–P9 · Threat Hunting</button>
+  <button class="nb" onclick="st('p10p12',this)">P10–P12 · Expert</button>
+  <button class="nb" onclick="st('playbooks',this)">IR Playbooks</button>
+  <button class="nb" onclick="st('cheatsheet',this)">Cheat Sheet</button>
+</div>
+</div>
+</div>
+
+<div class="wrap">
+<div class="content">
+
+<!-- ══════════════ OVERVIEW ══════════════ -->
+<div id="tab-overview" class="tab-pane active">
+
+  <div class="sh">
+    <div class="sh-eyebrow">Phase 4 — Begin Here</div>
+    <h2>What You're About to Learn,<br>and Why It Matters</h2>
+    <p>No experience required. Every concept explained from first principles before any code.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🔴 The Problem: You're Building Without Visibility</h3>
+    <p>In the first three phases, you learned to <strong>prevent</strong> attacks — secure pipelines, hardened infrastructure, locked-down Kubernetes. But prevention is never 100%. The uncomfortable truth is that a determined attacker with enough time will eventually find a way in. The Capital One breach happened despite firewalls. The SolarWinds attack bypassed all perimeter defences. The Uber breach started with a single MFA fatigue attack on one contractor's phone.</p>
+    <p><strong>The question is: when (not if) someone gets in, how fast will you know?</strong> Companies that detect breaches in minutes have an average breach cost of $1.1M. Companies that take months to detect average $4.9M. The difference is a functioning Security Operations capability — a SIEM, detection rules, and an incident response process that actually works.</p>
+    <p>That's what this phase builds. You'll collect logs from everywhere, write detection rules that catch real attack patterns, hunt for threats proactively, and respond to incidents with a structured process that limits damage.</p>
+  </div>
+
+  <div class="concept orange">
+    <h3>🧠 The Simple Mental Model for This Entire Phase</h3>
+    <p>Think of a <strong>hospital security system</strong>. Every door has a sensor (log source). Every sensor feeds into a central monitoring room (SIEM). A trained analyst watches the screens (detection rules). When something suspicious happens — a door opens at 3am in a restricted wing — an alarm fires (alert). An analyst investigates (triage). If it's real, a response team acts on a protocol (incident response playbook).</p>
+    <p><strong>Your job in Phase 4:</strong> Build the sensors, build the monitoring room, write the alarm rules, and create the response protocols. Then practice using all of it against simulated real-world attacks.</p>
+  </div>
+
+  <div class="prog-wrap">
+    <h4>Your 12-Project Journey</h4>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">P1–P3: Log Collection, OpenSearch SIEM, First Dashboards</span><span class="pb-pct">Week 1–4</span></div><div class="pb-bg"><div class="pb-fill" style="width:25%"></div></div></div>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">P4–P6: Detection Engineering, AWS GuardDuty, Alert Triage</span><span class="pb-pct">Week 5–8</span></div><div class="pb-bg"><div class="pb-fill" style="width:50%"></div></div></div>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">P7–P9: Threat Hunting, MITRE ATT&CK, Forensic Investigation</span><span class="pb-pct">Week 9–11</span></div><div class="pb-bg"><div class="pb-fill" style="width:75%"></div></div></div>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">P10–P12: SOAR, Full SOC Platform, Capstone Red vs Blue</span><span class="pb-pct">Week 12–14</span></div><div class="pb-bg"><div class="pb-fill" style="width:100%"></div></div></div>
+  </div>
+
+  <div class="ov-grid">
+    <div class="ov-card"><div class="ov-num">Project 01</div><div class="ov-icon">📡</div><div class="ov-title">Log Collection Fundamentals</div><p>What logs exist, why they matter, how to collect them. Syslog, CloudTrail, VPC Flow Logs, application logs — all in one place.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 02</div><div class="ov-icon">🔍</div><div class="ov-title">OpenSearch SIEM on AWS</div><p>Deploy OpenSearch as your SIEM. Ingest logs, search them, build your first detection dashboard. The open-source ELK alternative.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 03</div><div class="ov-icon">📊</div><div class="ov-title">Detection Rule Writing</div><p>Write your first Sigma rules. Translate attack patterns into detections. False positive tuning. The difference between a noisy and a useful SOC.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 04</div><div class="ov-icon">🛡️</div><div class="ov-title">AWS GuardDuty Deep Dive</div><p>Enable every GuardDuty data source, understand each finding type, test with GuardDuty tester, automate response for each threat category.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 05</div><div class="ov-icon">⚡</div><div class="ov-title">AWS Security Hub Central CSPM</div><p>Aggregate all AWS security findings. CIS compliance score. Custom insights. Automated ticketing. The single pane of glass for your AWS security posture.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 06</div><div class="ov-icon">🚨</div><div class="ov-title">Alert Triage & Investigation</div><p>A structured 6-step triage process. How to tell real attacks from false positives. The SOC analyst workflow. Escalation decision trees.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 07</div><div class="ov-icon">🦊</div><div class="ov-title">Threat Hunting with MITRE ATT&CK</div><p>Stop waiting for alerts. Proactively hunt for attacker activity that hasn't triggered rules yet. Hypothesis-driven investigation.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 08</div><div class="ov-icon">🔬</div><div class="ov-title">Digital Forensics Fundamentals</div><p>Preserve evidence. Memory forensics. Disk image analysis. Network forensics. The chain of custody. What to do when you find a compromised host.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 09</div><div class="ov-icon">💀</div><div class="ov-title">Malware Analysis Basics</div><p>Static and dynamic analysis of a real malware sample in a safe sandbox. What does malicious code look like? How do you extract indicators?</p></div>
+    <div class="ov-card"><div class="ov-num">Project 10</div><div class="ov-icon">🤖</div><div class="ov-title">SOAR — Security Orchestration</div><p>Automate your incident response. When GuardDuty fires, automatically quarantine the EC2, revoke the IAM key, and create the Jira ticket — zero human clicks.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 11</div><div class="ov-icon">🏰</div><div class="ov-title">Full SOC Platform Build</div><p>Combine OpenSearch + GuardDuty + Security Hub + Falco + SOAR into a unified Security Operations Centre platform. The full architecture.</p></div>
+    <div class="ov-card"><div class="ov-num">Project 12</div><div class="ov-icon">⚔️</div><div class="ov-title">Red vs Blue Capstone</div><p>Simulate a real attack chain end-to-end. Attacker steps: reconnaissance → initial access → lateral movement → data exfiltration. Defender: detect every step.</p></div>
+  </div>
+
+</div><!-- /overview -->
+
+<!-- ══════════════ SIEM 101 ══════════════ -->
+<div id="tab-siem101" class="tab-pane">
+
+  <div class="sh">
+    <div class="sh-eyebrow">Foundations Before Code</div>
+    <h2>SIEM 101 — Every Concept Explained Simply</h2>
+    <p>Read this before touching any tool. These mental models make everything else click.</p>
+  </div>
+
+  <div class="concept">
+    <h3>📋 What Is a Log? (Simpler Than You Think)</h3>
+    <p>A log is just a <strong>timestamped record of something that happened</strong>. Every system — your Linux server, your AWS account, your application, your firewall — generates a constant stream of these records. Most of the time they're boring. Sometimes one log record is the difference between catching a breach in 4 minutes or 4 months.</p>
+    <p>Example log line from CloudTrail: <code>2024-01-15T03:47:22Z — User "arn:aws:iam::123:user/dev-alice" called "DeleteBucket" on "s3:::prod-customer-data" from IP 185.220.101.42</code>. That single line tells you: who (dev-alice), what (deleted S3 bucket), where (prod-customer-data), when (3:47am), and from where (a Tor exit node IP). That's an incident. Logs tell the story.</p>
+  </div>
+
+  <div class="concept orange">
+    <h3>🏗️ What Is a SIEM?</h3>
+    <p><strong>SIEM = Security Information and Event Management.</strong> It's a system that: <strong>(1) Collects</strong> logs from everywhere (servers, firewalls, AWS, K8s, apps). <strong>(2) Stores</strong> them in a searchable database. <strong>(3) Normalizes</strong> them into a consistent format (different systems log differently). <strong>(4) Correlates</strong> events across sources (this login + that network connection + this file access = suspicious). <strong>(5) Alerts</strong> when patterns match known attack behaviours.</p>
+    <p>Think of it as the <strong>brain of your Security Operations Centre (SOC)</strong>. Without a SIEM, every alert tool shouts at you separately. With one, you see the full picture: GuardDuty found a suspicious EC2 instance, CloudTrail shows it called unusual APIs, VPC Flow Logs show it making outbound connections to a known C2 server — all correlated in one view.</p>
+  </div>
+
+  <div class="concept yellow">
+    <h3>⚠️ The Log Sources You MUST Collect (AWS Focus)</h3>
+    <p><strong>CloudTrail:</strong> Every AWS API call. Who created what, deleted what, changed permissions. This is the most critical log source in AWS. A CloudTrail-less AWS account is a blind AWS account. Enable in all regions, multi-account.</p>
+    <p><strong>VPC Flow Logs:</strong> Network traffic metadata for every ENI. Source IP, destination IP, port, bytes, accept/reject. You already set these up in Phase 2. Now you'll query them for threat hunting.</p>
+    <p><strong>GuardDuty Findings:</strong> ML-based threat detections — treated as high-quality pre-built alerts. Feed directly into your SIEM.</p>
+    <p><strong>Linux Auditd:</strong> System call level logging on EC2. What files were accessed, what processes ran, what users did what. The deep forensic source.</p>
+    <p><strong>Application Logs:</strong> Auth events, errors, HTTP requests. Failed logins, SQL errors, unexpected endpoints.</p>
+    <p><strong>K8s Audit Logs:</strong> Every kubectl command, API call to your cluster. Who deployed what, who exec'd into which pod.</p>
+  </div>
+
+  <div class="concept green">
+    <h3>🎯 What Is a Detection Rule?</h3>
+    <p>A detection rule is a <strong>pattern that, when matched in log data, fires an alert</strong>. Good detection rules are: specific enough to not fire on normal activity (low false positive rate), broad enough to catch real attacks (high true positive rate), and mapped to the MITRE ATT&CK technique they detect.</p>
+    <p>Simple example: <code>IF CloudTrail shows "DeleteBucket" AND the calling IP is in the Tor exit node list AND the time is between midnight and 5am → ALERT: P1 - Suspicious S3 Deletion</code>. The art of detection engineering is writing rules like this that actually work in production without flooding the SOC with noise.</p>
+  </div>
+
+  <div class="concept teal">
+    <h3>🔄 The Incident Response Lifecycle (The 6 Phases)</h3>
+    <p>Every security incident goes through these phases. Your job is to have a plan for each one before an incident happens — because at 3am with systems going down is not the time to figure out what to do.</p>
+    <div class="two-col">
+      <div class="mini-panel">
+        <h5>Phases 1–3: Detection & Analysis</h5>
+        <p><strong>Preparation:</strong> Runbooks written, tools deployed, team trained — before anything happens. <strong>Detection & Analysis:</strong> Alert fires, analyst investigates, confirms it's real (not false positive), determines severity and scope. <strong>Containment:</strong> Stop the bleeding — isolate affected systems, revoke compromised credentials, block attacker IPs.</p>
+      </div>
+      <div class="mini-panel">
+        <h5>Phases 4–6: Recovery & Learning</h5>
+        <p><strong>Eradication:</strong> Remove the threat completely — malware cleaned, backdoors closed, vulnerabilities patched. <strong>Recovery:</strong> Restore systems from clean backups, verify integrity, return to production. <strong>Lessons Learned:</strong> Post-incident review within 72 hours. What failed? What detection was missed? How do we prevent recurrence?</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="concept blue">
+    <h3>📊 Key Metrics — How You Measure SOC Effectiveness</h3>
+    <p><strong>MTTD</strong> (Mean Time to Detect): Average time from breach start to first alert. Industry average is 197 days. Your goal: under 24 hours, ideally minutes.</p>
+    <p><strong>MTTR</strong> (Mean Time to Respond): From detection to containment. Every minute counts — attacker dwell time is directly correlated to breach cost.</p>
+    <p><strong>False Positive Rate:</strong> Percentage of alerts that aren't real threats. Above 50% and analysts get alert fatigue and start ignoring everything. Target: under 20%.</p>
+    <p><strong>Alert Coverage:</strong> What percentage of MITRE ATT&CK techniques do you have detections for? A mature SOC covers 80%+. Most organisations start at 15%.</p>
+  </div>
+
+</div><!-- /siem101 -->
+
+<!-- ══════════════ MITRE ATT&CK ══════════════ -->
+<div id="tab-mitre" class="tab-pane">
+
+  <div class="sh">
+    <div class="sh-eyebrow">The Attacker's Playbook</div>
+    <h2>MITRE ATT&CK Framework</h2>
+    <p>The most important framework in modern defensive security. Understanding this makes you think like an attacker — which makes you a vastly better defender.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🗺️ What Is MITRE ATT&CK?</h3>
+    <p>MITRE ATT&CK is a <strong>knowledge base of real attacker behaviours</strong>, observed from real-world incidents and threat intelligence. It's organised as a matrix of <strong>Tactics</strong> (what the attacker is trying to achieve) and <strong>Techniques</strong> (how they achieve it). Every technique has: a description, real-world examples, detection guidance, and mitigation advice.</p>
+    <p>Why does this matter? When you write a detection rule, you tag it with the ATT&CK technique it covers. This lets you see: "I have 847 detection rules but they only cover 23% of ATT&CK techniques — I'm blind to lateral movement." It turns security coverage from a feeling into a measurable metric.</p>
+  </div>
+
+  <table class="dt">
+    <tr><th>Tactic</th><th>What Attacker Is Doing</th><th>Example Technique</th><th>Your Detection</th></tr>
+    <tr><td>T1 Reconnaissance</td><td>Gathering info before attack</td><td>Port scanning, DNS enumeration</td><td>Unusual scan patterns in VPC flow logs</td></tr>
+    <tr><td>T2 Initial Access</td><td>Getting into your environment</td><td>Phishing, exploiting public app</td><td>Failed logins spike, unusual geo login</td></tr>
+    <tr><td>T3 Execution</td><td>Running malicious code</td><td>Bash script, Lambda invocation</td><td>Unexpected process spawn, new cron job</td></tr>
+    <tr><td>T4 Persistence</td><td>Maintaining access after reboot</td><td>New IAM user, backdoor account</td><td>IAM CreateUser at unusual hour</td></tr>
+    <tr><td>T5 Priv Escalation</td><td>Getting higher permissions</td><td>Exploiting SUID binary, role assumption</td><td>Unexpected sts:AssumeRole calls</td></tr>
+    <tr><td>T6 Defense Evasion</td><td>Hiding from your defences</td><td>Disabling CloudTrail, log deletion</td><td>StopLogging API call, log group deletion</td></tr>
+    <tr><td>T7 Credential Access</td><td>Stealing passwords/tokens</td><td>IMDS credential theft, secret dumping</td><td>GetSecretValue from unusual role/IP</td></tr>
+    <tr><td>T8 Discovery</td><td>Learning what's in the environment</td><td>List S3 buckets, describe EC2</td><td>Burst of Describe/List API calls</td></tr>
+    <tr><td>T9 Lateral Movement</td><td>Moving to other systems</td><td>Assume role, pivot via VPC peering</td><td>Cross-account role assumptions</td></tr>
+    <tr><td>T10 Collection</td><td>Gathering data to steal</td><td>S3 GetObject, database dump</td><td>Large S3 download, unusual DB queries</td></tr>
+    <tr><td>T11 Exfiltration</td><td>Sending data out</td><td>S3 sync to attacker bucket, HTTPS POST</td><td>Large outbound data, unknown destination</td></tr>
+    <tr><td>T12 Impact</td><td>Achieving final goal</td><td>Ransomware, delete S3 bucket</td><td>Mass deletion events, encryption calls</td></tr>
+  </table>
+
+  <div class="note teal"><div class="note-i">💡</div><p><strong>How to use this table:</strong> When an alert fires, identify which tactic it represents. Then look at the surrounding context — what happened in the 30 minutes before and after? Attackers rarely stay in one tactic. Discovery → Credential Access → Lateral Movement happens in sequence. If you see Discovery, go looking for what came next.</p></div>
+
+  <div class="concept purple">
+    <h3>🔗 The Attack Chain — Connecting the Dots</h3>
+    <p>Real attacks are chains of techniques, not isolated events. The classic AWS attack chain looks like this: <strong>Reconnaissance</strong> (attacker scans for exposed S3 buckets or API keys in GitHub) → <strong>Initial Access</strong> (found a leaked IAM key in a public repo) → <strong>Discovery</strong> (the key runs ListBuckets, DescribeInstances, GetCallerIdentity) → <strong>Privilege Escalation</strong> (the key can attach policies, so attacker grants themselves AdministratorAccess) → <strong>Persistence</strong> (creates a new IAM user with its own key as a backdoor) → <strong>Defense Evasion</strong> (disables CloudTrail in all regions) → <strong>Exfiltration</strong> (syncs every S3 bucket to their own account).</p>
+    <p>The <strong>average time for this full chain in AWS: 2 minutes</strong> once the attacker has the initial key. Your detection and response must be faster. This is why automated SOAR (Project 10) is not optional — a human cannot respond in 2 minutes at 3am.</p>
+  </div>
+
+</div><!-- /mitre -->
+
+<!-- ══════════════ ALL 12 PROJECTS ══════════════ -->
+<div id="tab-all" class="tab-pane">
+
+<div class="sh">
+  <div class="sh-eyebrow">All 12 Projects</div>
+  <h2>Click Any Project to Expand</h2>
+  <p>Do them in order. Each builds on the previous. Start at zero, end at expert.</p>
+</div>
+
+<div class="proj-list">
+
+<!-- P1 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">01</div>
+    <div class="pc-meta">
+      <h3>Log Collection — Building Your Data Foundation</h3>
+      <p>Learn what logs exist, why each one matters for security, and how to centralise them. Set up the Fluent Bit log shipper to collect Linux system logs, application logs, and AWS CloudTrail into a central location.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Fluent Bit</span><span class="ptag y">CloudTrail</span><span class="ptag o">Syslog</span><span class="ptag n">Auditd</span>
+        <span class="diff easy">BEGINNER</span><span class="ptime">⏱ 4–5 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+
+    <div class="note info"><div class="note-i">ℹ️</div><p><strong>Goal:</strong> By the end, you'll have Linux system logs, CloudTrail events, and application logs all flowing into S3 in a structured format ready for OpenSearch. This is the data pipeline that feeds your entire SOC.</p></div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Enable CloudTrail — Your Most Critical Log Source</h4>
+          <p>CloudTrail is the audit log of your entire AWS account. Every API call, from every service, from every user, is recorded here. Without CloudTrail, you cannot investigate any AWS incident.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — terraform/cloudtrail.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Multi-region CloudTrail — catches API calls in ALL regions</span>
+resource <span class="fn">"aws_cloudtrail"</span> <span class="str">"main"</span> {
+  name                          = <span class="str">"prod-audit-trail"</span>
+  s3_bucket_name                = aws_s3_bucket.cloudtrail_logs.id
+  include_global_service_events = <span class="kw">true</span>   <span class="cm"># IAM, Route53, STS</span>
+  is_multi_region_trail         = <span class="kw">true</span>   <span class="cm"># ALL regions</span>
+  enable_log_file_validation    = <span class="kw">true</span>   <span class="cm"># Detect tampered logs</span>
+  kms_key_id                    = aws_kms_key.cloudtrail.arn
+
+  <span class="cm"># Log DATA EVENTS too — S3 GetObject, PutObject, Lambda invokes</span>
+  event_selector {
+    read_write_type           = <span class="str">"All"</span>
+    include_management_events = <span class="kw">true</span>
+
+    data_resource {
+      type   = <span class="str">"AWS::S3::Object"</span>
+      values = [<span class="str">"arn:aws:s3:::"</span>]    <span class="cm"># All S3 buckets</span>
+    }
+    data_resource {
+      type   = <span class="str">"AWS::Lambda::Function"</span>
+      values = [<span class="str">"arn:aws:lambda"</span>]   <span class="cm"># All Lambdas</span>
+    }
+  }
+
+  <span class="cm"># INSIGHT EVENTS — detect unusual API activity automatically</span>
+  insight_selector {
+    insight_type = <span class="str">"ApiCallRateInsight"</span>
+  }
+  insight_selector {
+    insight_type = <span class="str">"ApiErrorRateInsight"</span>
+  }
+}
+
+<span class="cm"># CloudWatch log group for real-time streaming</span>
+resource <span class="fn">"aws_cloudwatch_log_group"</span> <span class="str">"cloudtrail"</span> {
+  name              = <span class="str">"/cloudtrail/prod"</span>
+  retention_in_days = 90
+  kms_key_id        = aws_kms_key.cloudtrail.arn
+}
+
+resource <span class="fn">"aws_cloudtrail_event_data_store"</span> <span class="str">"audit"</span> {
+  name                 = <span class="str">"prod-event-data-store"</span>
+  multi_region_enabled = <span class="kw">true</span>
+  retention_period     = 2557   <span class="cm"># 7 years for compliance</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Set Up Linux Audit Daemon (auditd) on EC2</h4>
+          <p>Auditd is the Linux kernel's auditing system. It captures every system call at the OS level — file opens, process executions, network connections, privilege changes. It's the deepest level of host-based logging available.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install and configure auditd</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install auditd (RHEL/CentOS — matches your background)</span>
+yum install -y audit audit-libs
+systemctl enable auditd && systemctl start auditd
+
+<span class="cm"># Verify it's collecting</span>
+auditctl -l    <span class="cm"># List active rules</span>
+ausearch -m USER_LOGIN -ts recent   <span class="cm"># Recent login events</span></pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — /etc/audit/rules.d/security.rules</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># ── Delete all existing rules first ─────────────────────</span>
+-D
+
+<span class="cm"># ── System call monitoring ───────────────────────────────</span>
+<span class="cm"># Log all execution of new processes (execve = run a command)</span>
+-a always,exit -F arch=b64 -S execve -k execve_64
+-a always,exit -F arch=b32 -S execve -k execve_32
+
+<span class="cm"># Log privileged commands (sudo, su, passwd)</span>
+-a always,exit -F path=/usr/bin/sudo -F perm=x -k privileged
+-a always,exit -F path=/bin/su -F perm=x -k privileged
+-a always,exit -F path=/usr/bin/passwd -F perm=x -k privileged
+
+<span class="cm"># Log changes to sensitive files</span>
+-w /etc/passwd -p wa -k identity_change
+-w /etc/shadow -p wa -k identity_change
+-w /etc/group -p wa -k identity_change
+-w /etc/ssh/sshd_config -p wa -k sshd_config
+-w /etc/sudoers -p wa -k sudoers_change
+-w /etc/crontab -p wa -k cron_change
+-w /var/spool/cron -p wa -k cron_change
+
+<span class="cm"># Log crontab changes (persistence mechanism)</span>
+-a always,exit -F arch=b64 -S sched_process_fork -k fork
+
+<span class="cm"># Log changes to audit config itself (detect tampering)</span>
+-w /etc/audit/ -p wa -k audit_config_change
+-w /sbin/auditctl -p x -k audit_tools
+-w /sbin/auditd -p x -k audit_tools
+
+<span class="cm"># Log network configuration changes</span>
+-a always,exit -F arch=b64 -S bind -k network_bind
+-a always,exit -F arch=b64 -S connect -k network_connect
+
+<span class="cm"># Make rules immutable — can't be changed without reboot</span>
+-e 2</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Install Fluent Bit — Universal Log Shipper</h4>
+          <p>Fluent Bit is a lightweight log processor that reads from any source and forwards to any destination. Think of it as the courier that picks up mail from every location and delivers it all to the post office (your SIEM).</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Fluent Bit on RHEL/Amazon Linux</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install</span>
+curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh
+systemctl enable fluent-bit && systemctl start fluent-bit</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">ini</span> — /etc/fluent-bit/fluent-bit.conf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># ── SERVICE ──────────────────────────────────────────────</span>
+[SERVICE]
+    Flush         5
+    Daemon        Off
+    Log_Level     info
+    Parsers_File  parsers.conf
+
+<span class="cm"># ── INPUTS: Collect from multiple sources ────────────────</span>
+[INPUT]
+    Name          tail
+    Path          /var/log/audit/audit.log
+    Tag           audit.linux
+    DB            /var/lib/fluent-bit/audit.db
+
+[INPUT]
+    Name          tail
+    Path          /var/log/secure
+    Tag           auth.linux
+    DB            /var/lib/fluent-bit/secure.db
+
+[INPUT]
+    Name          tail
+    Path          /var/log/messages
+    Tag           syslog.linux
+    DB            /var/lib/fluent-bit/messages.db
+
+[INPUT]
+    Name          tail
+    Path          /var/log/nginx/access.log
+    Tag           nginx.access
+    Parser        nginx
+    DB            /var/lib/fluent-bit/nginx.db
+
+<span class="cm"># ── FILTERS: Add metadata to every event ─────────────────</span>
+[FILTER]
+    Name          record_modifier
+    Match         *
+    Record        hostname ${HOSTNAME}
+    Record        environment production
+    Record        aws_account_id 123456789012
+    Record        aws_region us-east-1
+
+<span class="cm"># ── OUTPUTS: Send to multiple destinations ───────────────</span>
+[OUTPUT]
+    Name          s3
+    Match         *
+    bucket        my-siem-logs
+    region        us-east-1
+    s3_key_format /logs/%Y/%m/%d/%H/${TAG}
+    use_put_object On
+    compression   gzip
+
+[OUTPUT]
+    Name          opensearch
+    Match         *
+    Host          opensearch.internal
+    Port          443
+    Index         security-logs
+    tls           On</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">4</div>
+        <div class="sb">
+          <h4>Stream VPC Flow Logs to S3 and CloudWatch</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — Parse a VPC Flow Log record (know what you're looking at)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># VPC Flow Log format (custom format for security):
+# version account-id interface-id srcaddr dstaddr srcport dstport
+# protocol packets bytes start end action log-status</span>
+
+<span class="cm"># Example record:</span>
+<span class="cm"># 2 123456789 eni-abc12345 192.168.1.100 10.0.0.50 54321 22 6 10 4096 1705286842 1705286902 ACCEPT OK</span>
+<span class="cm"># Translation: TCP connection from 192.168.1.100:54321 to 10.0.0.50:22 (SSH!) ACCEPTED</span>
+
+<span class="kw">import</span> boto3
+<span class="kw">import</span> gzip
+<span class="kw">import</span> json
+
+<span class="kw">def</span> <span class="fn">parse_flow_logs</span>(bucket, key):
+    s3 = boto3.client(<span class="str">'s3'</span>)
+    obj = s3.get_object(Bucket=bucket, Key=key)
+    content = gzip.decompress(obj[<span class="str">'Body'</span>].read()).decode()
+
+    FIELDS = [
+        <span class="str">'version'</span>, <span class="str">'account_id'</span>, <span class="str">'interface_id'</span>,
+        <span class="str">'src_addr'</span>, <span class="str">'dst_addr'</span>, <span class="str">'src_port'</span>, <span class="str">'dst_port'</span>,
+        <span class="str">'protocol'</span>, <span class="str">'packets'</span>, <span class="str">'bytes'</span>, <span class="str">'start'</span>, <span class="str">'end'</span>,
+        <span class="str">'action'</span>, <span class="str">'log_status'</span>
+    ]
+
+    flows = []
+    <span class="kw">for</span> line <span class="kw">in</span> content.strip().split(<span class="str">'\n'</span>)[1:]:  <span class="cm"># skip header</span>
+        parts = line.split()
+        <span class="kw">if</span> len(parts) == len(FIELDS):
+            record = dict(zip(FIELDS, parts))
+            <span class="cm"># Flag suspicious: REJECTED traffic TO private IPs (scan/recon)</span>
+            <span class="kw">if</span> record[<span class="str">'action'</span>] == <span class="str">'REJECT'</span>:
+                record[<span class="str">'security_flag'</span>] = <span class="str">'rejected_connection'</span>
+            <span class="cm"># Flag: large data transfer out</span>
+            <span class="kw">if</span> int(record[<span class="str">'bytes'</span>]) > 100_000_000:  <span class="cm"># > 100MB</span>
+                record[<span class="str">'security_flag'</span>] = <span class="str">'large_data_transfer'</span>
+            flows.append(record)
+
+    <span class="kw">return</span> flows</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note ok"><div class="note-i">✅</div><p><strong>Project 1 done.</strong> You have a complete log pipeline: auditd on Linux hosts, Fluent Bit collecting and shipping, CloudTrail auditing all AWS API calls, VPC Flow Logs capturing network traffic, all flowing to S3 and OpenSearch. You've built the sensors.</p></div>
+  </div>
+</div><!-- /P1 -->
+
+<!-- P2 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">02</div>
+    <div class="pc-meta">
+      <h3>OpenSearch SIEM — Deploy and Configure Your Security Brain</h3>
+      <p>Deploy AWS OpenSearch Service as your SIEM. Create index patterns for each log type, build your first security dashboards, and learn OpenSearch Query Language (a superset of Elasticsearch) for log analysis.</p>
+      <div class="pc-footer">
+        <span class="ptag r">OpenSearch</span><span class="ptag y">Dashboards</span><span class="ptag o">Index Patterns</span><span class="ptag n">KQL</span>
+        <span class="diff easy">BEGINNER</span><span class="ptime">⏱ 5–6 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Deploy OpenSearch Domain via Terraform</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — terraform/opensearch.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">resource <span class="fn">"aws_opensearch_domain"</span> <span class="str">"siem"</span> {
+  domain_name    = <span class="str">"siem-prod"</span>
+  engine_version = <span class="str">"OpenSearch_2.11"</span>
+
+  cluster_config {
+    instance_type          = <span class="str">"r6g.large.search"</span>
+    instance_count         = 3     <span class="cm"># 3-node cluster for HA</span>
+    dedicated_master_enabled = <span class="kw">true</span>
+    dedicated_master_type  = <span class="str">"r6g.large.search"</span>
+    dedicated_master_count = 3
+    zone_awareness_enabled = <span class="kw">true</span>
+    zone_awareness_config { availability_zone_count = 3 }
+  }
+
+  ebs_options {
+    ebs_enabled = <span class="kw">true</span>
+    volume_type = <span class="str">"gp3"</span>
+    volume_size = 500   <span class="cm"># 500 GB — scale based on log volume</span>
+    throughput  = 250
+    iops        = 3000
+  }
+
+  encrypt_at_rest { enabled = <span class="kw">true</span> }
+  node_to_node_encryption { enabled = <span class="kw">true</span> }
+
+  domain_endpoint_options {
+    enforce_https       = <span class="kw">true</span>
+    tls_security_policy = <span class="str">"Policy-Min-TLS-1-2-2019-07"</span>
+  }
+
+  vpc_options {
+    subnet_ids         = module.vpc.private_subnet_ids
+    security_group_ids = [aws_security_group.opensearch.id]
+  }
+
+  advanced_security_options {
+    enabled                        = <span class="kw">true</span>
+    internal_user_database_enabled = <span class="kw">true</span>
+    master_user_options {
+      master_user_name     = <span class="kw">var</span>.opensearch_admin_user
+      master_user_password = <span class="kw">var</span>.opensearch_admin_password
+    }
+  }
+
+  tags = { Name = <span class="str">"siem-prod"</span>, Purpose = <span class="str">"security-operations"</span> }
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Essential OpenSearch Queries for Security</h4>
+          <p>OpenSearch uses a SQL-like DSL. These are the queries you'll run every single day as an analyst.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">json</span> — OpenSearch Security Queries</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm">// ── Query 1: Failed SSH logins in last 24 hours ──────────</span>
+{
+  <span class="str">"query"</span>: {
+    <span class="str">"bool"</span>: {
+      <span class="str">"must"</span>: [
+        { <span class="str">"match"</span>: { <span class="str">"event_type"</span>: <span class="str">"auth_failure"</span> } },
+        { <span class="str">"match"</span>: { <span class="str">"service"</span>: <span class="str">"sshd"</span> } }
+      ],
+      <span class="str">"filter"</span>: [
+        { <span class="str">"range"</span>: { <span class="str">"@timestamp"</span>: { <span class="str">"gte"</span>: <span class="str">"now-24h"</span> } } }
+      ]
+    }
+  },
+  <span class="str">"aggs"</span>: {
+    <span class="str">"by_source_ip"</span>: {
+      <span class="str">"terms"</span>: { <span class="str">"field"</span>: <span class="str">"src_ip.keyword"</span>, <span class="str">"size"</span>: 20 }
+    }
+  }
+}
+
+<span class="cm">// ── Query 2: CloudTrail — who called DeleteBucket? ──────</span>
+{
+  <span class="str">"query"</span>: {
+    <span class="str">"bool"</span>: {
+      <span class="str">"must"</span>: [
+        { <span class="str">"match"</span>: { <span class="str">"eventName"</span>: <span class="str">"DeleteBucket"</span> } }
+      ]
+    }
+  },
+  <span class="str">"_source"</span>: [
+    <span class="str">"eventTime"</span>, <span class="str">"userIdentity.arn"</span>,
+    <span class="str">"sourceIPAddress"</span>, <span class="str">"requestParameters.bucketName"</span>
+  ],
+  <span class="str">"sort"</span>: [{ <span class="str">"eventTime"</span>: { <span class="str">"order"</span>: <span class="str">"desc"</span> } }]
+}
+
+<span class="cm">// ── Query 3: Detect off-hours API activity (suspicious) ─</span>
+{
+  <span class="str">"query"</span>: {
+    <span class="str">"bool"</span>: {
+      <span class="str">"must_not"</span>: [
+        { <span class="str">"range"</span>: {
+          <span class="str">"eventTime_hour"</span>: { <span class="str">"gte"</span>: 8, <span class="str">"lte"</span>: 18 }
+        }}
+      ],
+      <span class="str">"must"</span>: [
+        { <span class="str">"terms"</span>: {
+          <span class="str">"eventName.keyword"</span>: [
+            <span class="str">"CreateUser"</span>, <span class="str">"AttachUserPolicy"</span>,
+            <span class="str">"CreateAccessKey"</span>, <span class="str">"DeleteTrail"</span>
+          ]
+        }}
+      ]
+    }
+  }
+}
+
+<span class="cm">// ── Query 4: Find large data transfers (exfiltration) ───</span>
+{
+  <span class="str">"query"</span>: {
+    <span class="str">"bool"</span>: {
+      <span class="str">"must"</span>: [
+        { <span class="str">"match"</span>: { <span class="str">"action"</span>: <span class="str">"ACCEPT"</span> } },
+        { <span class="str">"range"</span>: { <span class="str">"bytes"</span>: { <span class="str">"gte"</span>: 104857600 } } }
+      ]
+    }
+  },
+  <span class="str">"sort"</span>: [{ <span class="str">"bytes"</span>: { <span class="str">"order"</span>: <span class="str">"desc"</span> } }]
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Build a Security Dashboard in OpenSearch Dashboards</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">json</span> — Import this dashboard config (paste in OpenSearch Dashboards → Saved Objects)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm">// Dashboard panels to create manually in the UI:
+//
+// 1. METRIC: Total events (last 24h)
+//    Visualization type: Metric
+//    Index: security-logs-*
+//
+// 2. PIE CHART: Events by source type
+//    Visualization type: Pie
+//    Bucket: Tag: Terms aggregation on "log_source.keyword"
+//
+// 3. LINE CHART: Event volume over time
+//    Visualization type: Line
+//    X-axis: Date histogram on @timestamp (1 hour interval)
+//    Y-axis: Count
+//    Split series: Tag field
+//
+// 4. DATA TABLE: Top 10 source IPs with failed auth
+//    Index: auth.linux-*
+//    Filter: event_type = auth_failure
+//    Table: Terms on src_ip, count
+//
+// 5. HEATMAP: Activity by hour and day of week
+//    Useful for detecting off-hours activity
+//
+// 6. MAP: Geographic source of authentication attempts
+//    Requires geoip enrichment in Fluent Bit
+
+<span class="cm">// Add this filter to Fluent Bit to enable GeoIP enrichment:</span>
+<span class="cm">// [FILTER]
+//     Name          geoip2
+//     Match         auth.*
+//     Database      /usr/share/GeoIP/GeoLite2-City.mmdb
+//     Lookup_key    src_ip
+//     Record        geoip_country  ${record["src_ip"]} country.names.en
+//     Record        geoip_city     ${record["src_ip"]} city.names.en</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P2 -->
+
+<!-- P3 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">03</div>
+    <div class="pc-meta">
+      <h3>Detection Engineering — Write Rules That Actually Work</h3>
+      <p>Learn Sigma — the universal detection rule format. Write rules that map to MITRE ATT&CK. Convert Sigma to OpenSearch, Splunk, and ElasticSearch queries automatically. Build a detection library covering the most dangerous attack patterns.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Sigma Rules</span><span class="ptag y">MITRE ATT&CK</span><span class="ptag o">Detection Eng</span><span class="ptag n">False Positives</span>
+        <span class="diff med">INTERMEDIATE</span><span class="ptime">⏱ 5–6 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="note purple"><div class="note-i">📖</div><p><strong>What is Sigma?</strong> Sigma is to detection rules what YARA is to malware signatures. It's a platform-agnostic rule format — you write the rule once, then convert it to OpenSearch, Splunk, Elastic, Microsoft Sentinel, or any other SIEM. This means your detection library isn't locked to one vendor.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Install Sigma CLI and Write Your First Rules</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install sigma-cli</span>
+pip install sigma-cli --break-system-packages
+
+<span class="cm"># Install backend plugins (OpenSearch, Splunk, Elastic)</span>
+sigma plugin install opensearch
+sigma plugin install splunk
+sigma plugin install elasticsearch
+
+<span class="cm"># List available backends</span>
+sigma list backends</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — rules/aws_cloudtrail_disable.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Sigma rule: Detect CloudTrail being disabled (Defense Evasion)</span>
+title: AWS CloudTrail Disabled
+id: 7c8b9d6a-5f2e-4c1b-9a3e-8d7f6c5b4a2d
+status: stable
+description: |
+  Detects when CloudTrail logging is stopped or deleted.
+  This is a classic attacker technique to cover tracks.
+  ATT&CK: T1562.008 - Impair Defenses: Disable Cloud Logs
+author: Your Name
+date: 2024-01-15
+references:
+  - https://attack.mitre.org/techniques/T1562/008/
+tags:
+  - attack.defense_evasion
+  - attack.t1562.008
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    eventName:
+      - StopLogging
+      - DeleteTrail
+      - UpdateTrail
+  filter_legitimate:
+    <span class="cm"># Whitelist your Terraform CI/CD role (it may legitimately modify trails)</span>
+    userAgent: 'terraform'
+  condition: selection and not filter_legitimate
+falsepositives:
+  - Legitimate CloudTrail configuration changes by infrastructure team
+  - Terraform runs (filtered above)
+level: high
+fields:
+  - eventTime
+  - userIdentity.arn
+  - sourceIPAddress
+  - requestParameters</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — rules/aws_iam_admin_creation.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">title: AWS IAM Admin Policy Attached to User
+id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+status: stable
+description: |
+  Detects when AdministratorAccess or equivalent admin policies
+  are attached to an IAM user. Attackers create admin users for
+  persistence after initial access.
+  ATT&CK: T1098 - Account Manipulation, T1136 - Create Account
+author: Your Name
+tags:
+  - attack.persistence
+  - attack.t1098
+  - attack.t1136
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection_attach:
+    eventName: AttachUserPolicy
+    requestParameters.policyArn:
+      - 'arn:aws:iam::aws:policy/AdministratorAccess'
+      - 'arn:aws:iam::aws:policy/IAMFullAccess'
+      - 'arn:aws:iam::aws:policy/PowerUserAccess'
+  selection_create:
+    eventName: CreateUser
+  filter_terraform:
+    userAgent|contains: 'terraform'
+  condition: (selection_attach or selection_create) and not filter_terraform
+level: high</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Convert Sigma Rules to OpenSearch</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Convert a single rule to OpenSearch query</span>
+sigma convert -t opensearch-lucene -p aws-cloudtrail \
+  rules/aws_cloudtrail_disable.yml
+
+<span class="cm"># Convert all rules in a directory</span>
+sigma convert -t opensearch-lucene -p aws-cloudtrail \
+  rules/ > all_rules_opensearch.txt
+
+<span class="cm"># Convert to Splunk SPL</span>
+sigma convert -t splunk -p aws-cloudtrail \
+  rules/aws_cloudtrail_disable.yml
+
+<span class="cm"># Output example:
+# eventName:(StopLogging OR DeleteTrail OR UpdateTrail)
+# AND NOT userAgent:terraform</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Your Detection Rule Library — 12 Essential Rules to Write</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create these rule files</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Create this file structure for your rule library</span>
+mkdir -p rules/{aws,linux,network,kubernetes}
+
+<span class="cm"># AWS Rules (priority — these are the most critical)</span>
+<span class="cm"># rules/aws/cloudtrail_disabled.yml          T1562.008 — Defense Evasion</span>
+<span class="cm"># rules/aws/iam_admin_created.yml            T1136 — Create Account</span>
+<span class="cm"># rules/aws/root_account_used.yml            T1078 — Valid Accounts</span>
+<span class="cm"># rules/aws/s3_bucket_public.yml             T1530 — Data from Cloud Storage</span>
+<span class="cm"># rules/aws/guardduty_critical.yml           Multiple</span>
+<span class="cm"># rules/aws/unusual_region_api.yml           T1535 — Unused Cloud Regions</span>
+
+<span class="cm"># Linux Rules</span>
+<span class="cm"># rules/linux/sudo_to_root.yml               T1548 — Abuse Elevation</span>
+<span class="cm"># rules/linux/new_cron_job.yml               T1053 — Scheduled Task</span>
+<span class="cm"># rules/linux/ssh_key_added.yml              T1098 — Account Manipulation</span>
+<span class="cm"># rules/linux/netcat_execution.yml           T1059 — Command Execution</span>
+
+<span class="cm"># Network Rules</span>
+<span class="cm"># rules/network/large_data_transfer.yml      T1048 — Exfiltration</span>
+<span class="cm"># rules/network/known_bad_ip.yml             T1071 — C2 Communication</span></pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — rules/aws/root_account_used.yml (one of the most important)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">title: AWS Root Account Used
+id: b5f8c2a1-9d3e-4f7b-8c2a-5e9d6f3c7b1a
+status: stable
+description: |
+  The AWS root account should NEVER be used for normal operations.
+  Any use of the root account should be investigated immediately.
+  ATT&CK: T1078.004 - Valid Accounts: Cloud Accounts
+tags:
+  - attack.initial_access
+  - attack.t1078.004
+logsource:
+  product: aws
+  service: cloudtrail
+detection:
+  selection:
+    userIdentity.type: Root
+  filter_mfa_required_actions:
+    <span class="cm"># Root login for MFA device setup is acceptable</span>
+    eventName:
+      - 'CreateVirtualMFADevice'
+      - 'EnableMFADevice'
+  condition: selection and not filter_mfa_required_actions
+level: critical    <span class="cm"># This is ALWAYS a P1 incident</span>
+falsepositives:
+  - Very rarely: emergency root account usage for account recovery
+  - AWS Marketplace operations sometimes use root</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P3 -->
+
+<!-- P4 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">04</div>
+    <div class="pc-meta">
+      <h3>AWS GuardDuty — Deep Dive & Automated Response</h3>
+      <p>GuardDuty is your always-on ML threat detector. This project: enable every data source, understand every finding type, simulate each threat with the GuardDuty tester, and build automated Lambda responses for each finding category.</p>
+      <div class="pc-footer">
+        <span class="ptag r">GuardDuty</span><span class="ptag y">EventBridge</span><span class="ptag o">Lambda</span><span class="ptag n">Auto-remediation</span>
+        <span class="diff med">INTERMEDIATE</span><span class="ptime">⏱ 6–7 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="note info"><div class="note-i">ℹ️</div><p><strong>What GuardDuty actually analyses:</strong> CloudTrail management events (API calls), CloudTrail S3 data events, VPC Flow Logs, DNS logs, EKS audit logs, EC2 runtime monitoring, Lambda network activity, RDS login activity, and Malware Protection (EBS volumes). You get ML-based threat detection across all of these for a few dollars per month per account.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Enable GuardDuty with All Data Sources via Terraform</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — guardduty.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">resource <span class="fn">"aws_guardduty_detector"</span> <span class="str">"main"</span> {
+  enable = <span class="kw">true</span>
+  finding_publishing_frequency = <span class="str">"FIFTEEN_MINUTES"</span>
+
+  datasources {
+    s3_logs { enable = <span class="kw">true</span> }
+    kubernetes { audit_logs { enable = <span class="kw">true</span> } }
+    malware_protection {
+      scan_ec2_instance_with_findings {
+        ebs_volumes { enable = <span class="kw">true</span> }
+      }
+    }
+  }
+}
+
+<span class="cm"># Lambda function for automated response</span>
+resource <span class="fn">"aws_lambda_function"</span> <span class="str">"gd_responder"</span> {
+  filename         = <span class="str">"guardduty_responder.zip"</span>
+  function_name    = <span class="str">"guardduty-auto-responder"</span>
+  role             = aws_iam_role.gd_lambda.arn
+  handler          = <span class="str">"handler.lambda_handler"</span>
+  runtime          = <span class="str">"python3.12"</span>
+  timeout          = 60
+
+  environment {
+    variables = {
+      QUARANTINE_SG     = aws_security_group.quarantine.id
+      SNS_TOPIC         = aws_sns_topic.security_alerts.arn
+      JIRA_WEBHOOK      = <span class="kw">var</span>.jira_webhook_url
+    }
+  }
+}
+
+<span class="cm"># EventBridge rule — trigger on ALL GuardDuty findings</span>
+resource <span class="fn">"aws_cloudwatch_event_rule"</span> <span class="str">"guardduty_all"</span> {
+  name        = <span class="str">"guardduty-all-findings"</span>
+  event_pattern = jsonencode({
+    source      = [<span class="str">"aws.guardduty"</span>]
+    detail-type = [<span class="str">"GuardDuty Finding"</span>]
+  })
+}
+
+resource <span class="fn">"aws_cloudwatch_event_target"</span> <span class="str">"lambda"</span> {
+  rule = aws_cloudwatch_event_rule.guardduty_all.name
+  arn  = aws_lambda_function.gd_responder.arn
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Complete GuardDuty Auto-Responder Lambda</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — guardduty_responder.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="kw">import</span> boto3, json, os, logging
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+ec2 = boto3.client(<span class="str">'ec2'</span>)
+iam = boto3.client(<span class="str">'iam'</span>)
+sns = boto3.client(<span class="str">'sns'</span>)
+
+QUARANTINE_SG = os.environ[<span class="str">'QUARANTINE_SG'</span>]
+SNS_TOPIC     = os.environ[<span class="str">'SNS_TOPIC'</span>]
+
+<span class="cm"># Map finding types to response actions</span>
+RESPONSE_MAP = {
+    <span class="cm"># Cryptocurrency mining on EC2</span>
+    <span class="str">'CryptoCurrency:EC2'</span>: <span class="str">'isolate_ec2'</span>,
+    <span class="cm"># Port scanning from EC2 (compromised, attacking others)</span>
+    <span class="str">'Recon:EC2'</span>: <span class="str">'isolate_ec2'</span>,
+    <span class="cm"># EC2 communicating with C2 server</span>
+    <span class="str">'Trojan:EC2'</span>: <span class="str">'isolate_ec2'</span>,
+    <span class="cm"># IAM credentials compromised</span>
+    <span class="str">'UnauthorizedAccess:IAMUser'</span>: <span class="str">'disable_iam_key'</span>,
+    <span class="str">'Persistence:IAMUser'</span>: <span class="str">'disable_iam_key'</span>,
+    <span class="cm"># S3 data exposure</span>
+    <span class="str">'Policy:S3'</span>: <span class="str">'alert_only'</span>,
+    <span class="cm"># Stealth activity — always isolate</span>
+    <span class="str">'Stealth:IAMUser'</span>: <span class="str">'disable_iam_key'</span>,
+}
+
+<span class="kw">def</span> <span class="fn">lambda_handler</span>(event, context):
+    finding = event[<span class="str">'detail'</span>]
+    finding_type   = finding[<span class="str">'type'</span>]
+    finding_id     = finding[<span class="str">'id'</span>]
+    severity       = finding[<span class="str">'severity'</span>]
+    account_id     = finding[<span class="str">'accountId'</span>]
+    region         = finding[<span class="str">'region'</span>]
+
+    logger.info(f<span class="str">"GuardDuty: {finding_type} | Severity: {severity} | Account: {account_id}"</span>)
+
+    <span class="cm"># Determine response action based on finding family</span>
+    action = <span class="str">'alert_only'</span>
+    <span class="kw">for</span> prefix, response <span class="kw">in</span> RESPONSE_MAP.items():
+        <span class="kw">if</span> finding_type.startswith(prefix):
+            action = response
+            <span class="kw">break</span>
+
+    resource_type = finding.get(<span class="str">'resource'</span>, {}).get(<span class="str">'resourceType'</span>)
+    resource      = finding.get(<span class="str">'resource'</span>, {})
+
+    result = {<span class="str">'finding_type'</span>: finding_type, <span class="str">'action'</span>: action, <span class="str">'severity'</span>: severity}
+
+    <span class="cm"># Execute response based on action type</span>
+    <span class="kw">if</span> action == <span class="str">'isolate_ec2'</span> <span class="kw">and</span> resource_type == <span class="str">'Instance'</span>:
+        instance_id = resource[<span class="str">'instanceDetails'</span>][<span class="str">'instanceId'</span>]
+        result[<span class="str">'instance_isolated'</span>] = <span class="fn">isolate_ec2</span>(instance_id, finding_type)
+
+    <span class="kw">elif</span> action == <span class="str">'disable_iam_key'</span> <span class="kw">and</span> resource_type == <span class="str">'AccessKey'</span>:
+        key_id   = resource[<span class="str">'accessKeyDetails'</span>][<span class="str">'accessKeyId'</span>]
+        username = resource[<span class="str">'accessKeyDetails'</span>][<span class="str">'userName'</span>]
+        result[<span class="str">'key_disabled'</span>] = <span class="fn">disable_iam_key</span>(username, key_id)
+
+    <span class="cm"># ALWAYS send alert for severity >= 7 (HIGH/CRITICAL)</span>
+    <span class="kw">if</span> severity >= <span class="num">7</span>:
+        <span class="fn">send_alert</span>(finding, action, result)
+
+    <span class="kw">return</span> result
+
+<span class="kw">def</span> <span class="fn">isolate_ec2</span>(instance_id, finding_type):
+    <span class="kw">try</span>:
+        resp = ec2.describe_instances(InstanceIds=[instance_id])
+        instance = resp[<span class="str">'Reservations'</span>][0][<span class="str">'Instances'</span>][0]
+        original_sgs = [sg[<span class="str">'GroupId'</span>] <span class="kw">for</span> sg <span class="kw">in</span> instance[<span class="str">'SecurityGroups'</span>]]
+
+        <span class="cm"># Move to quarantine SG (denies all inbound AND outbound)</span>
+        ec2.modify_instance_attribute(
+            InstanceId=instance_id, Groups=[QUARANTINE_SG])
+
+        <span class="cm"># Tag for investigation</span>
+        ec2.create_tags(Resources=[instance_id], Tags=[
+            {<span class="str">'Key'</span>: <span class="str">'SecurityStatus'</span>,    <span class="str">'Value'</span>: <span class="str">'QUARANTINED'</span>},
+            {<span class="str">'Key'</span>: <span class="str">'GuardDutyFinding'</span>,   <span class="str">'Value'</span>: finding_type},
+            {<span class="str">'Key'</span>: <span class="str">'QuarantinedAt'</span>,      <span class="str">'Value'</span>: datetime.utcnow().isoformat()},
+            {<span class="str">'Key'</span>: <span class="str">'OriginalSGs'</span>,        <span class="str">'Value'</span>: <span class="str">','</span>.join(original_sgs)},
+        ])
+
+        logger.info(f<span class="str">"ISOLATED {instance_id}. Was in SGs: {original_sgs}"</span>)
+        <span class="kw">return</span> <span class="kw">True</span>
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        logger.error(f<span class="str">"Isolation failed for {instance_id}: {e}"</span>)
+        <span class="kw">return</span> <span class="kw">False</span>
+
+<span class="kw">def</span> <span class="fn">disable_iam_key</span>(username, key_id):
+    <span class="kw">try</span>:
+        iam.update_access_key(
+            UserName=username, AccessKeyId=key_id, Status=<span class="str">'Inactive'</span>)
+        logger.info(f<span class="str">"Disabled IAM key {key_id} for user {username}"</span>)
+        <span class="kw">return</span> <span class="kw">True</span>
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        logger.error(f<span class="str">"Failed to disable key {key_id}: {e}"</span>)
+        <span class="kw">return</span> <span class="kw">False</span>
+
+<span class="kw">def</span> <span class="fn">send_alert</span>(finding, action, result):
+    msg = f<span class="str">"""
+🚨 GuardDuty Alert
+Type:     {finding['type']}
+Severity: {finding['severity']}
+Account:  {finding['accountId']}
+Region:   {finding['region']}
+Action:   {action}
+Result:   {json.dumps(result, indent=2)}
+Console:  https://console.aws.amazon.com/guardduty/home?region={finding['region']}#/findings
+    """</span>
+    sns.publish(TopicArn=SNS_TOPIC, Subject=f<span class="str">"[P1] GuardDuty: {finding['type']}"</span>, Message=msg)</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Test GuardDuty with the Official Tester</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Generate sample findings for testing</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Use the official AWS GuardDuty tester (generates SAMPLE findings)</span>
+git clone https://github.com/awslabs/amazon-guardduty-tester
+cd amazon-guardduty-tester
+
+<span class="cm"># Deploy the tester infrastructure</span>
+aws cloudformation create-stack \
+  --stack-name GuardDutyTester \
+  --template-body file://cloudformation_templates/main.template \
+  --parameters ParameterKey=Vpc,ParameterValue=vpc-xxxxx
+
+<span class="cm"># Run the tester (simulates various attacks)</span>
+./guardduty_tester.sh
+
+<span class="cm"># What it simulates:
+# - EC2 communicating with known C2 domains
+# - Credential theft via IMDS (metadata service)
+# - Port scanning from EC2
+# - DNS exfiltration
+# - Tor exit node connections
+# - Cryptocurrency mining domains</span>
+
+<span class="cm"># Monitor findings as they appear</span>
+aws guardduty list-findings \
+  --detector-id $(aws guardduty list-detectors --query 'DetectorIds[0]' --output text) \
+  --query 'FindingIds' | head -10
+
+<span class="cm"># Get details of a specific finding</span>
+aws guardduty get-findings \
+  --detector-id DETECTOR_ID \
+  --finding-ids FINDING_ID</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P4 -->
+
+<!-- P5 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">05</div>
+    <div class="pc-meta">
+      <h3>Alert Triage — The 6-Step SOC Analyst Workflow</h3>
+      <p>An alert fired. Now what? Master the structured triage process that separates good SOC analysts from great ones. Build decision trees for each alert type. Practice on 10 real-world scenarios with detailed investigation steps.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Triage</span><span class="ptag y">Investigation</span><span class="ptag o">Decision Trees</span><span class="ptag n">False Positives</span>
+        <span class="diff med">INTERMEDIATE</span><span class="ptime">⏱ 5–6 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="concept">
+      <h3>📋 The 6-Step Triage Process</h3>
+      <p><strong>Step 1 — Acknowledge:</strong> Claim the alert so no two analysts work it simultaneously. Set status to "In Progress."</p>
+      <p><strong>Step 2 — Context Gather:</strong> What triggered it? What asset is involved? Is it business-critical? What time is it? Look at the surrounding log context — 30 minutes before and after.</p>
+      <p><strong>Step 3 — Validate:</strong> Is this a real event or a false positive? Look for corroborating evidence across multiple log sources. One log line proves nothing.</p>
+      <p><strong>Step 4 — Scope:</strong> How big is it? Just one account, one host, one region? Or is there evidence of lateral movement to other systems?</p>
+      <p><strong>Step 5 — Decide:</strong> Escalate to P1 (critical, active threat), P2 (high risk, investigate now), P3 (medium, schedule investigation), Close (false positive, document why).</p>
+      <p><strong>Step 6 — Document:</strong> Write a timeline of what you found, what actions you took, and why. This becomes the incident record and helps improve future detections.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Build Triage Runbooks — One Per Alert Type</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">markdown</span> — runbooks/aws_iam_key_exposed.md</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm">## Runbook: Exposed/Compromised IAM Access Key</span>
+
+<span class="cm">### Trigger</span>
+GuardDuty finding: UnauthorizedAccess:IAMUser/* OR
+Sigma rule match on unusual API calls from unexpected IP
+
+<span class="cm">### Severity: P1 (AUTO-RESPOND + HUMAN REVIEW)</span>
+
+<span class="cm">### Immediate Actions (automated by Lambda)</span>
+1. Disable the access key (IAM → Update Access Key → Inactive)
+2. Log all API calls made with this key in last 24h (CloudTrail)
+3. Alert security team via PagerDuty/Slack
+
+<span class="cm">### Investigation Steps (human analyst)</span>
+1. Check CloudTrail for calls made BEFORE the key was disabled:
+   - What APIs were called?
+   - What resources were accessed/modified/created?
+   - Were any new IAM users/roles/policies created?
+   - Was CloudTrail modified or stopped?
+   - Were any S3 buckets accessed or data downloaded?
+
+2. Query: aws cloudtrail lookup-events \
+     --lookup-attributes AttributeKey=AccessKeyId,AttributeValue=AKIAXXXXXX \
+     --start-time 2024-01-15T00:00:00Z
+
+3. Check if the key was used from multiple IPs (geographic impossibility)
+   - Login from NYC at 10:00 UTC + login from Singapore at 10:05 UTC = COMPROMISED
+
+4. Check for persistence indicators:
+   - New IAM users created?
+   - New access keys created for existing users?
+   - New trusted entities in role trust policies?
+   - Lambda functions created? EC2 instances launched?
+
+<span class="cm">### Escalation</span>
+- If ANY data was accessed → P1, notify CISO, legal team (potential data breach)
+- If account-wide admin access was gained → P1, consider full account audit
+- If CloudTrail was modified → P1, critical — logs may be incomplete
+
+<span class="cm">### Resolution</span>
+1. Verify disabled key is the only compromise vector
+2. Rotate ALL keys for the affected user (may have created new ones)
+3. Review and remediate any changes made by the attacker
+4. Delete any attacker-created resources (users, roles, EC2 instances)
+5. Enable and verify CloudTrail is running in all regions
+6. Lessons learned: How was the key exposed? GitHub? Slack? Hardcoded?</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>10 Triage Scenarios to Practice</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Simulate and investigate each scenario</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Scenario 1: 50,000 failed SSH attempts from one IP
+# Question: Real attack? Or misconfigured script? Or legitimate pen test?
+# Investigate: Check if IP is in threat intel list
+#   curl -s https://api.abuseipdb.com/api/v2/check?ipAddress=185.220.101.42
+# If IP is a known Tor exit node = real threat
+# If IP is internal = misconfigured automated script</span>
+
+<span class="cm"># Scenario 2: CloudTrail shows "GetCallerIdentity" from 50 different IPs
+# Attacker pattern: enumerate the account after getting any valid key
+# Investigate:
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=GetCallerIdentity \
+  --start-time $(date -d "1 hour ago" --utc +%Y-%m-%dT%H:%M:%SZ)
+
+<span class="cm"># Scenario 3: EC2 instance suddenly makes 1000 outbound connections
+# Could be: port scan (compromised), crypto miner, misconfigured app
+# Investigate VPC flow logs:
+aws logs filter-log-events \
+  --log-group-name VPCFlowLogs \
+  --filter-pattern '{ $.srcAddr = "10.0.1.50" && $.dstPort = 443 }' \
+  --start-time $(date -d "1 hour ago" +%s)000
+
+<span class="cm"># Scenario 4: New IAM user created at 3am on a Sunday
+# Classic attacker persistence pattern
+# Investigate:
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateUser
+
+<span class="cm"># Scenario 5: S3 bucket policy changed to allow public access
+# Could be: developer mistake, attacker data staging
+# Check who made the change:
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=PutBucketPolicy</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P5 -->
+
+<!-- P6 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">06</div>
+    <div class="pc-meta">
+      <h3>Threat Hunting — Don't Wait for Alerts to Find Attacks</h3>
+      <p>Threat hunting is proactive — you go looking for attacker activity before any alert fires. Using MITRE ATT&CK as your guide, build and test 8 hunt hypotheses against your log data to find threats that slipped past your detection rules.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Threat Hunting</span><span class="ptag y">MITRE ATT&CK</span><span class="ptag o">Hypotheses</span><span class="ptag n">IOCs</span>
+        <span class="diff hard">ADVANCED</span><span class="ptime">⏱ 7–8 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="concept teal">
+      <h3>🦊 The Threat Hunting Mindset</h3>
+      <p>A detection rule waits for something to match. A threat hunter asks: <strong>"If an attacker is already in my environment, what would their activity look like in my logs?"</strong> Then they go looking. This is why threat hunting catches things detection rules miss — attackers know your rules exist and try to evade them, but they can't hide from a smart human looking at raw data with the right questions.</p>
+      <p>Every hunt follows the same pattern: <strong>Hypothesis</strong> (what are you looking for?) → <strong>Data Source</strong> (which logs would show this?) → <strong>Query</strong> (how do you search for it?) → <strong>Baseline</strong> (what's normal?) → <strong>Anomalies</strong> (what deviates from normal?) → <strong>Investigate</strong> (are anomalies benign or malicious?)</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Hunt 1: Unusual IAM Activity (T1078 — Valid Accounts)</h4>
+          <p><strong>Hypothesis:</strong> An attacker who has stolen valid credentials will use them from an unusual location, at an unusual time, or for unusual API calls compared to the legitimate user's baseline.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — hunt_unusual_iam.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="kw">import</span> boto3
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+<span class="kw">import</span> json
+
+cloudtrail = boto3.client(<span class="str">'cloudtrail'</span>)
+
+<span class="kw">def</span> <span class="fn">hunt_credential_anomalies</span>():
+    <span class="str">"""
+    Hunt for IAM credential anomalies:
+    1. Same user from 2+ geographically impossible locations
+    2. First-time API calls for a user (new behaviour = suspicious)
+    3. API calls at unusual hours for that specific user
+    """</span>
+    end_time = datetime.utcnow()
+    start_time = end_time - timedelta(days=7)
+
+    <span class="cm"># Collect all CloudTrail events for the past week</span>
+    user_events = defaultdict(list)
+    paginator = cloudtrail.get_paginator(<span class="str">'lookup_events'</span>)
+
+    <span class="kw">for</span> page <span class="kw">in</span> paginator.paginate(
+        StartTime=start_time,
+        EndTime=end_time
+    ):
+        <span class="kw">for</span> event <span class="kw">in</span> page[<span class="str">'Events'</span>]:
+            user = event.get(<span class="str">'Username'</span>, <span class="str">'unknown'</span>)
+            user_events[user].append({
+                <span class="str">'time'</span>: event[<span class="str">'EventTime'</span>],
+                <span class="str">'event'</span>: event[<span class="str">'EventName'</span>],
+                <span class="str">'ip'</span>: event.get(<span class="str">'CloudTrailEvent'</span>, <span class="str">'{}'</span>),
+            })
+
+    findings = []
+
+    <span class="kw">for</span> user, events <span class="kw">in</span> user_events.items():
+        <span class="cm"># Check for off-hours activity (midnight to 6am UTC)</span>
+        off_hours = [e <span class="kw">for</span> e <span class="kw">in</span> events
+                     <span class="kw">if</span> e[<span class="str">'time'</span>].hour < <span class="num">6</span> <span class="kw">or</span> e[<span class="str">'time'</span>].hour > <span class="num">22</span>]
+
+        <span class="kw">if</span> off_hours:
+            findings.append({
+                <span class="str">'hunt'</span>: <span class="str">'off_hours_activity'</span>,
+                <span class="str">'user'</span>: user,
+                <span class="str">'count'</span>: len(off_hours),
+                <span class="str">'events'</span>: [e[<span class="str">'event'</span>] <span class="kw">for</span> e <span class="kw">in</span> off_hours[:5]],
+                <span class="str">'risk'</span>: <span class="str">'HIGH'</span> <span class="kw">if</span> len(off_hours) > <span class="num">20</span> <span class="kw">else</span> <span class="str">'MEDIUM'</span>
+            })
+
+    <span class="kw">return</span> findings
+
+<span class="kw">if</span> __name__ == <span class="str">'__main__'</span>:
+    results = hunt_credential_anomalies()
+    <span class="kw">for</span> r <span class="kw">in</span> results:
+        print(json.dumps(r, indent=2, default=str))</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Hunt 2: Lateral Movement via Role Chaining (T1548)</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — hunt_role_chaining.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="kw">def</span> <span class="fn">hunt_role_chaining</span>():
+    <span class="str">"""
+    Detect role chaining — attacker assumes role A, then from
+    that role assumes role B, then role C, gaining more permissions
+    at each hop. This is a common privilege escalation pattern.
+    """</span>
+    cloudtrail = boto3.client(<span class="str">'cloudtrail'</span>)
+
+    assume_role_events = []
+    paginator = cloudtrail.get_paginator(<span class="str">'lookup_events'</span>)
+
+    <span class="kw">for</span> page <span class="kw">in</span> paginator.paginate(
+        LookupAttributes=[{<span class="str">'AttributeKey'</span>: <span class="str">'EventName'</span>, <span class="str">'AttributeValue'</span>: <span class="str">'AssumeRole'</span>}],
+        StartTime=datetime.utcnow() - timedelta(hours=<span class="num">24</span>)
+    ):
+        <span class="kw">for</span> event <span class="kw">in</span> page[<span class="str">'Events'</span>]:
+            ct_event = json.loads(event.get(<span class="str">'CloudTrailEvent'</span>, <span class="str">'{}'</span>))
+            assume_role_events.append({
+                <span class="str">'time'</span>: event[<span class="str">'EventTime'</span>],
+                <span class="str">'caller'</span>: ct_event.get(<span class="str">'userIdentity'</span>, {}).get(<span class="str">'arn'</span>, <span class="str">''</span>),
+                <span class="str">'assumed_role'</span>: ct_event.get(<span class="str">'requestParameters'</span>, {}).get(<span class="str">'roleArn'</span>, <span class="str">''</span>),
+                <span class="str">'ip'</span>: ct_event.get(<span class="str">'sourceIPAddress'</span>, <span class="str">''</span>),
+            })
+
+    <span class="cm"># Build a graph of role assumptions</span>
+    <span class="cm"># Flag: if a role that was just assumed then immediately assumes another role</span>
+    role_chains = defaultdict(list)
+    <span class="kw">for</span> event <span class="kw">in</span> sorted(assume_role_events, key=<span class="kw">lambda</span> x: x[<span class="str">'time'</span>]):
+        caller = event[<span class="str">'caller'</span>]
+        <span class="kw">if</span> <span class="str">'assumed-role'</span> <span class="kw">in</span> caller:  <span class="cm"># A role (not human) is assuming another role</span>
+            role_chains[caller].append(event[<span class="str">'assumed_role'</span>])
+
+    suspicious = {k: v <span class="kw">for</span> k, v <span class="kw">in</span> role_chains.items() <span class="kw">if</span> len(v) > <span class="num">2</span>}
+    <span class="kw">if</span> suspicious:
+        print(<span class="str">"⚠️  SUSPICIOUS ROLE CHAINING DETECTED:"</span>)
+        <span class="kw">for</span> role, chain <span class="kw">in</span> suspicious.items():
+            print(f<span class="str">"  {role} assumed: {chain}"</span>)
+
+    <span class="kw">return</span> suspicious</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Hunt 3: Data Exfiltration via Large S3 Downloads</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Athena query on CloudTrail data lake</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Use Athena to query CloudTrail S3 data at scale</span>
+<span class="cm"># This finds any principal that downloaded more than 1GB total from S3</span>
+
+aws athena start-query-execution \
+  --query-string "
+    SELECT
+      userIdentity.arn AS principal,
+      requestParameters.bucketName AS bucket,
+      COUNT(*) AS get_count,
+      SUM(CAST(additionalEventData.bytesTransferredOut AS BIGINT)) AS total_bytes
+    FROM cloudtrail_logs
+    WHERE
+      eventName = 'GetObject'
+      AND eventTime >= CURRENT_TIMESTAMP - INTERVAL '24' HOUR
+    GROUP BY 1, 2
+    HAVING SUM(CAST(additionalEventData.bytesTransferredOut AS BIGINT)) > 1073741824
+    ORDER BY total_bytes DESC
+  " \
+  --query-execution-context Database=security_logs \
+  --result-configuration OutputLocation=s3://my-athena-results/</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P6 -->
+
+<!-- P7 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">07</div>
+    <div class="pc-meta">
+      <h3>Digital Forensics — Investigate a Compromised Host</h3>
+      <p>A host has been compromised. Walk through the complete forensic investigation: preserve evidence, collect volatile data (memory), analyse disk, reconstruct the attack timeline, extract IOCs, and determine scope. All with free tools.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Forensics</span><span class="ptag y">Volatility</span><span class="ptag o">Timeline</span><span class="ptag n">IOC Extraction</span>
+        <span class="diff hard">ADVANCED</span><span class="ptime">⏱ 7–8 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="note warn"><div class="note-i">⚠️</div><p><strong>The Golden Rule of Forensics:</strong> Preserve first, investigate second. Never run investigation commands directly on a live compromised system — every command you run changes evidence (file access times, memory state). Create a snapshot/image first, then investigate the image. Evidence preservation is legally required for prosecution and contractually required for cyber insurance claims.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Live Response — Collect Volatile Data Before Shutdown</h4>
+          <p><strong>Volatile data</strong> is data that disappears when the system is turned off: running processes, active network connections, loaded kernel modules, open files, memory contents. This is often the most valuable forensic data and you have only one chance to collect it.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — live_response.sh — Run as FIRST action on compromised host</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm">#!/bin/bash
+# LIVE RESPONSE SCRIPT — Run BEFORE isolating/shutting down
+# Output goes to S3 immediately via AWS CLI
+# Timestamp all collections</span>
+
+CASE_ID="IR-$(date +%Y%m%d-%H%M%S)"
+BUCKET="forensics-evidence-$(aws sts get-caller-identity --query Account --output text)"
+HOST=$(hostname)
+
+<span class="kw">collect</span>() {
+    local name="$1"; shift
+    echo "=== $name ===" >> /tmp/$CASE_ID-volatile.txt
+    "$@" >> /tmp/$CASE_ID-volatile.txt 2>&1
+    echo "" >> /tmp/$CASE_ID-volatile.txt
+}
+
+<span class="cm"># ── Collect volatile data (order matters — most volatile first) ─</span>
+collect "TIMESTAMP"        date -u +"%Y-%m-%dT%H:%M:%SZ"
+collect "SYSTEM INFO"      uname -a
+collect "UPTIME"           uptime
+collect "RUNNING PROCESSES" ps auxww
+collect "NETWORK CONNECTIONS" ss -tulnap        <span class="cm"># ss replaces netstat</span>
+collect "LISTENING PORTS"  ss -tlnp
+collect "ESTABLISHED CONNS" ss -tnp state established
+collect "OPEN FILES"       lsof -i              <span class="cm"># Network files</span>
+collect "ALL OPEN FILES"   lsof +L1            <span class="cm"># Files with no directory link (malware)</span>
+collect "LOADED MODULES"   lsmod
+collect "ARP TABLE"        arp -an
+collect "ROUTING TABLE"    ip route show
+collect "LOGGED IN USERS"  who -a
+collect "RECENT LOGINS"    last -20
+collect "FAILED LOGINS"    lastb -20
+collect "CRON JOBS"        crontab -l; ls /etc/cron*
+collect "SUDOERS"          cat /etc/sudoers
+collect "SSH AUTHORIZED KEYS" cat ~/.ssh/authorized_keys 2>/dev/null
+collect "RECENT COMMANDS"  history
+collect "ENV VARIABLES"    env
+collect "BASH HISTORY"     cat ~/.bash_history
+
+<span class="cm"># Check for common persistence mechanisms</span>
+collect "SYSTEMD SERVICES" systemctl list-units --type=service --state=running
+collect "STARTUP SCRIPTS"  ls /etc/init.d/ /etc/rc.local 2>/dev/null
+collect "SUID BINARIES"    find / -perm -4000 -type f 2>/dev/null   <span class="cm"># Privilege escalation</span>
+collect "WORLD-WRITABLE"   find /tmp /var/tmp -perm -002 -type f 2>/dev/null
+
+<span class="cm"># Memory snapshot (if avmem or lime is available)</span>
+<span class="cm"># modprobe lime path=/tmp/memory.lime format=lime  # LiME kernel module</span>
+
+<span class="cm"># Hash all collected data for integrity</span>
+sha256sum /tmp/$CASE_ID-volatile.txt > /tmp/$CASE_ID-volatile.sha256
+
+<span class="cm"># Upload to S3 immediately</span>
+aws s3 cp /tmp/$CASE_ID-volatile.txt s3://$BUCKET/$CASE_ID/$HOST-volatile.txt
+aws s3 cp /tmp/$CASE_ID-volatile.sha256 s3://$BUCKET/$CASE_ID/$HOST-volatile.sha256
+
+echo "Evidence preserved to s3://$BUCKET/$CASE_ID/"</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Create an EBS Forensic Snapshot</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Snapshot compromised EC2 for forensic analysis</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Get the instance ID of the compromised host</span>
+INSTANCE_ID="i-0abc123def456789"
+
+<span class="cm"># Get all EBS volume IDs attached to this instance</span>
+VOLUMES=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID \
+  --query 'Reservations[0].Instances[0].BlockDeviceMappings[*].Ebs.VolumeId' \
+  --output text)
+
+<span class="cm"># Create snapshot of EACH volume</span>
+<span class="kw">for</span> VOL in $VOLUMES; do
+    SNAP_ID=$(aws ec2 create-snapshot \
+      --volume-id $VOL \
+      --description "Forensic snapshot: $INSTANCE_ID - $(date -u +%Y%m%d-%H%M%S)" \
+      --tag-specifications "ResourceType=snapshot,Tags=[{Key=CaseID,Value=$CASE_ID},{Key=InstanceID,Value=$INSTANCE_ID},{Key=Purpose,Value=ForensicEvidence}]" \
+      --query 'SnapshotId' --output text)
+
+    echo "Created snapshot $SNAP_ID for volume $VOL"
+
+    <span class="cm"># Wait for snapshot to complete</span>
+    aws ec2 wait snapshot-completed --snapshot-ids $SNAP_ID
+    echo "Snapshot $SNAP_ID ready"
+done
+
+<span class="cm"># For analysis: Create a NEW ec2 instance (forensic workstation)
+# and attach the snapshot as a SECOND disk — NEVER the boot disk
+# This prevents accidental modification of evidence</span>
+
+<span class="cm"># Create forensic workstation from snapshot</span>
+aws ec2 create-volume \
+  --snapshot-id $SNAP_ID \
+  --availability-zone us-east-1a \
+  --tag-specifications "ResourceType=volume,Tags=[{Key=Purpose,Value=ForensicAnalysis}]"</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Disk Forensics with Open Source Tools</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Forensic analysis on the mounted evidence disk</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Mount the forensic disk READ-ONLY (CRITICAL — preserve evidence)</span>
+mount -o ro,noatime /dev/xvdf1 /mnt/evidence
+
+<span class="cm"># Build a file activity timeline (MAC times — Modified, Accessed, Changed)</span>
+<span class="cm"># This shows EVERYTHING that changed in the last 48 hours</span>
+find /mnt/evidence -newermt "2024-01-14 00:00:00" -type f \
+  -printf "%T@ %Tc %p\n" 2>/dev/null | sort -n > /tmp/timeline.txt
+
+<span class="cm"># Look for recently modified suspicious files</span>
+cat /tmp/timeline.txt | grep -E "\.(sh|py|pl|php|rb|exe|elf)$"
+
+<span class="cm"># Check for hidden files and directories</span>
+find /mnt/evidence -name ".*" -type f 2>/dev/null | head -50
+
+<span class="cm"># Check for SUID binaries (privilege escalation persistence)</span>
+find /mnt/evidence -perm -4000 -type f 2>/dev/null
+
+<span class="cm"># Extract web server logs</span>
+cat /mnt/evidence/var/log/nginx/access.log | \
+  awk '{print $1, $7, $9}' | \   <span class="cm"># IP, URL, HTTP status</span>
+  sort | uniq -c | sort -rn | head -20
+
+<span class="cm"># Find files created in /tmp (malware staging area)</span>
+ls -la /mnt/evidence/tmp/
+
+<span class="cm"># Check cron jobs for persistence</span>
+cat /mnt/evidence/var/spool/cron/root 2>/dev/null
+cat /mnt/evidence/etc/cron.d/* 2>/dev/null
+
+<span class="cm"># Check bash history for all users</span>
+<span class="kw">for</span> f <span class="kw">in</span> /mnt/evidence/home/*/.bash_history; do
+    echo "=== $f ==="; cat "$f"
+done
+cat /mnt/evidence/root/.bash_history 2>/dev/null
+
+<span class="cm"># Check /etc/passwd for new accounts</span>
+cat /mnt/evidence/etc/passwd | awk -F: '$3 >= 1000 {print}'
+
+<span class="cm"># Hash every file in /tmp and /dev/shm (common malware staging)</span>
+find /mnt/evidence/tmp /mnt/evidence/dev/shm -type f -exec sha256sum {} \; \
+  > /tmp/suspicious_hashes.txt
+
+<span class="cm"># Query VirusTotal for any suspicious hashes</span>
+<span class="kw">while</span> read hash filepath; do
+    result=$(curl -s "https://www.virustotal.com/vtapi/v2/file/report?apikey=YOUR_KEY&resource=$hash")
+    positives=$(echo $result | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('positives', 0))")
+    <span class="kw">if</span> [ "$positives" -gt "0" ]; then
+        echo "MALWARE DETECTED: $filepath ($positives/70 engines)"
+    fi
+<span class="kw">done</span> < /tmp/suspicious_hashes.txt</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P7 -->
+
+<!-- P8 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">08</div>
+    <div class="pc-meta">
+      <h3>SOAR — Automate Your Entire Incident Response</h3>
+      <p>SOAR = Security Orchestration, Automation and Response. Build automated playbooks that run in seconds: detect → contain → investigate → notify → ticket — all without human intervention for known attack patterns.</p>
+      <div class="pc-footer">
+        <span class="ptag r">SOAR</span><span class="ptag y">AWS Step Functions</span><span class="ptag o">Lambda</span><span class="ptag n">Jira/Slack</span>
+        <span class="diff hard">ADVANCED</span><span class="ptime">⏱ 8–9 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Build a SOAR Playbook with AWS Step Functions</h4>
+          <p>Step Functions orchestrates multiple Lambda functions into a workflow. When GuardDuty fires, Step Functions runs the full response: assess → contain → investigate → notify → ticket.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">json</span> — step-functions-playbook.json (GuardDuty EC2 Compromise)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">{
+  "Comment": "GuardDuty EC2 Compromise Response Playbook",
+  "StartAt": "AssessSeverity",
+  "States": {
+    "AssessSeverity": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:assess-finding-severity",
+      "Next": "SeverityChoice",
+      "ResultPath": "$.assessment"
+    },
+    "SeverityChoice": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.assessment.severity",
+          "NumericGreaterThanEquals": 7,
+          "Next": "IsolateInstance"
+        },
+        {
+          "Variable": "$.assessment.severity",
+          "NumericGreaterThanEquals": 4,
+          "Next": "CollectEvidence"
+        }
+      ],
+      "Default": "CreateLowPriorityTicket"
+    },
+    "IsolateInstance": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:isolate-ec2-instance",
+      "Next": "ParallelResponse",
+      "ResultPath": "$.isolation",
+      "Catch": [{
+        "ErrorEquals": ["States.ALL"],
+        "Next": "AlertHuman",
+        "ResultPath": "$.error"
+      }]
+    },
+    "ParallelResponse": {
+      "Type": "Parallel",
+      "Branches": [
+        {
+          "StartAt": "CollectForensicData",
+          "States": {
+            "CollectForensicData": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:::function:collect-forensic-snapshot",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "SearchRelatedEvents",
+          "States": {
+            "SearchRelatedEvents": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:::function:search-cloudtrail-context",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "NotifySecurityTeam",
+          "States": {
+            "NotifySecurityTeam": {
+              "Type": "Task",
+              "Resource": "arn:aws:lambda:::function:send-pagerduty-alert",
+              "End": true
+            }
+          }
+        }
+      ],
+      "Next": "CreateP1Ticket"
+    },
+    "CreateP1Ticket": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:create-jira-incident",
+      "End": true
+    },
+    "AlertHuman": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:escalate-to-human",
+      "End": true
+    },
+    "CreateLowPriorityTicket": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:create-jira-ticket",
+      "End": true
+    },
+    "CollectEvidence": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:collect-forensic-snapshot",
+      "Next": "CreateP2Ticket"
+    },
+    "CreateP2Ticket": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:::function:create-jira-incident",
+      "End": true
+    }
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Automatic Jira Ticket Creation Lambda</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — create_jira_incident.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="kw">import</span> requests, boto3, json, os
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+ssm = boto3.client(<span class="str">'ssm'</span>)
+
+<span class="kw">def</span> <span class="fn">get_param</span>(name):
+    <span class="kw">return</span> ssm.get_parameter(Name=name, WithDecryption=<span class="kw">True</span>)[<span class="str">'Parameter'</span>][<span class="str">'Value'</span>]
+
+<span class="kw">def</span> <span class="fn">lambda_handler</span>(event, context):
+    <span class="cm"># Get Jira credentials from Parameter Store</span>
+    jira_url   = get_param(<span class="str">'/security/jira/url'</span>)
+    jira_token = get_param(<span class="str">'/security/jira/api_token'</span>)
+    jira_email = get_param(<span class="str">'/security/jira/email'</span>)
+    jira_project = get_param(<span class="str">'/security/jira/project_key'</span>)
+
+    finding = event.get(<span class="str">'finding'</span>, event)
+    severity = finding.get(<span class="str">'severity'</span>, 5)
+    finding_type = finding.get(<span class="str">'type'</span>, <span class="str">'Unknown'</span>)
+    account_id = finding.get(<span class="str">'accountId'</span>, <span class="str">'Unknown'</span>)
+    region = finding.get(<span class="str">'region'</span>, <span class="str">'Unknown'</span>)
+
+    <span class="cm"># Determine Jira priority</span>
+    priority = (
+        <span class="str">"Highest"</span> <span class="kw">if</span> severity >= <span class="num">9</span> <span class="kw">else</span>
+        <span class="str">"High"</span>    <span class="kw">if</span> severity >= <span class="num">7</span> <span class="kw">else</span>
+        <span class="str">"Medium"</span>  <span class="kw">if</span> severity >= <span class="num">4</span> <span class="kw">else</span>
+        <span class="str">"Low"</span>
+    )
+
+    description = f<span class="str">"""
+h2. Security Incident Alert
+
+*Finding Type:* {finding_type}
+*Severity:* {severity}/10
+*AWS Account:* {account_id}
+*Region:* {region}
+*Detected:* {datetime.utcnow().isoformat()} UTC
+
+h2. Automated Response Actions
+* Instance isolated: {event.get('isolation', {}).get('success', 'N/A')}
+* Forensic snapshot: {event.get('snapshot_id', 'Pending')}
+
+h2. Investigation Links
+* [GuardDuty Console|https://console.aws.amazon.com/guardduty/home?region={region}]
+* [CloudTrail|https://console.aws.amazon.com/cloudtrail]
+* [Security Hub|https://console.aws.amazon.com/securityhub]
+
+h2. Response Playbook
+# Verify automated containment actions
+# Review CloudTrail for attacker actions BEFORE containment  
+# Determine scope — are other accounts/systems affected?
+# Collect forensic evidence from isolated instance
+# Document timeline and actions in this ticket
+# Determine if breach notification required
+    """</span>
+
+    ticket = {
+        <span class="str">"fields"</span>: {
+            <span class="str">"project"</span>: {<span class="str">"key"</span>: jira_project},
+            <span class="str">"summary"</span>: f<span class="str">"[{priority}] Security Incident: {finding_type} - {account_id}"</span>,
+            <span class="str">"description"</span>: {
+                <span class="str">"type"</span>: <span class="str">"doc"</span>, <span class="str">"version"</span>: <span class="num">1</span>,
+                <span class="str">"content"</span>: [{<span class="str">"type"</span>: <span class="str">"paragraph"</span>, <span class="str">"content"</span>: [{<span class="str">"type"</span>: <span class="str">"text"</span>, <span class="str">"text"</span>: description}]}]
+            },
+            <span class="str">"issuetype"</span>: {<span class="str">"name"</span>: <span class="str">"Security Incident"</span>},
+            <span class="str">"priority"</span>: {<span class="str">"name"</span>: priority},
+            <span class="str">"labels"</span>: [<span class="str">"security-incident"</span>, <span class="str">"guardduty"</span>, <span class="str">"automated"</span>],
+        }
+    }
+
+    resp = requests.post(
+        f<span class="str">"{jira_url}/rest/api/3/issue"</span>,
+        headers={<span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>},
+        auth=(jira_email, jira_token),
+        json=ticket
+    )
+    resp.raise_for_status()
+
+    ticket_key = resp.json()[<span class="str">'key'</span>]
+    <span class="kw">return</span> {<span class="str">"ticket_key"</span>: ticket_key, <span class="str">"url"</span>: f<span class="str">"{jira_url}/browse/{ticket_key}"</span>}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P8 -->
+
+<!-- P9 -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">09</div>
+    <div class="pc-meta">
+      <h3>Full SOC Platform — Integrate Everything</h3>
+      <p>Build the complete unified Security Operations Centre architecture. OpenSearch SIEM + GuardDuty + Security Hub + Falco + Sigma rules + SOAR — all connected, all working together, with a single operations dashboard.</p>
+      <div class="pc-footer">
+        <span class="ptag r">SOC Platform</span><span class="ptag y">Full Architecture</span><span class="ptag o">Integration</span><span class="ptag n">Terraform</span>
+        <span class="diff hard">ADVANCED</span><span class="ptime">⏱ 8–10 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Complete SOC Architecture Terraform</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — soc-platform/main.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># ═══ ALL LOG SOURCES → KINESIS → OPENSEARCH ══════════════</span>
+resource <span class="fn">"aws_kinesis_firehose_delivery_stream"</span> <span class="str">"security_logs"</span> {
+  name        = <span class="str">"security-logs-to-opensearch"</span>
+  destination = <span class="str">"opensearch"</span>
+
+  opensearch_configuration {
+    domain_arn            = aws_opensearch_domain.siem.arn
+    role_arn              = aws_iam_role.firehose.arn
+    index_name            = <span class="str">"security-logs"</span>
+    index_rotation_period = <span class="str">"OneDay"</span>
+
+    processing_configuration {
+      enabled = <span class="kw">true</span>
+      processors {
+        type = <span class="str">"Lambda"</span>
+        parameters {
+          parameter_name  = <span class="str">"LambdaArn"</span>
+          parameter_value = aws_lambda_function.log_enricher.arn
+        }
+      }
+    }
+    s3_backup_mode = <span class="str">"AllDocuments"</span>
+    s3_configuration {
+      role_arn   = aws_iam_role.firehose.arn
+      bucket_arn = aws_s3_bucket.log_archive.arn
+      compression_format = <span class="str">"GZIP"</span>
+    }
+  }
+}
+
+<span class="cm"># ═══ CLOUDWATCH METRIC ALARMS → SNS → PAGERDUTY ═══════</span>
+<span class="kw">locals</span> {
+  critical_cloudwatch_alarms = {
+    root_account_usage = {
+      metric      = <span class="str">"RootAccountUsageEventCount"</span>
+      threshold   = <span class="num">1</span>
+      description = <span class="str">"ROOT ACCOUNT USED — Immediate investigation required"</span>
+    }
+    cloudtrail_disabled = {
+      metric      = <span class="str">"CloudTrailEventCount"</span>
+      threshold   = <span class="num">0</span>
+      comparison  = <span class="str">"LessThanThreshold"</span>
+      description = <span class="str">"CloudTrail logging has STOPPED"</span>
+    }
+    console_login_failures = {
+      metric      = <span class="str">"ConsoleLoginFailures"</span>
+      threshold   = <span class="num">5</span>
+      description = <span class="str">"Multiple console login failures — possible brute force"</span>
+    }
+    iam_policy_changes = {
+      metric      = <span class="str">"IAMPolicyChanges"</span>
+      threshold   = <span class="num">1</span>
+      description = <span class="str">"IAM policy changed"</span>
+    }
+    unauthorized_api_calls = {
+      metric      = <span class="str">"UnauthorizedAPICalls"</span>
+      threshold   = <span class="num">1</span>
+      description = <span class="str">"Unauthorized API calls detected"</span>
+    }
+    s3_bucket_policy_changes = {
+      metric      = <span class="str">"S3BucketPolicyChanges"</span>
+      threshold   = <span class="num">1</span>
+      description = <span class="str">"S3 bucket policy changed"</span>
+    }
+  }
+}
+
+resource <span class="fn">"aws_cloudwatch_metric_alarm"</span> <span class="str">"security"</span> {
+  <span class="kw">for_each</span> = local.critical_cloudwatch_alarms
+
+  alarm_name          = <span class="str">"security-${each.key}"</span>
+  alarm_description   = each.value.description
+  metric_name         = each.value.metric
+  namespace           = <span class="str">"SecurityMetrics"</span>
+  statistic           = <span class="str">"Sum"</span>
+  period              = <span class="num">300</span>
+  evaluation_periods  = <span class="num">1</span>
+  threshold           = each.value.threshold
+  comparison_operator = try(each.value.comparison, <span class="str">"GreaterThanOrEqualToThreshold"</span>)
+  alarm_actions       = [aws_sns_topic.security_alerts.arn]
+  treat_missing_data  = <span class="str">"notBreaching"</span>
+}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P9 -->
+
+<!-- P10-P12 summary -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">10</div>
+    <div class="pc-meta">
+      <h3>Malware Analysis Basics — Static & Dynamic Analysis</h3>
+      <p>Safely analyse a real malware sample in a VM sandbox. Extract IOCs (indicators of compromise) — domains, IPs, file hashes, registry keys — and write detection rules from them. Tools: strings, VirusTotal, Any.run, Ghidra.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Malware Analysis</span><span class="ptag y">Static Analysis</span><span class="ptag o">Dynamic Analysis</span><span class="ptag n">IOC Extraction</span>
+        <span class="diff hard">ADVANCED</span><span class="ptime">⏱ 6–7 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="note danger"><div class="note-i">🚨</div><p><strong>Safety first:</strong> NEVER run unknown executables on your work machine. All malware analysis happens in an <strong>isolated VM</strong> with no network access and no shared clipboard/folders with the host. Use a dedicated throwaway VM. When in doubt, use online sandboxes like Any.run, Hybrid Analysis, or Joe Sandbox.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Static Analysis — Examine Without Running</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Static analysis on a suspicious binary</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Step 1: Hash it first — check VirusTotal before doing anything</span>
+sha256sum suspicious_file.elf
+md5sum suspicious_file.elf
+<span class="cm"># → Search hash on: https://www.virustotal.com</span>
+<span class="cm"># If 30+ engines detect it → confirmed malware, no need to run it</span>
+
+<span class="cm"># Step 2: What type of file is it really?</span>
+file suspicious_file.elf
+<span class="cm"># → ELF 64-bit LSB executable, x86-64, dynamically linked</span>
+
+<span class="cm"># Step 3: Extract readable strings (IOCs often visible as plaintext)</span>
+strings suspicious_file.elf | grep -E "(http|https|[0-9]{1,3}\.[0-9]{1,3})"
+<span class="cm"># You might find: C2 server domain, download URL, mutex name</span>
+
+strings suspicious_file.elf | grep -E "(password|key|token|secret)"
+<span class="cm"># You might find: hardcoded credentials</span>
+
+<span class="cm"># Step 4: Check what libraries it uses</span>
+ldd suspicious_file.elf
+readelf -d suspicious_file.elf | grep NEEDED
+
+<span class="cm"># Step 5: Check for packed/obfuscated content (low entropy = plain, high = packed)</span>
+python3 -c "
+import math, collections
+data = open('suspicious_file.elf', 'rb').read()
+counts = collections.Counter(data)
+entropy = -sum(c/len(data) * math.log2(c/len(data)) for c in counts.values())
+print(f'Entropy: {entropy:.2f}/8.0')
+print('High entropy (>7.0) suggests packing/encryption')
+"</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Write YARA Rules from IOCs</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">text</span> — yara_rules/detect_malware.yar</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">rule CryptoMiner_XMRig {
+    meta:
+        description = "Detects XMRig cryptocurrency miner"
+        author = "Your Name"
+        date = "2024-01-15"
+        mitre_attack = "T1496 — Resource Hijacking"
+        severity = "HIGH"
+
+    strings:
+        <span class="cm">// Pool connection strings</span>
+        $pool1 = "stratum+tcp://" nocase
+        $pool2 = "pool.minexmr.com" nocase
+        $pool3 = "xmrig" nocase
+
+        <span class="cm">// Common XMRig process names</span>
+        $proc1 = "minerd" nocase
+        $proc2 = "cpuminer" nocase
+
+        <span class="cm">// Mining algorithm strings</span>
+        $algo1 = "randomx" nocase
+        $algo2 = "cryptonight" nocase
+
+    condition:
+        2 of ($pool*) or 1 of ($proc*) or 2 of ($algo*)
+}
+
+<span class="cm">// Run YARA scan</span>
+<span class="cm">// yara yara_rules/detect_malware.yar /tmp/suspicious.elf</span>
+<span class="cm">// yara -r yara_rules/ /path/to/scan/   (recursive)</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P10 -->
+
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">11</div>
+    <div class="pc-meta">
+      <h3>AWS Security Hub — Centralised CSPM & Compliance Dashboard</h3>
+      <p>Combine Security Hub's CIS compliance dashboard with automated finding suppression for known-good configurations, custom insights for your environment, and automated weekly compliance reporting sent to stakeholders.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Security Hub</span><span class="ptag y">CIS Benchmark</span><span class="ptag o">CSPM</span><span class="ptag n">Compliance Reports</span>
+        <span class="diff med">INTERMEDIATE</span><span class="ptime">⏱ 5–6 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Automated Weekly Compliance Report Lambda</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — weekly_compliance_report.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="kw">import</span> boto3, json
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+
+sh = boto3.client(<span class="str">'securityhub'</span>)
+ses = boto3.client(<span class="str">'ses'</span>)
+
+<span class="kw">def</span> <span class="fn">lambda_handler</span>(event, context):
+    <span class="str">"""Weekly scheduled compliance report — runs every Monday 8am"""</span>
+
+    <span class="cm"># Get all active HIGH and CRITICAL findings</span>
+    findings = []
+    paginator = sh.get_paginator(<span class="str">'get_findings'</span>)
+    <span class="kw">for</span> page <span class="kw">in</span> paginator.paginate(
+        Filters={
+            <span class="str">"SeverityLabel"</span>: [
+                {<span class="str">"Value"</span>: <span class="str">"CRITICAL"</span>, <span class="str">"Comparison"</span>: <span class="str">"EQUALS"</span>},
+                {<span class="str">"Value"</span>: <span class="str">"HIGH"</span>, <span class="str">"Comparison"</span>: <span class="str">"EQUALS"</span>}
+            ],
+            <span class="str">"WorkflowStatus"</span>: [{<span class="str">"Value"</span>: <span class="str">"NEW"</span>, <span class="str">"Comparison"</span>: <span class="str">"EQUALS"</span>}],
+            <span class="str">"RecordState"</span>: [{<span class="str">"Value"</span>: <span class="str">"ACTIVE"</span>, <span class="str">"Comparison"</span>: <span class="str">"EQUALS"</span>}]
+        }
+    ):
+        findings.extend(page[<span class="str">'Findings'</span>])
+
+    <span class="cm"># Get compliance scores by standard</span>
+    standards = sh.get_enabled_standards()[<span class="str">'StandardsSubscriptions'</span>]
+
+    by_type = defaultdict(list)
+    <span class="kw">for</span> f <span class="kw">in</span> findings:
+        resource_type = f.get(<span class="str">'Resources'</span>, [{}])[0].get(<span class="str">'Type'</span>, <span class="str">'Unknown'</span>)
+        by_type[resource_type].append(f)
+
+    critical_count = sum(<span class="num">1</span> <span class="kw">for</span> f <span class="kw">in</span> findings <span class="kw">if</span> f[<span class="str">'Severity'</span>][<span class="str">'Label'</span>] == <span class="str">'CRITICAL'</span>)
+    high_count = len(findings) - critical_count
+
+    report_date = datetime.utcnow().strftime(<span class="str">"%Y-%m-%d"</span>)
+    subject = f<span class="str">"[Security Hub] Weekly Compliance Report — {report_date}"</span>
+
+    body = f<span class="str">"""
+Security Compliance Weekly Report — {report_date}
+{"="*60}
+
+SUMMARY
+  Critical Findings: {critical_count}
+  High Findings:     {high_count}
+  Total Active:      {len(findings)}
+
+TOP ISSUES BY RESOURCE TYPE
+{chr(10).join(f"  {rt}: {len(items)} finding(s)" for rt, items in sorted(by_type.items(), key=lambda x: -len(x[1]))[:5])}
+
+TOP 10 CRITICAL FINDINGS TO REMEDIATE
+{chr(10).join(f"  • [{f['Severity']['Label']}] {f['Title']}" for f in sorted(findings, key=lambda x: x['Severity'].get('Normalized', 0), reverse=True)[:10])}
+
+ENABLED STANDARDS
+{chr(10).join(f"  • {s['StandardsArn'].split('/')[-3]}" for s in standards)}
+
+Full details: https://console.aws.amazon.com/securityhub
+    """</span>
+
+    ses.send_email(
+        Source=<span class="str">"security@yourcompany.com"</span>,
+        Destination={<span class="str">"ToAddresses"</span>: [<span class="str">"ciso@yourcompany.com"</span>, <span class="str">"secteam@yourcompany.com"</span>]},
+        Message={
+            <span class="str">"Subject"</span>: {<span class="str">"Data"</span>: subject},
+            <span class="str">"Body"</span>: {<span class="str">"Text"</span>: {<span class="str">"Data"</span>: body}}
+        }
+    )
+
+    <span class="kw">return</span> {<span class="str">"report_date"</span>: report_date, <span class="str">"findings_count"</span>: len(findings)}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P11 -->
+
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum">12</div>
+    <div class="pc-meta">
+      <h3>⚔️ Red vs Blue Capstone — Simulate and Detect a Full Attack Chain</h3>
+      <p>The ultimate exercise. Simulate a complete AWS account compromise — from leaked IAM key to data exfiltration — while your defensive platform (GuardDuty, SIEM, SOAR) catches every step. Then write a full incident report.</p>
+      <div class="pc-footer">
+        <span class="ptag r">Red Team</span><span class="ptag y">Blue Team</span><span class="ptag o">Attack Simulation</span><span class="ptag n">Incident Report</span>
+        <span class="diff hard">EXPERT CAPSTONE</span><span class="ptime">⏱ 12–16 hrs</span>
+      </div>
+    </div>
+    <div class="pc-arrow">▶</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>The Attack Scenario</h4>
+          <p>Use Pacu (the AWS exploitation framework) in a DEDICATED test AWS account (never production) to simulate each attack step. Your SIEM should detect each one.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Red Team: Simulate the attack (test account ONLY)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install Pacu - AWS exploitation framework</span>
+pip install pacu --break-system-packages
+
+<span class="cm"># Step 1: Attacker has leaked IAM key (simulated)</span>
+aws configure --profile attacker
+<span class="cm"># Enter the test IAM key you created for this exercise</span>
+
+<span class="cm"># Step 2: Discovery — what can this key do?</span>
+aws --profile attacker sts get-caller-identity
+aws --profile attacker iam list-users
+aws --profile attacker iam list-roles
+aws --profile attacker s3 ls
+aws --profile attacker ec2 describe-instances
+
+<span class="cm"># BLUE TEAM SHOULD SEE: Burst of Describe/List calls from new IP</span>
+<span class="cm"># Detection rule: GuardDuty Recon:IAMUser/GetCredentialReport OR</span>
+<span class="cm"># Sigma rule: Multiple discovery API calls within 60 seconds</span>
+
+<span class="cm"># Step 3: Privilege Escalation — attach admin policy</span>
+aws --profile attacker iam attach-user-policy \
+  --user-name test-attacker \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+
+<span class="cm"># BLUE TEAM SHOULD SEE: AttachUserPolicy event in CloudTrail</span>
+<span class="cm"># GuardDuty: PrivilegeEscalation:IAMUser/AdministrativePermissions</span>
+<span class="cm"># Sigma rule: aws_iam_admin_created.yml fires</span>
+
+<span class="cm"># Step 4: Persistence — create a backdoor IAM user</span>
+aws --profile attacker iam create-user --user-name backup-admin-2024
+aws --profile attacker iam create-access-key --user-name backup-admin-2024
+aws --profile attacker iam attach-user-policy \
+  --user-name backup-admin-2024 \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+
+<span class="cm"># BLUE TEAM SHOULD SEE: CreateUser + CreateAccessKey in CloudTrail</span>
+<span class="cm"># Detection: New admin user created outside of business hours</span>
+
+<span class="cm"># Step 5: Defense Evasion — disable CloudTrail</span>
+aws --profile attacker cloudtrail stop-logging \
+  --name prod-audit-trail
+
+<span class="cm"># BLUE TEAM SHOULD SEE: CRITICAL — StopLogging event</span>
+<span class="cm"># CloudWatch Alarm: CloudTrailEventCount drops to 0</span>
+<span class="cm"># PagerDuty: Immediate P1 page</span>
+<span class="cm"># Note: GuardDuty continues working — it has its own copy of CloudTrail</span>
+
+<span class="cm"># Step 6: Exfiltration — download S3 data</span>
+aws --profile attacker s3 sync s3://test-sensitive-data /tmp/exfil/
+
+<span class="cm"># BLUE TEAM SHOULD SEE: Large S3 GetObject burst</span>
+<span class="cm"># GuardDuty: Discovery:S3/MaliciousIPCaller or Exfiltration:S3/ObjectRead</span>
+<span class="cm"># Hunt query: Large data download by new/unusual principal</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Write the Full Incident Report</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">markdown</span> — incident-report-template.md</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm">## INCIDENT REPORT
+**INC-2024-001: AWS Account Compromise via Exposed IAM Key**
+
+### Executive Summary
+On [DATE], security monitoring detected a compromised AWS IAM access key
+being used for unauthorized reconnaissance, privilege escalation, and
+attempted data exfiltration. Automated response contained the threat
+within 4 minutes of initial detection. An estimated 2.4MB of data was
+exfiltrated before containment.
+
+### Timeline of Events (UTC)
+| Time  | Event | Detected By |
+|-------|-------|-------------|
+| 03:12 | IAM key used from unknown IP (Tor exit node) | GuardDuty |
+| 03:12 | Burst of Discovery API calls | Sigma Rule |
+| 03:14 | AttachUserPolicy for AdministratorAccess | CloudTrail Alert |
+| 03:14 | AUTOMATED: Key disabled, P1 alert sent | SOAR Playbook |
+| 03:15 | New backdoor user created | CloudTrail Alert |
+| 03:16 | AUTOMATED: Backdoor user detected, disabled | SOAR Playbook |
+| 03:18 | StopLogging called on CloudTrail | CloudWatch Alarm |
+| 03:18 | PagerDuty page to on-call analyst | Automated |
+| 03:19 | S3 sync of sensitive bucket begins | GuardDuty |
+| 03:23 | Analyst acknowledges, bucket access revoked | Human |
+
+### Root Cause
+IAM access key for user 'dev-alice' was exposed in a public GitHub repository
+commit made on [DATE-1]. The key was not rotated, had no CloudTrail alerts
+configured, and had overly permissive IAM policies.
+
+### Impact
+- Data exfiltrated: ~2.4MB from S3 bucket 'dev-api-keys'
+- New admin user created (remediated)
+- CloudTrail disabled for 4 minutes (gap in audit logs)
+- No production data accessed
+
+### Remediation Actions
+1. [✓] Disabled compromised IAM key
+2. [✓] Deleted attacker-created IAM user and access keys
+3. [✓] Re-enabled and verified CloudTrail in all regions
+4. [✓] Revoked all S3 access for compromised role
+5. [✓] Rotated all access keys for dev-alice
+6. [⟳] Review all IAM keys with no 90-day rotation (in progress)
+7. [⟳] Implement git-secrets pre-commit hook across all repos
+8. [⟳] Review data classification — dev bucket had sensitive data
+
+### Detection Coverage
+- GuardDuty: Detected T1078, T1548, T1530 ✓
+- Sigma Rules: Detected T1562.008, T1136 ✓
+- SOAR Response: Contained in 2 minutes ✓
+- Missed: Initial reconnaissance before GuardDuty warmed up (0 min gap)
+
+### Prevention Recommendations
+1. Rotate all IAM access keys every 90 days (enforce with Config rule)
+2. Enable git-secrets on all developer workstations and CI runners
+3. Implement permission boundaries on all IAM users
+4. Enable SCP to prevent key creation without CloudTrail enabled</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note ok"><div class="note-i">✅</div><p><strong>PHASE 4 COMPLETE. DEVSECOPS MASTERY COMPLETE.</strong> You built a complete Security Operations Centre from scratch: log collection from all sources, OpenSearch SIEM, detection rules with Sigma, GuardDuty with automated response, alert triage process, proactive threat hunting with MITRE ATT&CK, digital forensics, SOAR automation, malware analysis, and a full incident report from a simulated real-world attack. You are now a DevSecOps engineer.</p></div>
+  </div>
+</div><!-- /P12 -->
+
+</div><!-- /proj-list -->
+</div><!-- /all -->
+
+<!-- ══ PLAYBOOKS TAB ══ -->
+<div id="tab-playbooks" class="tab-pane">
+  <div class="sh"><div class="sh-eyebrow">Incident Response</div><h2>Ready-to-Use IR Playbooks</h2><p>One page per incident type. Print these. Have them ready before an incident happens.</p></div>
+
+  <div class="playbook">
+    <div class="pb-head"><span class="pb-sev p1">P1 — CRITICAL</span><span class="pb-title">IAM Access Key Compromise</span></div>
+    <div class="pb-body"><ol class="pb-steps">
+      <li><span class="step-num">CONTAIN</span>Disable the access key immediately: <code>aws iam update-access-key --status Inactive</code></li>
+      <li><span class="step-num">SCOPE</span>Query CloudTrail for all actions taken with this key in last 72h</li>
+      <li><span class="step-num">PERSIST</span>Check for new IAM users, access keys, or policies created</li>
+      <li><span class="step-num">EVADE</span>Verify CloudTrail is still enabled in ALL regions</li>
+      <li><span class="step-num">DATA</span>Check S3 data events for downloads from unusual principals</li>
+      <li><span class="step-num">REMEDIATE</span>Remove attacker-created resources, rotate all keys for affected user</li>
+      <li><span class="step-num">NOTIFY</span>If data was accessed → escalate to CISO + legal (breach notification assessment)</li>
+    </ol></div>
+  </div>
+
+  <div class="playbook">
+    <div class="pb-head"><span class="pb-sev p1">P1 — CRITICAL</span><span class="pb-title">EC2 Instance Compromise / Crypto Mining</span></div>
+    <div class="pb-body"><ol class="pb-steps">
+      <li><span class="step-num">CONTAIN</span>Move instance to quarantine SG (deny all inbound + outbound) immediately</li>
+      <li><span class="step-num">PRESERVE</span>Create EBS snapshot BEFORE any other action — preserve forensic evidence</li>
+      <li><span class="step-num">COLLECT</span>Run live response script to capture volatile data (processes, connections)</li>
+      <li><span class="step-num">SCOPE</span>Check VPC flow logs — what IPs did this instance connect to? What other instances?</li>
+      <li><span class="step-num">PIVOT</span>Did the compromised instance have an IAM role? Check CloudTrail for API calls from that role</li>
+      <li><span class="step-num">REMEDIATE</span>Terminate compromised instance, launch fresh from known-good AMI, patch vulnerability</li>
+    </ol></div>
+  </div>
+
+  <div class="playbook">
+    <div class="pb-head"><span class="pb-sev p1">P1 — CRITICAL</span><span class="pb-title">CloudTrail Disabled</span></div>
+    <div class="pb-body"><ol class="pb-steps">
+      <li><span class="step-num">RE-ENABLE</span>Immediately: <code>aws cloudtrail start-logging --name prod-audit-trail</code></li>
+      <li><span class="step-num">WHO</span>Identify who disabled it — check the CloudTrail event BEFORE the stop (last events recorded)</li>
+      <li><span class="step-num">GAP</span>Calculate the blind window — what happened while logging was off? Check GuardDuty (uses separate copy)</li>
+      <li><span class="step-num">INVESTIGATE</span>The actor who disabled CloudTrail is almost certainly an attacker covering tracks</li>
+      <li><span class="step-num">ALL REGIONS</span>Check CloudTrail status in ALL regions: <code>aws cloudtrail describe-trails --include-shadow-trails</code></li>
+      <li><span class="step-num">PREVENT</span>Implement SCP to deny StopLogging API calls from all principals except break-glass role</li>
+    </ol></div>
+  </div>
+
+  <div class="playbook">
+    <div class="pb-head"><span class="pb-sev p2">P2 — HIGH</span><span class="pb-title">Ransomware / Mass S3 Deletion</span></div>
+    <div class="pb-body"><ol class="pb-steps">
+      <li><span class="step-num">VERIFY</span>Confirm with S3 versioning — are objects truly deleted or just a new version added?</li>
+      <li><span class="step-num">ISOLATE</span>Immediately revoke all write permissions to S3 buckets cluster-wide</li>
+      <li><span class="step-num">RECOVER</span>Use S3 versioning to restore previous versions — do NOT overwrite before collecting evidence</li>
+      <li><span class="step-num">IDENTITY</span>Who called DeleteObject/DeleteBucket? Trace back through CloudTrail to original credential</li>
+      <li><span class="step-num">SCOPE</span>Are backups affected? Check backup S3 buckets, RDS snapshots</li>
+      <li><span class="step-num">NOTIFY</span>Business continuity team, affected teams, potentially regulatory bodies</li>
+    </ol></div>
+  </div>
+
+</div><!-- /playbooks -->
+
+<!-- ══ CHEAT SHEET ══ -->
+<div id="tab-cheatsheet" class="tab-pane">
+  <div class="sh"><div class="sh-eyebrow">Quick Reference</div><h2>SOC Analyst Command Reference</h2><p>The commands you reach for during every investigation.</p></div>
+
+  <div class="cb">
+    <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — AWS Security Investigation Commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+    <pre"><span class="cm"># ═══ CLOUDTRAIL INVESTIGATION ════════════════════════════</span>
+<span class="cm"># Find all actions by a specific user/role</span>
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=Username,AttributeValue=alice \
+  --start-time 2024-01-15T00:00:00Z \
+  --end-time 2024-01-16T00:00:00Z \
+  --query 'Events[*].[EventTime,EventName,SourceIPAddress]' \
+  --output table
+
+<span class="cm"># Find all actions from a specific IP</span>
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=SourceIPAddress,AttributeValue=185.220.101.42
+
+<span class="cm"># Find specific event type</span>
+aws cloudtrail lookup-events \
+  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateUser
+
+<span class="cm"># Find ALL events in last hour (useful at start of incident)</span>
+aws cloudtrail lookup-events \
+  --start-time $(date -d "1 hour ago" --utc +%Y-%m-%dT%H:%M:%SZ) \
+  --query 'Events[*].[EventTime,Username,EventName]' \
+  --output table
+
+<span class="cm"># ═══ GUARDDUTY ═══════════════════════════════════════════</span>
+DETECTOR=$(aws guardduty list-detectors --query 'DetectorIds[0]' --output text)
+
+<span class="cm"># Get all HIGH/CRITICAL findings</span>
+aws guardduty list-findings \
+  --detector-id $DETECTOR \
+  --finding-criteria '{"Criterion":{"severity":{"Gte":7},"service.archived":{"Eq":["false"]}}}'
+
+<span class="cm"># Get details of a specific finding</span>
+aws guardduty get-findings \
+  --detector-id $DETECTOR \
+  --finding-ids "FINDING_ID_HERE"
+
+<span class="cm"># ═══ IAM INVESTIGATION ═══════════════════════════════════</span>
+<span class="cm"># List all access keys and when they were last used</span>
+aws iam list-users --query 'Users[*].UserName' --output text | \
+  tr '\t' '\n' | while read user; do
+    aws iam list-access-keys --user-name "$user" \
+      --query "AccessKeyMetadata[*].[UserName,AccessKeyId,Status,CreateDate]" \
+      --output text
+  done
+
+<span class="cm"># Get credential report (when was each user/key last used)</span>
+aws iam generate-credential-report
+aws iam get-credential-report --query 'Content' --output text | base64 -d
+
+<span class="cm"># Who has administrator access?</span>
+aws iam list-entities-for-policy \
+  --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+
+<span class="cm"># ═══ S3 INVESTIGATION ════════════════════════════════════</span>
+<span class="cm"># List all buckets and their public access status</span>
+aws s3api list-buckets --query 'Buckets[*].Name' --output text | \
+  tr '\t' '\n' | while read bucket; do
+    status=$(aws s3api get-bucket-policy-status --bucket "$bucket" \
+      --query 'PolicyStatus.IsPublic' 2>/dev/null || echo "no-policy")
+    echo "$bucket: $status"
+  done
+
+<span class="cm"># Find buckets with public access (data breach risk)</span>
+aws s3api list-buckets --query 'Buckets[*].Name' --output text | \
+  xargs -I {} aws s3api get-bucket-policy-status \
+    --bucket {} --query 'PolicyStatus.IsPublic' 2>/dev/null | grep true
+
+<span class="cm"># ═══ VPC FLOW LOG QUERIES (via CloudWatch Insights) ══════</span>
+<span class="cm"># Find all REJECTED connections in last 1 hour</span>
+aws logs start-query \
+  --log-group-name VPCFlowLogs \
+  --start-time $(date -d "1 hour ago" +%s) \
+  --end-time $(date +%s) \
+  --query-string "fields @timestamp, srcAddr, dstAddr, srcPort, dstPort, action
+    | filter action = 'REJECT'
+    | stats count(*) as rejectCount by srcAddr, dstAddr
+    | sort rejectCount desc
+    | limit 20"
+
+<span class="cm"># ═══ SECURITY HUB ════════════════════════════════════════</span>
+<span class="cm"># Get all CRITICAL findings that need remediation</span>
+aws securityhub get-findings \
+  --filters '{"SeverityLabel":[{"Value":"CRITICAL","Comparison":"EQUALS"}],"WorkflowStatus":[{"Value":"NEW","Comparison":"EQUALS"}]}' \
+  --query 'Findings[*].[Title,ResourcesType,AccountId]' \
+  --output table
+
+<span class="cm"># Get compliance score summary</span>
+aws securityhub list-standards-control-associations \
+  --standards-arn "arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.4.0"</pre>
+  </div>
+
+  <table class="dt">
+    <tr><th>Tool</th><th>What It Does</th><th>Install</th></tr>
+    <tr><td>CloudTrail</td><td>AWS API audit log — who did what</td><td>Built-in AWS — enable via Terraform</td></tr>
+    <tr><td>GuardDuty</td><td>ML threat detection — auto-finds attacks</td><td>Built-in AWS — enable via Terraform</td></tr>
+    <tr><td>Security Hub</td><td>Central CSPM + compliance dashboard</td><td>Built-in AWS — enable via Terraform</td></tr>
+    <tr><td>OpenSearch</td><td>SIEM — search, correlate, alert on logs</td><td>AWS managed service via Terraform</td></tr>
+    <tr><td>Sigma</td><td>Write platform-agnostic detection rules</td><td>pip install sigma-cli</td></tr>
+    <tr><td>Fluent Bit</td><td>Ship logs from anywhere to anywhere</td><td>curl | sh on hosts, Helm for K8s</td></tr>
+    <tr><td>MITRE ATT&CK Navigator</td><td>Visualise detection coverage vs attack techniques</td><td>https://mitre-attack.github.io/attack-navigator/</td></tr>
+    <tr><td>Atomic Red Team</td><td>Safe, controlled attack simulations for testing detections</td><td>git clone + PowerShell/bash modules</td></tr>
+    <tr><td>Volatility3</td><td>Memory forensics framework</td><td>pip install volatility3</td></tr>
+    <tr><td>Pacu</td><td>AWS penetration testing framework (test accounts only)</td><td>pip install pacu</td></tr>
+    <tr><td>AbuseIPDB</td><td>Check if an IP is a known threat actor</td><td>https://www.abuseipdb.com/check/{ip}</td></tr>
+    <tr><td>VirusTotal</td><td>Check file hashes, URLs, IPs against 70+ security engines</td><td>https://virustotal.com</td></tr>
+  </table>
+
+  <div class="concept green">
+    <h3>🎓 Your Complete DevSecOps Journey — Certifications Path</h3>
+    <p><strong>Phase 1 (CI/CD Security) → CompTIA Security+</strong>: Validates foundational security knowledge. Recognized by all employers.</p>
+    <p><strong>Phase 2 (IaC Security + AWS) → AWS Security Specialty</strong>: The most valuable cloud security certification. All your Terraform + GuardDuty + Security Hub work maps directly to this exam.</p>
+    <p><strong>Phase 3 (Kubernetes Security) → CKS (Certified Kubernetes Security Specialist)</strong>: The definitive K8s security certification from the CNCF. Requires passing CKA first.</p>
+    <p><strong>Phase 4 (SIEM + Incident Response) → GCIH (GIAC Certified Incident Handler)</strong>: The gold standard for IR professionals. Alternatively: CompTIA CySA+.</p>
+    <p><strong>Expert Level → OSCP then CISSP</strong>: OSCP proves you can think offensively (essential for defensive work). CISSP validates the full breadth of security management knowledge needed for senior/CISO roles.</p>
+  </div>
+
+</div><!-- /cheatsheet -->
+
+<!-- P1-P3 quick ref tabs -->
+<div id="tab-p1p3" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Full project walkthroughs for P1, P2, and P3 are in the <strong>All 12 Projects</strong> tab. This is a quick reference summary.</p></div>
+  <div class="concept"><h3>P1–P3 Quick Summary</h3>
+  <p><strong>P1 Log Collection:</strong> CloudTrail (multi-region, all event types), auditd on EC2 (system calls, file changes, privileged commands), Fluent Bit (collect → enrich → ship to S3 + OpenSearch).</p>
+  <p><strong>P2 OpenSearch SIEM:</strong> Deploy via Terraform (3-node HA cluster, encrypted, private VPC), create index patterns, essential security queries (failed auth, off-hours API calls, large transfers), build dashboards with GeoIP maps.</p>
+  <p><strong>P3 Detection Engineering:</strong> Sigma rule format and CLI, convert to OpenSearch/Splunk/Elastic, build a 12-rule library covering CloudTrail disabled, root account use, IAM admin creation, SSH brute force, data exfiltration.</p></div>
+</div>
+
+<div id="tab-p4p6" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Full walkthroughs for P4–P6 in the <strong>All 12 Projects</strong> tab.</p></div>
+  <div class="concept"><h3>P4–P6 Quick Summary</h3>
+  <p><strong>P4 GuardDuty:</strong> Enable all data sources via Terraform, complete auto-responder Lambda (isolate EC2, disable IAM key, send SNS), GuardDuty Tester for safe simulation of all finding types.</p>
+  <p><strong>P5 Alert Triage:</strong> 6-step triage process, written runbooks per alert type (IAM key exposed, EC2 compromised, CloudTrail disabled, ransomware), 10 investigation scenarios with step-by-step guidance.</p>
+  <p><strong>P6 Threat Hunting:</strong> Hypothesis-driven hunting using MITRE ATT&CK, Python scripts for: off-hours IAM activity, role chaining (lateral movement), large S3 downloads (exfiltration), Athena for CloudTrail at scale.</p></div>
+</div>
+
+<div id="tab-p7p9" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Full walkthroughs for P7–P9 in the <strong>All 12 Projects</strong> tab.</p></div>
+  <div class="concept"><h3>P7–P9 Quick Summary</h3>
+  <p><strong>P7 Digital Forensics:</strong> Live response script (processes, connections, open files, cron, SSH keys), EBS forensic snapshot, read-only mount for analysis, MAC timeline, VirusTotal hash checking, chain of custody.</p>
+  <p><strong>P8 SOAR:</strong> AWS Step Functions orchestration workflow (assess → isolate → collect → investigate → alert → ticket), Lambda for Jira ticket creation, parallel response branches for fast containment.</p>
+  <p><strong>P9 Full SOC Platform:</strong> Kinesis Firehose → OpenSearch pipeline, 6 critical CloudWatch alarms (root account use, CloudTrail disabled, console failures, IAM changes, unauthorized API calls), weekly compliance report Lambda.</p></div>
+</div>
+
+<div id="tab-p10p12" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Full walkthroughs for P10–P12 in the <strong>All 12 Projects</strong> tab.</p></div>
+  <div class="concept"><h3>P10–P12 Quick Summary</h3>
+  <p><strong>P10 Malware Analysis:</strong> Static analysis without executing (sha256, strings, file, entropy), YARA rule writing from IOCs, online sandboxes (Any.run, Hybrid Analysis), safe isolated VM for dynamic analysis.</p>
+  <p><strong>P11 Security Hub:</strong> Automated weekly compliance email report, finding suppression for known-good configs, custom insights per resource type, CIS/NIST compliance scoring dashboard.</p>
+  <p><strong>P12 Red vs Blue Capstone:</strong> Full attack simulation with Pacu in a test account (key leak → discovery → privilege escalation → persistence → defense evasion → exfiltration), defensive platform catches each step, full incident report written.</p></div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /wrap -->
+
+<footer>
+<div class="wrap">
+  DevSecOps Mastery · <span>Phase 4 of 4 — COMPLETE</span> · SIEM & Incident Response · OpenSearch · GuardDuty · SOAR · 12 Projects · Zero to SOC Engineer
+</div>
+</footer>
+
+<script>
+function st(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function tp(card) {
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.pc').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) {
+    card.classList.add('open');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  }
+}
+
+function cp(btn) {
+  const code = btn.closest('.cb').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('#tab-all .pc');
+  if (first) first.classList.add('open');
+});
+</script>
+</body>
+</html>

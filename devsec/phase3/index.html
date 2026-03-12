@@ -1,0 +1,3486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevSecOps Phase 3 — Kubernetes Security Mastery</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0b0f0e;
+  --bg2:       #0e1412;
+  --bg3:       #121a17;
+  --white:     #141c19;
+  --panel:     #141c19;
+  --border:    #1e2d28;
+  --border2:   #243529;
+  --mint:      #00c88c;
+  --mint2:     #00e8a2;
+  --mint3:     #0a2b20;
+  --navy:      #e2f5ee;
+  --navy2:     #c4e8d8;
+  --coral:     #ff6b6b;
+  --coral2:    #1f0f0f;
+  --gold:      #fbbf24;
+  --gold2:     #1c1400;
+  --blue:      #60a5fa;
+  --blue2:     #0d1a2e;
+  --purple:    #a78bfa;
+  --purple2:   #160d2a;
+  --text:      #d8f0e8;
+  --text2:     #7aab90;
+  --text3:     #3d6652;
+  --code-bg:   #060e0b;
+  --code-text: #d4e8d4;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  min-height: 100vh;
+}
+
+.wrap { max-width: 1140px; margin: 0 auto; padding: 0 28px; }
+
+/* ══ TOP ACCENT BAR ══ */
+.top-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--mint), var(--blue), var(--purple), var(--coral));
+}
+
+/* ══ HEADER ══ */
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 52px 0 44px;
+  position: relative;
+}
+
+.phase-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 20px;
+  letter-spacing: 0.06em;
+}
+.phase-crumb .cur { color: var(--mint2); font-weight: 600; }
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 5.5vw, 64px);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+h1 em {
+  font-style: italic;
+  color: var(--mint2);
+}
+.h1-sub {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(16px, 2.5vw, 24px);
+  font-weight: 700;
+  font-style: italic;
+  color: var(--text3);
+  margin-bottom: 20px;
+}
+
+.header-lead {
+  max-width: 720px;
+  color: var(--text2);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.8;
+  margin-bottom: 28px;
+}
+
+.hbadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+.hbadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Fira Code', monospace;
+}
+.hb-mint { background: var(--mint3); color: var(--mint2); border: 1px solid #0e3d2a; }
+.hb-blue { background: var(--blue2); color: var(--blue); border: 1px solid #1a3050; }
+.hb-coral { background: var(--coral2); color: var(--coral); border: 1px solid #3d1515; }
+.hb-gold { background: var(--gold2); color: var(--gold); border: 1px solid #3d2800; }
+.hb-purple { background: var(--purple2); color: var(--purple); border: 1px solid #2a1550; }
+
+/* ══ STICKY TAB NAV ══ */
+.tab-nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.tab-nav-inner {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-nav-inner::-webkit-scrollbar { display: none; }
+
+.tn {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--text3);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 14px 20px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.tn:hover { color: var(--text2); }
+.tn.active { color: var(--mint2); border-bottom-color: var(--mint); }
+
+/* ══ LAYOUT ══ */
+.content { padding: 48px 0 100px; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; animation: pageIn 0.3s ease; }
+@keyframes pageIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+/* ══ SECTION HEADS ══ */
+.sh {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.sh-icon {
+  font-size: 36px;
+  line-height: 1;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+.sh-text h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.sh-text p { color: var(--text2); font-size: 14px; font-weight: 400; }
+
+/* ══ CONCEPT BLOCKS ══ */
+.concept {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 32px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.concept::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--mint);
+}
+.concept h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 12px;
+}
+.concept p { color: var(--text2); margin-bottom: 10px; font-size: 14.5px; line-height: 1.8; }
+.concept p:last-child { margin-bottom: 0; }
+.concept strong { color: var(--navy); font-weight: 700; }
+.concept.coral::before { background: var(--coral); }
+.concept.blue::before { background: var(--blue); }
+.concept.gold::before { background: var(--gold); }
+.concept.purple::before { background: var(--purple); }
+
+/* ══ KUBERNETES VISUAL DIAGRAM ══ */
+.k8s-diagram {
+  background: var(--navy);
+  border-radius: 14px;
+  padding: 28px;
+  margin: 24px 0;
+  overflow-x: auto;
+}
+.k8s-diagram .diag-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  color: var(--mint);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.cluster-box {
+  border: 2px dashed rgba(0,200,140,0.4);
+  border-radius: 10px;
+  padding: 20px;
+  position: relative;
+}
+.cluster-label {
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--navy);
+  padding: 0 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  color: var(--mint);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.k8s-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.k8s-box {
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 100px;
+  text-align: center;
+}
+.k8s-box.cp { border-color: rgba(59,130,246,0.5); background: rgba(59,130,246,0.08); }
+.k8s-box.node { border-color: rgba(0,200,140,0.4); background: rgba(0,200,140,0.06); }
+.k8s-box.pod { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.06); }
+.k8s-box .kb-icon { font-size: 16px; margin-bottom: 4px; }
+.k8s-box .kb-name { font-family: 'Fira Code', monospace; font-size: 10px; font-weight: 600; }
+.k8s-box.cp .kb-name { color: #93c5fd; }
+.k8s-box.node .kb-name { color: var(--mint); }
+.k8s-box.pod .kb-name { color: #c4b5fd; }
+.k8s-box .kb-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+/* ══ ANALOGY CARDS ══ */
+.analogy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.analogy-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.analogy-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.5); transform: translateY(-2px); }
+.analogy-card .ac-k8s {
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mint2);
+  margin-bottom: 4px;
+}
+.analogy-card .ac-equals {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.analogy-card .ac-plain {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.analogy-card p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* ══ PROJECT CARDS ══ */
+.proj-grid { display: flex; flex-direction: column; gap: 20px; }
+
+.pc {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.pc:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+
+.pc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 24px 28px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pnum {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 900;
+  margin-top: 2px;
+}
+.pnum.m { background: var(--mint3); color: var(--mint2); }
+.pnum.b { background: var(--blue2); color: var(--blue); }
+.pnum.c { background: var(--coral2); color: var(--coral); }
+.pnum.g { background: var(--gold2); color: var(--gold); }
+.pnum.p { background: var(--purple2); color: var(--purple); }
+
+.pc-meta { flex: 1; min-width: 0; }
+.pc-meta h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+.pc-meta p { color: var(--text2); font-size: 14px; line-height: 1.6; }
+
+.pc-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.ptag {
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 4px;
+}
+.ptag.m { background: var(--mint3); color: var(--mint2); }
+.ptag.b { background: var(--blue2); color: var(--blue); }
+.ptag.c { background: var(--coral2); color: var(--coral); }
+.ptag.g { background: var(--gold2); color: var(--gold); }
+.ptag.p { background: var(--purple2); color: var(--purple); }
+.ptag.n { background: var(--bg3); color: var(--text2); }
+
+.diff {
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 4px;
+}
+.diff.easy { background: #0a2a14; color: #4ade80; }
+.diff.med { background: var(--gold2); color: #fbbf24; }
+.diff.hard { background: var(--coral2); color: var(--coral); }
+
+.ptime { font-family: 'Fira Code', monospace; font-size: 10px; color: var(--text3); }
+
+.pc-toggle {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text3);
+  font-size: 12px;
+  transition: transform 0.3s, background 0.2s;
+  margin-top: 6px;
+}
+.pc.open .pc-toggle { transform: rotate(180deg); background: var(--mint3); color: var(--mint2); border-color: var(--border2); }
+
+.pc-body {
+  display: none;
+  padding: 4px 28px 32px;
+  border-top: 1px solid var(--border);
+}
+.pc.open .pc-body { display: block; animation: pageIn 0.3s ease; }
+
+/* ══ STEPS ══ */
+.steps { margin-top: 24px; }
+.step {
+  display: flex;
+  gap: 20px;
+  padding-bottom: 28px;
+  position: relative;
+}
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 15px; top: 36px; bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+.sn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--mint3);
+  border: 2px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mint2);
+  z-index: 1;
+  flex-shrink: 0;
+}
+.sb { flex: 1; min-width: 0; }
+.sb h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.sb p {
+  color: var(--text2);
+  font-size: 14px;
+  line-height: 1.75;
+  margin-bottom: 10px;
+}
+.sb p strong { color: var(--navy); font-weight: 700; }
+.sb p:last-child { margin-bottom: 0; }
+
+/* ══ CODE BLOCKS ══ */
+.cb {
+  background: var(--code-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 12px 0;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.cb-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+}
+.cb-lang {
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.cb-lang .hl { color: var(--mint); }
+.cpbtn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.3);
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cpbtn:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.3); }
+.cpbtn.ok { color: var(--mint); border-color: var(--mint); }
+pre {
+  padding: 18px 20px;
+  overflow-x: auto;
+  font-family: 'Fira Code', monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #c8dfc8;
+  scrollbar-width: thin;
+  scrollbar-color: #1a3550 transparent;
+}
+.kw{color:#7dd3fc;}
+.str{color:#a3e8a3;}
+.cm{color:#3d5a6a;font-style:italic;}
+.fn{color:#fcd34d;}
+.num{color:#f9a8d4;}
+.var{color:#c4b5fd;}
+.res{color:#00c88c;}
+.hl-line{background:rgba(0,200,140,0.08);display:block;border-left:2px solid var(--mint);padding-left:4px;margin-left:-2px;}
+code {
+  font-family: 'Fira Code', monospace;
+  font-size: 12px;
+  background: var(--mint3);
+  color: var(--mint2);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* ══ CALLOUTS ══ */
+.note {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  margin: 14px 0;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.note-i { flex-shrink: 0; font-size: 18px; }
+.note p { margin: 0; }
+.note.info { background: var(--blue2); border: 1px solid #1a3050; color: #93c5fd; }
+.note.warn { background: var(--gold2); border: 1px solid #3d2800; color: #fde68a; }
+.note.ok { background: var(--mint3); border: 1px solid #0e3d2a; color: #6ee7b7; }
+.note.danger { background: var(--coral2); border: 1px solid #3d1515; color: #fca5a5; }
+.note.purple { background: var(--purple2); border: 1px solid #2a1550; color: #c4b5fd; }
+
+/* ══ TWO COL ══ */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 16px 0;
+}
+@media(max-width:640px){ .two-col { grid-template-columns: 1fr; } }
+
+.mini-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.mini-card h5 {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.mini-card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+/* ══ OVERVIEW GRID ══ */
+.ov-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.ov-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.ov-card:hover { box-shadow: 0 6px 28px rgba(0,0,0,0.5); transform: translateY(-3px); }
+.ov-card .ov-num {
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+}
+.ov-card .ov-icon { font-size: 28px; margin-bottom: 10px; }
+.ov-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.ov-card p { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+
+/* ══ CHEAT TABLE ══ */
+.ct {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  margin: 16px 0;
+}
+.ct th {
+  text-align: left;
+  font-family: 'Fira Code', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 10px 16px;
+  border-bottom: 2px solid var(--border);
+  background: var(--bg3);
+}
+.ct td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text2);
+}
+.ct tr:hover td { background: var(--bg3); }
+.ct td:first-child {
+  font-family: 'Fira Code', monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mint2);
+  white-space: nowrap;
+}
+.ct td:last-child { font-size: 12px; }
+
+/* ══ SECURITY THREAT MATRIX ══ */
+.threat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.threat-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.threat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.threat-card.high::before { background: var(--coral); }
+.threat-card.med::before { background: var(--gold); }
+.threat-card.low::before { background: var(--mint); }
+
+.threat-card .tc-sev {
+  font-family: 'Fira Code', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.threat-card.high .tc-sev { color: var(--coral); }
+.threat-card.med .tc-sev { color: var(--gold); }
+.threat-card.low .tc-sev { color: var(--mint2); }
+.threat-card h5 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+.threat-card p { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+/* ══ DIVIDER ══ */
+hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+/* ══ CHECKLIST ══ */
+.chklist { list-style: none; margin: 12px 0; }
+.chklist li {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+.chklist li:last-child { border-bottom: none; }
+.chk-box {
+  flex-shrink: 0;
+  width: 18px; height: 18px;
+  border: 2px solid var(--border2);
+  border-radius: 4px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--mint2);
+}
+.chklist li strong { color: var(--navy); font-weight: 700; }
+
+/* ══ PROGRESS BAR ══ */
+.prog-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+}
+.prog-section h3 {
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 18px;
+}
+.prog-bars { display: flex; flex-direction: column; gap: 14px; }
+.pbi { }
+.pbi-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.pbi-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.pbi-pct { font-family: 'Fira Code', monospace; font-size: 11px; color: var(--text3); }
+.pbi-bg { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.pbi-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--mint), var(--blue)); }
+
+/* ══ FOOTER ══ */
+footer {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  color: var(--text3);
+  text-align: center;
+  padding: 24px;
+  font-family: 'Fira Code', monospace;
+  font-size: 11px;
+}
+footer span { color: var(--mint2); }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<header>
+<div class="wrap">
+  <div class="phase-crumb">
+    DevSecOps Mastery
+    <span style="color:var(--border2)">›</span>
+    <span class="cur">Phase 3 — Kubernetes Security</span>
+  </div>
+
+  <h1>Kubernetes Security<br><em>from Zero to Expert</em></h1>
+  <div class="h1-sub">Complete Hand-Holding Guide · 12 Projects · Beginner to CKS Level</div>
+
+  <p class="header-lead">You've never used Kubernetes before — that's perfectly fine. We start from "what even is a container orchestrator?" and end at runtime threat detection, supply chain security, and hardened EKS clusters. Every concept explained with real-world analogies before we write a single line of code.</p>
+
+  <div class="hbadges">
+    <span class="hbadge hb-mint">12 Projects</span>
+    <span class="hbadge hb-blue">10–16 Weeks</span>
+    <span class="hbadge hb-coral">Zero → Expert</span>
+    <span class="hbadge hb-gold">AWS EKS Focus</span>
+    <span class="hbadge hb-purple">CKS Exam Ready</span>
+  </div>
+</div>
+</header>
+
+<div class="tab-nav">
+<div class="wrap">
+<div class="tab-nav-inner">
+  <button class="tn active" onclick="st('overview',this)">Start Here</button>
+  <button class="tn" onclick="st('k8s101',this)">K8s 101</button>
+  <button class="tn" onclick="st('all',this)">All 12 Projects</button>
+  <button class="tn" onclick="st('p1',this)">P1–P3 · Foundations</button>
+  <button class="tn" onclick="st('p4',this)">P4–P6 · RBAC & Policies</button>
+  <button class="tn" onclick="st('p7',this)">P7–P9 · Runtime Security</button>
+  <button class="tn" onclick="st('p10',this)">P10–P12 · Expert Level</button>
+  <button class="tn" onclick="st('eks',this)">EKS on AWS</button>
+  <button class="tn" onclick="st('cheatsheet',this)">Cheat Sheet</button>
+</div>
+</div>
+</div>
+
+<div class="wrap">
+<div class="content">
+
+<!-- ══════════════ START HERE / OVERVIEW ══════════════ -->
+<div id="tab-overview" class="tab-pane active">
+
+  <div class="sh">
+    <div class="sh-icon">🚀</div>
+    <div class="sh-text">
+      <h2>Before We Write Any Code</h2>
+      <p>Let's build the mental model. Everything else depends on understanding these concepts deeply.</p>
+    </div>
+  </div>
+
+  <div class="concept">
+    <h3>🧠 The Analogy That Makes Everything Click</h3>
+    <p>Imagine you're the <strong>manager of a shipping port</strong>. You have dozens of cargo ships (servers), hundreds of containers being loaded and unloaded constantly, and you need to track every container, make sure the right ones go to the right ships, restart any container that falls into the water, and ensure no unauthorized containers get loaded.</p>
+    <p><strong>Kubernetes (K8s) is that port manager.</strong> It manages containers running on a fleet of servers. It decides where each container runs, restarts it if it crashes, scales it up when traffic increases, and routes network traffic to the right place. You tell it "I want 3 copies of my web server running at all times" — it figures out the rest.</p>
+    <p><strong>Why does this matter for security?</strong> When containers run on shared servers with shared networking and shared storage, one misconfigured or compromised container can threaten everything else. Kubernetes security means locking down every layer: what containers can do, who can talk to whom, what they can access, and detecting when something acts maliciously at runtime.</p>
+  </div>
+
+  <div class="concept blue">
+    <h3>📦 Why Not Just Run Docker Directly?</h3>
+    <p>With your Docker experience, you can run containers. But imagine running 50 microservices: you'd need to manually start each one, check which server has space, restart crashed containers, update them without downtime, load-balance traffic between copies, and manage secrets for each one. That's a full-time job for 10 people.</p>
+    <p>Kubernetes automates all of that. You declare what you want — "3 replicas of this container, accessible on port 80, with this secret mounted" — and Kubernetes makes it happen and keeps it that way. <strong>Your job as a DevSecOps engineer is to make sure all that automation happens securely.</strong></p>
+  </div>
+
+  <div class="k8s-diagram">
+    <div class="diag-title">Kubernetes Cluster Architecture — Simplified</div>
+    <div class="cluster-box">
+      <div class="cluster-label">☁️ KUBERNETES CLUSTER</div>
+      <div class="k8s-row">
+        <div class="k8s-box cp"><div class="kb-icon">🧠</div><div class="kb-name">API Server</div><div class="kb-sub">Control Plane</div></div>
+        <div class="k8s-box cp"><div class="kb-icon">🗃️</div><div class="kb-name">etcd</div><div class="kb-sub">State Store</div></div>
+        <div class="k8s-box cp"><div class="kb-icon">📅</div><div class="kb-name">Scheduler</div><div class="kb-sub">Places Pods</div></div>
+        <div class="k8s-box cp"><div class="kb-icon">⚙️</div><div class="kb-name">Controller</div><div class="kb-sub">Maintains State</div></div>
+      </div>
+      <div style="border-top:1px dashed rgba(255,255,255,0.1);margin:16px 0;"></div>
+      <div class="k8s-row">
+        <div class="k8s-box node">
+          <div class="kb-name" style="margin-bottom:8px;">⚙️ NODE 1</div>
+          <div style="display:flex;gap:6px;justify-content:center;">
+            <div class="k8s-box pod"><div class="kb-name" style="font-size:9px;">🐳 Pod</div></div>
+            <div class="k8s-box pod"><div class="kb-name" style="font-size:9px;">🐳 Pod</div></div>
+          </div>
+        </div>
+        <div class="k8s-box node">
+          <div class="kb-name" style="margin-bottom:8px;">⚙️ NODE 2</div>
+          <div style="display:flex;gap:6px;justify-content:center;">
+            <div class="k8s-box pod"><div class="kb-name" style="font-size:9px;">🐳 Pod</div></div>
+            <div class="k8s-box pod"><div class="kb-name" style="font-size:9px;">🐳 Pod</div></div>
+          </div>
+        </div>
+        <div class="k8s-box node">
+          <div class="kb-name" style="margin-bottom:8px;">⚙️ NODE 3</div>
+          <div style="display:flex;gap:6px;justify-content:center;">
+            <div class="k8s-box pod"><div class="kb-name" style="font-size:9px;">🐳 Pod</div></div>
+            <div class="k8s-box pod"><div class="kb-name" style="font-size:9px;">🐳 Pod</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="prog-section">
+    <h3>Your Learning Journey — 12 Projects Mapped</h3>
+    <div class="prog-bars">
+      <div class="pbi"><div class="pbi-row"><span class="pbi-name">Projects 1–3: K8s Fundamentals + First Cluster</span><span class="pbi-pct">Week 1–3</span></div><div class="pbi-bg"><div class="pbi-fill" style="width:25%"></div></div></div>
+      <div class="pbi"><div class="pbi-row"><span class="pbi-name">Projects 4–6: RBAC, Network Policies, Pod Security</span><span class="pbi-pct">Week 4–7</span></div><div class="pbi-bg"><div class="pbi-fill" style="width:50%"></div></div></div>
+      <div class="pbi"><div class="pbi-row"><span class="pbi-name">Projects 7–9: Runtime Security, Falco, Secrets</span><span class="pbi-pct">Week 8–11</span></div><div class="pbi-bg"><div class="pbi-fill" style="width:75%"></div></div></div>
+      <div class="pbi"><div class="pbi-row"><span class="pbi-name">Projects 10–12: EKS, Supply Chain, Capstone</span><span class="pbi-pct">Week 12–16</span></div><div class="pbi-bg"><div class="pbi-fill" style="width:100%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="ov-grid">
+    <div class="ov-card"><div class="ov-num">PROJECT 01</div><div class="ov-icon">🏗️</div><h4>Your First K8s Cluster</h4><p>Install minikube, understand every component, deploy your first pod. Learn the 5 commands you'll use 80% of the time.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 02</div><div class="ov-icon">📦</div><h4>Deployments & Services</h4><p>Deploy a real web app with replicas, rolling updates, health checks, and service discovery. The full application lifecycle.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 03</div><div class="ov-icon">🔍</div><h4>Security Baseline Audit</h4><p>Run kube-bench (CIS benchmark) against your cluster. Find and fix every critical misconfiguration from day one.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 04</div><div class="ov-icon">🛡️</div><h4>RBAC — Who Can Do What</h4><p>Build a complete RBAC system. Roles, ClusterRoles, bindings, service accounts. Least privilege for every team member.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 05</div><div class="ov-icon">🌐</div><h4>Network Policies — Zero Trust</h4><p>Implement zero-trust networking. Pods can only talk to who they're explicitly allowed to. Stop lateral movement cold.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 06</div><div class="ov-icon">🔒</div><h4>Pod Security Standards</h4><p>Enforce security contexts: no root, read-only filesystems, dropped capabilities, no privilege escalation. CIS Level 2.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 07</div><div class="ov-icon">🦅</div><h4>Falco Runtime Detection</h4><p>Install Falco for real-time threat detection. Catch shell spawns, file writes, unusual network connections as they happen.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 08</div><div class="ov-icon">🔑</div><h4>Secrets Management</h4><p>Stop storing secrets in environment variables. Vault, AWS Secrets Manager CSI driver, sealed secrets — the right way.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 09</div><div class="ov-icon">🎯</div><h4>OPA Gatekeeper Policies</h4><p>Enforce cluster-wide policies with Open Policy Agent. No unscanned images, required labels, approved registries only.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 10</div><div class="ov-icon">☁️</div><h4>Hardened EKS on AWS</h4><p>Production EKS cluster via Terraform. Private nodes, IRSA, control plane logging, managed node groups, all security controls.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 11</div><div class="ov-icon">🔗</div><h4>Supply Chain Security</h4><p>Image signing with Cosign, SBOM attestation, admission webhook validation. Trust nothing that isn't signed and scanned.</p></div>
+    <div class="ov-card"><div class="ov-num">PROJECT 12</div><div class="ov-icon">🏆</div><h4>Full Secure K8s Platform</h4><p>Capstone: everything deployed together. Security scanning → signed images → hardened EKS → runtime monitoring → alerting.</p></div>
+  </div>
+
+</div><!-- /overview -->
+
+<!-- ══════════════ K8S 101 ══════════════ -->
+<div id="tab-k8s101" class="tab-pane">
+
+  <div class="sh">
+    <div class="sh-icon">📚</div>
+    <div class="sh-text">
+      <h2>Kubernetes 101 — Every Concept Explained Simply</h2>
+      <p>Read this before touching any code. These mental models will make everything click.</p>
+    </div>
+  </div>
+
+  <div class="note info"><div class="note-i">💡</div><p><strong>How to read this section:</strong> Each K8s term is paired with a real-world analogy. Once the analogy clicks, the technical detail will feel obvious. Don't skip this — it's the foundation everything else builds on.</p></div>
+
+  <div class="analogy-grid">
+    <div class="analogy-card">
+      <div class="ac-k8s">Pod</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🏠 Studio Apartment</div>
+      <p>The smallest deployable unit. Contains one or more containers that share network and storage. Just like roommates sharing a flat — same IP, same volumes.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Deployment</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🏢 Apartment Block Manager</div>
+      <p>Says "I want 3 identical apartments always occupied." If one empties, it creates another. Handles rolling upgrades room by room.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Service</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">📮 Post Office</div>
+      <p>A stable address that routes to the right pods. Even if pods move or restart, the Service address stays the same. Load balances across all healthy pods.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Namespace</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🏙️ City District</div>
+      <p>Virtual cluster within a cluster. Isolates teams or environments (dev, staging, prod). Resources in one namespace can't see others by default.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">ConfigMap</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">📋 Bulletin Board</div>
+      <p>Stores non-secret configuration data (env vars, config files). Pods read from it at startup. Change the ConfigMap, restart pods, new config takes effect.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Secret</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🔐 Safe Deposit Box</div>
+      <p>Like ConfigMap but for sensitive data (passwords, tokens). Base64 encoded by default (NOT encrypted — more on this later). Should be stored in Vault instead.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Node</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🖥️ Physical Server</div>
+      <p>A worker machine (EC2 instance in AWS). Runs the pods assigned to it. The Scheduler decides which node gets which pod based on resources and constraints.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">RBAC Role</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🎫 Access Badge</div>
+      <p>Defines permissions (read pods, create deployments). A RoleBinding attaches the badge to a person or service account. ClusterRole = master key for the whole building.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Ingress</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🚦 Traffic Cop</div>
+      <p>Routes external HTTP/HTTPS traffic to the right internal services. "myapp.com/api → api-service, myapp.com/web → frontend-service."</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">Network Policy</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🏗️ Firewall Rule</div>
+      <p>Controls which pods can talk to which other pods. Default: all pods can reach all others. Add Network Policies to lock it down to only what's needed.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">DaemonSet</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">👮 Security Guard</div>
+      <p>Runs exactly one pod on every node. Used for: log collection, monitoring agents, security scanners. Every node gets a guard automatically.</p>
+    </div>
+    <div class="analogy-card">
+      <div class="ac-k8s">ServiceAccount</div>
+      <div class="ac-equals">is like a</div>
+      <div class="ac-plain">🤖 Robot Employee ID</div>
+      <p>Identity for pods (not humans). Pods use ServiceAccounts to call the Kubernetes API. Attach RBAC roles to control what that pod can do inside the cluster.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="concept">
+    <h3>🗺️ How a Request Flows Through Kubernetes</h3>
+    <p>You type <code>kubectl apply -f deployment.yaml</code>. Here's what happens: 1) <strong>kubectl</strong> sends your YAML to the <strong>API Server</strong> (the brain of K8s). 2) The API Server authenticates you (your certificate) and checks RBAC (are you allowed to create Deployments?). 3) It stores the desired state in <strong>etcd</strong> (the cluster's database). 4) The <strong>Controller Manager</strong> notices "desired state says 3 pods, actual state says 0" and creates 3 pods. 5) The <strong>Scheduler</strong> picks which Node each pod goes on (based on available CPU/memory). 6) The <strong>kubelet</strong> on each Node sees "I've been assigned a pod" and tells Docker to start the container.</p>
+    <p><strong>Security checkpoint:</strong> Every step is an attack surface. We secure each one.</p>
+  </div>
+
+  <div class="concept gold">
+    <h3>⚠️ The 5 Biggest K8s Security Mistakes (That You Won't Make)</h3>
+    <p><strong>1. Running containers as root.</strong> If the container process is root, a container escape gives the attacker root on your node. Fix: always set <code>runAsNonRoot: true</code>.</p>
+    <p><strong>2. No Network Policies.</strong> By default, every pod can reach every other pod. One compromised pod = network access to your database, your payment service, everything. Fix: default-deny, then allowlist.</p>
+    <p><strong>3. Overpermissive RBAC.</strong> Giving developers <code>cluster-admin</code> or letting pods use the default ServiceAccount with wide permissions. Fix: least privilege for humans and pods.</p>
+    <p><strong>4. Secrets in environment variables.</strong> Environment variables are visible in process lists, logs, crash dumps, and <code>kubectl describe pod</code>. Fix: mount secrets as files, use Vault or Secrets Manager.</p>
+    <p><strong>5. No admission control.</strong> Without it, anyone who can deploy can run privileged containers, mount host filesystem, or run any image from any registry. Fix: OPA Gatekeeper or Kyverno.</p>
+  </div>
+
+</div><!-- /k8s101 -->
+
+<!-- ══════════════ ALL PROJECTS ══════════════ -->
+<div id="tab-all" class="tab-pane">
+
+<div class="sh">
+  <div class="sh-icon">🗂️</div>
+  <div class="sh-text">
+    <h2>All 12 Projects</h2>
+    <p>Click any card to expand the full walkthrough. Do them in order — each builds on the previous.</p>
+  </div>
+</div>
+
+<div class="proj-grid">
+
+<!-- ══ P1 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum m">1</div>
+    <div class="pc-meta">
+      <h3>Your First Kubernetes Cluster — Local Setup</h3>
+      <p>Install minikube, understand every component that starts, deploy your very first pod, and learn the 10 kubectl commands you'll use every single day. This is the foundation everything else stands on.</p>
+      <div class="pc-footer">
+        <span class="ptag m">minikube</span><span class="ptag n">kubectl</span><span class="ptag m">Pods</span><span class="ptag n">Deployments</span>
+        <span class="diff easy">● BEGINNER</span>
+        <span class="ptime">⏱ 3–4 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="note info"><div class="note-i">ℹ️</div><p><strong>What you'll build:</strong> A local Kubernetes cluster running on your laptop/VM. You'll deploy a web server, scale it up and down, inspect every component, and get comfortable with kubectl before touching anything in AWS.</p></div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Install the Tools</h4>
+          <p>You need three things: <code>kubectl</code> (the CLI to talk to K8s), <code>minikube</code> (a single-node K8s cluster on your laptop), and <code>helm</code> (the package manager for K8s apps).</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Installation</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre><span class="cm"># ── On RHEL/CentOS (your background) ──────────────────</span>
+<span class="cm"># Install kubectl</span>
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl && mv kubectl /usr/local/bin/
+kubectl version --client
+
+<span class="cm"># Install minikube</span>
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube-linux-amd64 && mv minikube-linux-amd64 /usr/local/bin/minikube
+minikube version
+
+<span class="cm"># Install helm (K8s package manager)</span>
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+
+<span class="cm"># ── On macOS ──────────────────────────────────────────</span>
+brew install kubectl minikube helm</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Start Your Cluster and Understand What Just Happened</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre><span class="cm"># Start minikube (uses Docker driver — perfect since you know Docker)</span>
+minikube start --driver=docker --cpus=2 --memory=4096
+
+<span class="cm"># What just started? Let's look at every component:</span>
+kubectl get nodes           <span class="cm"># Should show 1 node "minikube" - Ready</span>
+kubectl get pods -A         <span class="cm"># -A = all namespaces. See ALL system pods</span>
+
+<span class="cm"># You'll see pods like:
+# kube-system   coredns-xxx          1/1   Running  <- DNS for the cluster
+# kube-system   etcd-minikube        1/1   Running  <- The database (brain memory)
+# kube-system   kube-apiserver       1/1   Running  <- The API (brain)
+# kube-system   kube-controller-mgr  1/1   Running  <- Keeps desired state
+# kube-system   kube-scheduler       1/1   Running  <- Decides which node gets pods
+# kube-system   kube-proxy           1/1   Running  <- Network proxy on each node</span>
+
+<span class="cm"># Explore the cluster info</span>
+kubectl cluster-info
+kubectl get componentstatuses</pre>
+          </div>
+          <div class="note ok"><div class="note-i">✅</div><p>The <code>kube-system</code> namespace is sacred — it's where K8s runs itself. You should have read access but almost never modify things here directly. One of the most critical security controls is preventing workloads from accessing the kube-system namespace.</p></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Deploy Your First Pod — The Hard Way (then the Right Way)</h4>
+          <p>We'll run a pod imperatively first (like running a Docker command), then declaratively (using YAML, which is the correct production approach).</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Imperative (learning only)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre><span class="cm"># Run a single nginx pod (imperative - for learning only)</span>
+kubectl run my-nginx --image=nginx:latest --port=80
+
+<span class="cm"># Check it</span>
+kubectl get pods                   <span class="cm"># See the pod</span>
+kubectl get pods -o wide           <span class="cm"># See which node it's on, its IP</span>
+kubectl describe pod my-nginx      <span class="cm"># Full details — Events are most useful</span>
+kubectl logs my-nginx              <span class="cm"># Container logs (like docker logs)</span>
+
+<span class="cm"># Shell into the pod (like docker exec)</span>
+kubectl exec -it my-nginx -- /bin/bash
+<span class="cm"># Inside: whoami, cat /etc/passwd, ps aux, exit</span>
+
+<span class="cm"># Delete it — we'll recreate properly with YAML</span>
+kubectl delete pod my-nginx</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — pod.yaml (Declarative — always use this in production)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre><span class="cm"># Every K8s object has these 4 top-level fields:</span>
+apiVersion: v1          <span class="cm"># API version (v1 for core, apps/v1 for Deployments)</span>
+kind: Pod               <span class="cm"># What type of object</span>
+metadata:               <span class="cm"># Name, labels, namespace</span>
+  name: my-nginx
+  namespace: default
+  labels:               <span class="cm"># Key-value pairs for organizing/selecting</span>
+    app: web
+    environment: learning
+spec:                   <span class="cm"># What you want</span>
+  containers:
+  - name: nginx
+    image: nginx:1.25.3   <span class="cm"># ALWAYS pin versions in production!</span>
+    ports:
+    - containerPort: 80
+    resources:            <span class="cm"># Always set limits — prevents noisy neighbors</span>
+      requests:
+        memory: "64Mi"
+        cpu: "100m"       <span class="cm"># 100 millicores = 0.1 CPU</span>
+      limits:
+        memory: "128Mi"
+        cpu: "200m"</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre>kubectl apply -f pod.yaml      <span class="cm"># Apply = create or update</span>
+kubectl get pods -w            <span class="cm"># -w = watch, see status change in real time</span>
+kubectl describe pod my-nginx  <span class="cm"># Read the Events section carefully</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">4</div>
+        <div class="sb">
+          <h4>Deployment — The Right Way to Run Apps</h4>
+          <p>In production, you <strong>never</strong> create bare Pods. You use Deployments, which manage replicas, rolling updates, and self-healing.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — deployment.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: default
+  labels:
+    app: web-app
+spec:
+  replicas: 3               <span class="cm"># Always run 3 copies</span>
+  selector:
+    matchLabels:
+      app: web-app          <span class="cm"># Links Deployment to its Pods</span>
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1           <span class="cm"># Create 1 extra pod during update</span>
+      maxUnavailable: 0     <span class="cm"># Never have fewer than 3 available</span>
+  template:                 <span class="cm"># Pod template — EVERYTHING below is a Pod spec</span>
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        resources:
+          requests: { memory: "64Mi", cpu: "100m" }
+          limits:   { memory: "128Mi", cpu: "200m" }
+        readinessProbe:     <span class="cm"># K8s checks this before sending traffic</span>
+          httpGet: { path: /, port: 80 }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:      <span class="cm"># K8s restarts pod if this fails</span>
+          httpGet: { path: /, port: 80 }
+          initialDelaySeconds: 15
+          periodSeconds: 10
+---
+<span class="cm"># Service: gives the Deployment a stable network endpoint</span>
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-svc
+spec:
+  selector:
+    app: web-app            <span class="cm"># Routes to pods with this label</span>
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP           <span class="cm"># Internal only (not exposed to internet)</span></pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Deploy and Explore</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre>kubectl apply -f deployment.yaml
+
+<span class="cm"># Watch the rolling deployment</span>
+kubectl rollout status deployment/web-app
+
+<span class="cm"># Scale up/down</span>
+kubectl scale deployment web-app --replicas=5
+kubectl get pods -w    <span class="cm"># Watch 2 more pods appear</span>
+kubectl scale deployment web-app --replicas=3
+
+<span class="cm"># Kill a pod — Deployment recreates it!</span>
+kubectl delete pod $(kubectl get pods -l app=web-app -o name | head -1)
+kubectl get pods -w    <span class="cm"># See new pod appear automatically</span>
+
+<span class="cm"># Rolling update — change the image version</span>
+kubectl set image deployment/web-app nginx=nginx:1.25.4
+kubectl rollout status deployment/web-app
+
+<span class="cm"># Something wrong? Roll back!</span>
+kubectl rollout undo deployment/web-app
+kubectl rollout history deployment/web-app</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">5</div>
+        <div class="sb">
+          <h4>The 15 kubectl Commands You Must Know Cold</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Daily kubectl commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre><span class="cm"># ── GET: List resources ───────────────────────────────</span>
+kubectl get pods                        <span class="cm"># List pods in current namespace</span>
+kubectl get pods -A                     <span class="cm"># ALL namespaces</span>
+kubectl get pods -n kube-system         <span class="cm"># Specific namespace</span>
+kubectl get pods -o wide                <span class="cm"># With node, IP info</span>
+kubectl get pods -o yaml                <span class="cm"># Full YAML (great for debugging)</span>
+kubectl get all                         <span class="cm"># Pods + services + deployments</span>
+
+<span class="cm"># ── DESCRIBE: Deep dive into a resource ───────────────</span>
+kubectl describe pod my-pod             <span class="cm"># Full details + Events (read this first)</span>
+kubectl describe node minikube          <span class="cm"># Node capacity, allocated resources</span>
+
+<span class="cm"># ── LOGS: Container output ────────────────────────────</span>
+kubectl logs my-pod                     <span class="cm"># Current logs</span>
+kubectl logs my-pod -f                  <span class="cm"># Follow (like tail -f)</span>
+kubectl logs my-pod --previous          <span class="cm"># Logs from crashed container</span>
+kubectl logs -l app=web-app             <span class="cm"># Logs from ALL pods with this label</span>
+
+<span class="cm"># ── EXEC: Shell into container ────────────────────────</span>
+kubectl exec -it my-pod -- /bin/bash
+kubectl exec -it my-pod -- /bin/sh      <span class="cm"># For Alpine containers</span>
+kubectl exec my-pod -- cat /etc/passwd  <span class="cm"># Non-interactive</span>
+
+<span class="cm"># ── APPLY/DELETE ──────────────────────────────────────</span>
+kubectl apply -f manifest.yaml          <span class="cm"># Create or update (idempotent)</span>
+kubectl delete -f manifest.yaml         <span class="cm"># Delete resources from file</span>
+kubectl delete pod my-pod               <span class="cm"># Delete specific resource</span>
+
+<span class="cm"># ── USEFUL EXTRAS ────────────────────────────────────</span>
+kubectl port-forward pod/my-pod 8080:80  <span class="cm"># Forward port to your laptop</span>
+kubectl top pods                         <span class="cm"># CPU/memory usage (needs metrics-server)</span>
+kubectl api-resources                    <span class="cm"># List all resource types</span>
+kubectl explain pod.spec.securityContext <span class="cm"># Built-in docs for any field</span></pre>
+          </div>
+          <div class="note warn"><div class="note-i">⚠️</div><p><strong>Security note on kubectl exec:</strong> <code>kubectl exec</code> is like SSH into a container. In production, log every <code>exec</code> with audit logging and Falco. Developers should not routinely exec into production pods — use proper logging and debugging tooling instead.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="note ok"><div class="note-i">✅</div><p><strong>Project 1 done.</strong> You have a running cluster, understand every component, deployed an app with replicas, tested self-healing, did a rolling update, and know the core commands. You're ready for security.</p></div>
+  </div>
+</div><!-- /P1 -->
+
+<!-- ══ P2 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum b">2</div>
+    <div class="pc-meta">
+      <h3>Namespaces, ConfigMaps & Secrets — Environment Isolation</h3>
+      <p>Set up multi-environment namespace isolation. Manage configuration and secrets the right way. Understand why K8s Secrets are NOT actually secret by default — and what to do about it.</p>
+      <div class="pc-footer">
+        <span class="ptag b">Namespaces</span><span class="ptag n">ConfigMaps</span><span class="ptag b">Secrets</span><span class="ptag n">RBAC intro</span>
+        <span class="diff easy">● BEGINNER</span>
+        <span class="ptime">⏱ 3–4 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Create Namespace Isolation for Environments</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — namespaces.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre><span class="cm"># Create isolated namespaces for each environment/team</span>
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: development
+  labels:
+    environment: development
+    pod-security.kubernetes.io/enforce: baseline   <span class="cm"># ← Security label!</span>
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+  labels:
+    environment: staging
+    pod-security.kubernetes.io/enforce: baseline
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    environment: production
+    pod-security.kubernetes.io/enforce: restricted  <span class="cm"># Strictest in prod!</span>
+---
+<span class="cm"># Resource quotas — prevent one namespace from consuming all cluster resources</span>
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: dev-quota
+  namespace: development
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 4Gi
+    limits.cpu: "8"
+    limits.memory: 8Gi
+    pods: "20"
+    services: "10"
+    persistentvolumeclaims: "5"</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre>kubectl apply -f namespaces.yaml
+kubectl get namespaces
+kubectl describe namespace production   <span class="cm"># See pod security labels</span>
+
+<span class="cm"># Set your current context to development namespace (saves typing -n)</span>
+kubectl config set-context --current --namespace=development</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>ConfigMaps — Externalise Configuration</h4>
+          <p>ConfigMaps separate configuration from container images. Change config without rebuilding images.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — configmap.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: development
+data:
+  <span class="cm"># Simple key-value pairs</span>
+  APP_ENV: "development"
+  LOG_LEVEL: "debug"
+  MAX_CONNECTIONS: "100"
+  <span class="cm"># Multi-line file content (mounted as a file in the container)</span>
+  nginx.conf: |
+    server {
+      listen 80;
+      location / {
+        root /usr/share/nginx/html;
+        index index.html;
+      }
+      location /health {
+        return 200 'OK';
+      }
+    }</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Using ConfigMap in a Pod</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre>spec:
+  containers:
+  - name: app
+    image: nginx:1.25.3
+    <span class="cm"># Method 1: Inject specific keys as env vars</span>
+    env:
+    - name: APP_ENV
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_ENV
+    <span class="cm"># Method 2: Inject ALL keys as env vars</span>
+    envFrom:
+    - configMapRef:
+        name: app-config
+    <span class="cm"># Method 3: Mount as files (best for config files)</span>
+    volumeMounts:
+    - name: config-vol
+      mountPath: /etc/nginx/conf.d
+  volumes:
+  - name: config-vol
+    configMap:
+      name: app-config
+      items:
+      - key: nginx.conf
+        path: default.conf</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>⚠️ The Dirty Secret About Kubernetes Secrets</h4>
+          <p><strong>This is critically important.</strong> Kubernetes Secrets are only base64-encoded, not encrypted. Anyone with kubectl access to the namespace can decode them instantly.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Proof that Secrets aren't secret</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Create a "secret"</span>
+kubectl create secret generic db-creds \
+  --from-literal=password=MySuperSecretP@ssw0rd \
+  -n development
+
+<span class="cm"># Anyone with kubectl access can instantly decode it:</span>
+kubectl get secret db-creds -n development -o jsonpath='{.data.password}' | base64 -d
+<span class="cm"># Output: MySuperSecretP@ssw0rd   ← No protection at all!</span>
+
+<span class="cm"># It's also visible in etcd (the cluster database) without encryption
+# This is why you need:
+# 1. Encryption at rest for etcd (--encryption-provider-config)
+# 2. RBAC to restrict who can read Secrets
+# 3. Vault or AWS Secrets Manager for real secret management (Project 8)</span></pre>
+          </div>
+
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Using Secrets properly (mounted as files, not env vars)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: development
+type: Opaque
+stringData:                    <span class="cm"># stringData auto-encodes to base64</span>
+  DB_PASSWORD: "use-vault-instead"
+  DB_USERNAME: "appuser"
+---
+<span class="cm"># In your pod spec:</span>
+spec:
+  containers:
+  - name: app
+    image: myapp:latest
+    <span class="cm"># ✅ Mount as file — not visible in environment listings</span>
+    volumeMounts:
+    - name: db-secret
+      mountPath: /run/secrets/db
+      readOnly: true
+  volumes:
+  - name: db-secret
+    secret:
+      secretName: db-credentials
+      defaultMode: 0400        <span class="cm"># Read-only by owner only</span></pre>
+          </div>
+          <div class="note danger"><div class="note-i">🚨</div><p><strong>Production rule:</strong> Never use Kubernetes Secrets for production credentials. Use Vault (Project 8) or the AWS Secrets Manager CSI driver. K8s Secrets are acceptable only for non-sensitive config values that still need namespace scoping.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P2 -->
+
+<!-- ══ P3 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum c">3</div>
+    <div class="pc-meta">
+      <h3>kube-bench — CIS Security Benchmark Audit</h3>
+      <p>Run kube-bench against your cluster to check every CIS Benchmark control. Find real misconfigurations, understand each finding, and fix the critical ones. This is your security baseline.</p>
+      <div class="pc-footer">
+        <span class="ptag c">kube-bench</span><span class="ptag n">CIS Benchmark</span><span class="ptag c">Audit</span><span class="ptag n">Remediation</span>
+        <span class="diff easy">● BEGINNER</span>
+        <span class="ptime">⏱ 3–4 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="note purple"><div class="note-i">📖</div><p><strong>What is CIS Benchmark?</strong> The Center for Internet Security publishes hardening guidelines for Kubernetes. kube-bench automates checking your cluster against these. It tests 200+ controls across: API Server config, etcd, kubelet, scheduler, and worker node settings. This is the standard used by security auditors.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Run kube-bench on Your Cluster</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Run kube-bench as a Job</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Run kube-bench as a Kubernetes Job (checks control plane too)</span>
+kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job.yaml
+
+<span class="cm"># Wait for it to complete</span>
+kubectl wait --for=condition=complete job/kube-bench --timeout=300s
+
+<span class="cm"># Get results</span>
+kubectl logs job/kube-bench
+
+<span class="cm"># Save to file for analysis</span>
+kubectl logs job/kube-bench > kube-bench-results.txt
+
+<span class="cm"># Summarize: count PASS, FAIL, WARN</span>
+grep -E "^\[" kube-bench-results.txt | sort | uniq -c</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Understand and Fix Critical Findings</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Common Findings and Fixes</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># ═══ FINDING: Anonymous auth enabled on API server ════
+# CIS 1.2.1: Ensure that the --anonymous-auth argument is set to false
+# Risk: Anyone can make unauthenticated API calls</span>
+
+<span class="cm"># Fix (minikube): edit API server flags</span>
+minikube ssh
+sudo vi /etc/kubernetes/manifests/kube-apiserver.yaml
+<span class="cm"># Add: --anonymous-auth=false</span>
+
+<span class="cm"># ═══ FINDING: No audit logging ════════════════════════
+# CIS 1.2.22: Ensure audit logs are collected
+# Risk: No record of API calls — blind during incidents</span>
+
+<span class="cm"># Create audit policy file</span>
+cat > /tmp/audit-policy.yaml &lt;&lt;'EOF'
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+  - level: None                           <span class="cm"># Don't log read-only system calls</span>
+    resources:
+    - group: ""
+      resources: ["events"]
+  - level: Metadata                       <span class="cm"># Log metadata for most requests</span>
+    resources:
+    - group: ""
+      resources: ["secrets", "configmaps"]
+  - level: RequestResponse                <span class="cm"># Full request+response for sensitive</span>
+    resources:
+    - group: "rbac.authorization.k8s.io"
+EOF
+
+<span class="cm"># ═══ FINDING: Kubelet anonymous auth enabled ══════════
+# CIS 4.2.1: Ensure anonymous auth is disabled on kubelet
+# Risk: Anyone with network access to kubelet API can execute commands</span>
+<span class="cm"># Fix: kubelet config on each node</span>
+<span class="cm"># --anonymous-auth=false --authorization-mode=Webhook</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Automated kube-bench in CI Pipeline</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — .gitlab-ci.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">k8s-cis-audit:
+  stage: security
+  image: aquasec/kube-bench:latest
+  script:
+    - kube-bench --json > kube-bench-results.json
+    - |
+      python3 &lt;&lt;'EOF'
+      import json, sys
+      with open("kube-bench-results.json") as f:
+          data = json.load(f)
+      critical_fails = []
+      for control in data.get("Controls", []):
+          for test in control.get("tests", []):
+              for result in test.get("results", []):
+                  if result.get("status") == "FAIL" and \
+                     result.get("scored", False):
+                      critical_fails.append(result["test_desc"])
+      if len(critical_fails) > 10:
+          print(f"FAIL: {len(critical_fails)} CIS controls failing")
+          sys.exit(1)
+      print(f"CIS Audit: {len(critical_fails)} failures (acceptable)")
+      EOF
+  artifacts:
+    paths: [kube-bench-results.json]</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P3 -->
+
+<!-- ══ P4 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum m">4</div>
+    <div class="pc-meta">
+      <h3>RBAC — Complete Role-Based Access Control System</h3>
+      <p>Build a full RBAC system from scratch. Create roles for different team members (developer, ops, read-only), service accounts for pods, and implement least-privilege access for everything in your cluster.</p>
+      <div class="pc-footer">
+        <span class="ptag m">RBAC</span><span class="ptag m">Roles</span><span class="ptag m">ServiceAccounts</span><span class="ptag n">Least Privilege</span>
+        <span class="diff med">◆ INTERMEDIATE</span>
+        <span class="ptime">⏱ 5–6 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="note info"><div class="note-i">ℹ️</div><p><strong>RBAC Mental Model:</strong> There are 3 pieces. <strong>Subject</strong> = who (user, group, or ServiceAccount). <strong>Role</strong> = what permissions (list pods, create deployments). <strong>RoleBinding</strong> = glues the subject to the role. ClusterRole and ClusterRoleBinding work cluster-wide instead of just one namespace.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Create Roles for Different Team Members</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — rbac-roles.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># ── DEVELOPER ROLE: Deploy and debug in dev namespace ──</span>
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: development
+rules:
+- apiGroups: ["", "apps", "batch"]
+  resources: ["pods", "deployments", "replicasets", "jobs"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["pods/log"]         <span class="cm"># Can read logs</span>
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/exec"]        <span class="cm"># Can exec into pods (dev only!)</span>
+  verbs: ["create"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["secrets"]          <span class="cm"># Can READ secrets in dev</span>
+  verbs: ["get", "list"]          <span class="cm"># NOT create/update (use Vault)</span>
+---
+<span class="cm"># ── READ-ONLY ROLE: View cluster without changing anything</span>
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-viewer
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: []                       <span class="cm"># CANNOT read secrets</span>
+---
+<span class="cm"># ── SECURITY AUDITOR: Can inspect everything including secrets</span>
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: security-auditor
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list", "watch"]  <span class="cm"># Read everything, change nothing</span>
+---
+<span class="cm"># ── BIND DEVELOPER ROLE to a user ─────────────────────</span>
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: alice-developer
+  namespace: development
+subjects:
+- kind: User
+  name: alice                     <span class="cm"># Matches CN in the user's cert</span>
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Service Accounts — Least Privilege for Pods</h4>
+          <p><strong>Critical insight:</strong> Every pod runs with a service account. By default it uses the <code>default</code> service account which may have unexpected permissions. Always create dedicated service accounts with minimal permissions.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — service-accounts.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Service account for the web app (needs NO K8s API access)</span>
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web-app-sa
+  namespace: production
+automountServiceAccountToken: false   <span class="cm"># ← Critical! Don't auto-mount API token</span>
+---
+<span class="cm"># Service account for a metrics collector (needs to read pods)</span>
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: metrics-collector-sa
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metrics-collector
+rules:
+- apiGroups: [""]
+  resources: ["pods", "nodes", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]     <span class="cm"># Read-only, specific resources only</span>
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metrics-collector-binding
+subjects:
+- kind: ServiceAccount
+  name: metrics-collector-sa
+  namespace: monitoring
+roleRef:
+  kind: ClusterRole
+  name: metrics-collector
+  apiGroup: rbac.authorization.k8s.io
+---
+<span class="cm"># Attach the service account to a pod</span>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-collector
+spec:
+  template:
+    spec:
+      serviceAccountName: metrics-collector-sa  <span class="cm"># Explicit SA assignment</span>
+      automountServiceAccountToken: true   <span class="cm"># OK for this one — it needs API access</span>
+      containers:
+      - name: collector
+        image: mymetrics:1.0</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Audit and Test Your RBAC</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — RBAC testing commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Can alice create pods in development?</span>
+kubectl auth can-i create pods -n development --as=alice
+<span class="cm"># → yes</span>
+
+<span class="cm"># Can alice create pods in PRODUCTION? (she shouldn't)</span>
+kubectl auth can-i create pods -n production --as=alice
+<span class="cm"># → no</span>
+
+<span class="cm"># Can alice delete secrets?</span>
+kubectl auth can-i delete secrets -n development --as=alice
+<span class="cm"># → no</span>
+
+<span class="cm"># What CAN the web-app service account do?</span>
+kubectl auth can-i --list \
+  --as=system:serviceaccount:production:web-app-sa
+
+<span class="cm"># Find all ClusterRoleBindings (who has cluster-admin?)</span>
+kubectl get clusterrolebindings -o json | \
+  python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+for item in data['items']:
+    if item['roleRef']['name'] == 'cluster-admin':
+        subjects = item.get('subjects', [])
+        for s in subjects:
+            print(f'cluster-admin: {s[\"kind\"]}/{s[\"name\"]}')
+"
+
+<span class="cm"># Install rbac-tool for visual RBAC analysis</span>
+kubectl krew install rbac-tool
+kubectl rbac-tool lookup alice
+kubectl rbac-tool visualize</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P4 -->
+
+<!-- ══ P5 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum g">5</div>
+    <div class="pc-meta">
+      <h3>Network Policies — Zero Trust Pod Networking</h3>
+      <p>By default every pod can reach every other pod. We fix that. Implement default-deny network policies and then explicitly allow only the traffic that needs to flow. This stops lateral movement dead in its tracks.</p>
+      <div class="pc-footer">
+        <span class="ptag g">Network Policies</span><span class="ptag n">Zero Trust</span><span class="ptag g">Calico</span><span class="ptag n">Cilium</span>
+        <span class="diff med">◆ INTERMEDIATE</span>
+        <span class="ptime">⏱ 5–6 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="note warn"><div class="note-i">⚠️</div><p><strong>This requires a CNI plugin that enforces Network Policies.</strong> minikube's default CNI doesn't. Run: <code>minikube start --cni=calico</code> or <code>minikube start --cni=cilium</code> to get policy enforcement. AWS EKS uses VPC CNI — you need Calico on top for network policies.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Step 1: Default Deny Everything (The Golden Rule)</h4>
+          <p>The first network policy you deploy in every namespace must be default-deny. This means no traffic flows unless explicitly allowed.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — default-deny.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Apply this to EVERY namespace immediately</span>
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: production
+spec:
+  podSelector: {}        <span class="cm"># {} = selects ALL pods in namespace</span>
+  policyTypes:
+  - Ingress              <span class="cm"># Block all incoming traffic</span>
+  - Egress               <span class="cm"># Block all outgoing traffic</span>
+  <span class="cm"># No ingress/egress rules = deny everything</span></pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Test it</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Deploy two test pods</span>
+kubectl run pod-a --image=busybox -n production -- sleep 3600
+kubectl run pod-b --image=busybox -n production -- sleep 3600
+
+<span class="cm"># Before policy: pod-a CAN reach pod-b</span>
+kubectl exec pod-a -n production -- wget -qO- --timeout=2 http://pod-b-ip
+<span class="cm"># Success!</span>
+
+kubectl apply -f default-deny.yaml
+
+<span class="cm"># After policy: connection REFUSED</span>
+kubectl exec pod-a -n production -- wget -qO- --timeout=2 http://pod-b-ip
+<span class="cm"># wget: bad address / timeout</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Build a 3-Tier Application Network Policy</h4>
+          <p>Frontend can receive from internet. Frontend can talk to API. API can talk to database. Database accepts nothing else.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — app-network-policies.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># ── Frontend: Accept traffic from ingress controller ──</span>
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx  <span class="cm"># From ingress only</span>
+    ports:
+    - port: 3000
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: api                   <span class="cm"># Can only talk to API tier</span>
+    ports:
+    - port: 8080
+  - to:                              <span class="cm"># Allow DNS resolution</span>
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - port: 53
+      protocol: UDP
+---
+<span class="cm"># ── API: Accept from frontend, talk to database ────────</span>
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      tier: api
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: frontend              <span class="cm"># From frontend only</span>
+    ports:
+    - port: 8080
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          tier: database             <span class="cm"># To database only</span>
+    ports:
+    - port: 5432
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - port: 53
+      protocol: UDP
+---
+<span class="cm"># ── Database: Accept from API ONLY. NO egress. ────────</span>
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: database-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      tier: database
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          tier: api                  <span class="cm"># Only API can connect</span>
+    ports:
+    - port: 5432
+  <span class="cm"># NO egress rules = database cannot initiate ANY connections out</span>
+  <span class="cm"># This prevents data exfiltration even if database is compromised</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P5 -->
+
+<!-- ══ P6 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum p">6</div>
+    <div class="pc-meta">
+      <h3>Pod Security — No Root, Read-Only FS, Dropped Capabilities</h3>
+      <p>Lock down what containers can do at the OS level. No root processes, read-only filesystems, dropped Linux capabilities, no privilege escalation. This limits what an attacker can do even after compromising a container.</p>
+      <div class="pc-footer">
+        <span class="ptag p">securityContext</span><span class="ptag n">Pod Security Std</span><span class="ptag p">AppArmor</span><span class="ptag n">Seccomp</span>
+        <span class="diff med">◆ INTERMEDIATE</span>
+        <span class="ptime">⏱ 4–5 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>The Insecure vs Secure Container Spec</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — ❌ Insecure (what most tutorials show)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># This runs as root with all capabilities — a disaster</span>
+spec:
+  containers:
+  - name: app
+    image: myapp:latest
+    <span class="cm"># No securityContext at all = runs as root by default</span>
+    <span class="cm"># Attacker who escapes container gets root on node</span></pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — ✅ Hardened security context (use this always)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app
+spec:
+  template:
+    spec:
+      <span class="cm"># Pod-level security: applies to ALL containers</span>
+      securityContext:
+        runAsNonRoot: true          <span class="cm"># Container must not run as root</span>
+        runAsUser: 1001             <span class="cm"># Run as this UID</span>
+        runAsGroup: 1001            <span class="cm"># Run as this GID</span>
+        fsGroup: 2000               <span class="cm"># Files written by pods owned by this group</span>
+        seccompProfile:
+          type: RuntimeDefault      <span class="cm"># Restrict syscalls to safe defaults</span>
+
+      containers:
+      - name: app
+        image: myapp:1.0
+        <span class="cm"># Container-level security</span>
+        securityContext:
+          allowPrivilegeEscalation: false   <span class="cm"># Can't sudo or setuid</span>
+          readOnlyRootFilesystem: true       <span class="cm"># Filesystem is immutable</span>
+          capabilities:
+            drop:
+            - ALL                           <span class="cm"># Drop ALL Linux capabilities</span>
+            add:
+            - NET_BIND_SERVICE              <span class="cm"># Add back ONLY what's needed</span>
+          runAsNonRoot: true
+          runAsUser: 1001
+
+        <span class="cm"># If readOnlyRootFilesystem=true, app needs writable dirs:</span>
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/cache
+
+      volumes:
+      - name: tmp
+        emptyDir: {}               <span class="cm"># Temp space, deleted when pod dies</span>
+      - name: cache
+        emptyDir: {}
+
+      <span class="cm"># Never mount service account token unless needed</span>
+      automountServiceAccountToken: false</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Pod Security Standards — Namespace-Level Enforcement</h4>
+          <p>K8s v1.25+ has built-in Pod Security Standards that enforce security at the namespace level, blocking non-compliant pods from even starting.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Namespace with enforcement labels</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Three levels: privileged, baseline, restricted
+# Three modes: enforce (block), audit (log), warn (warn dev)</span>
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    <span class="cm"># ENFORCE restricted — pods that don't comply are REJECTED</span>
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: v1.28
+
+    <span class="cm"># AUDIT — log violations for monitoring</span>
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: v1.28
+
+    <span class="cm"># WARN — warn developers at deploy time</span>
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: v1.28</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Test enforcement</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Try to run a privileged pod in production namespace</span>
+kubectl run privileged-test \
+  --image=busybox \
+  --overrides='{"spec":{"containers":[{"name":"t","image":"busybox","securityContext":{"privileged":true}}]}}' \
+  -n production
+
+<span class="cm"># Error: would violate PodSecurity "restricted:v1.28":
+# privileged (container "t" must not set securityContext.privileged=true)</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Linux Capabilities — Understanding What You're Dropping</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Key Linux capabilities and why they're dangerous</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Capabilities containers get by default (drop ALL of these):</span>
+
+<span class="cm"># CHOWN        - Change file ownership → attacker can own your files</span>
+<span class="cm"># DAC_OVERRIDE - Bypass file permissions → read any file</span>
+<span class="cm"># FOWNER       - Bypass permission checks → bypass access control</span>
+<span class="cm"># FSETID       - Set setuid bits → privilege escalation</span>
+<span class="cm"># KILL         - Send signals to any process → DoS attacks</span>
+<span class="cm"># NET_BIND     - Bind ports below 1024 → impersonate privileged services</span>
+<span class="cm"># NET_RAW      - Raw network access → packet sniffing</span>
+<span class="cm"># SETGID       - Change group IDs → privilege escalation</span>
+<span class="cm"># SETUID       - Change user IDs → become root</span>
+<span class="cm"># SYS_CHROOT   - Use chroot() → container escape</span>
+
+<span class="cm"># Check what capabilities a running container has:</span>
+kubectl exec my-pod -- cat /proc/1/status | grep Cap
+<span class="cm"># CapPrm: 00000000a80425fb (bitmask of permitted capabilities)</span>
+<span class="cm"># After hardening: CapPrm: 0000000000000000 (nothing)</span>
+
+<span class="cm"># Decode capabilities bitmask</span>
+capsh --decode=00000000a80425fb</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P6 -->
+
+<!-- ══ P7 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum c">7</div>
+    <div class="pc-meta">
+      <h3>Falco — Real-Time Runtime Threat Detection</h3>
+      <p>Deploy Falco as a DaemonSet to monitor every container in real-time. Detect: shell spawned in container, sensitive file reads, unexpected outbound connections, container escape attempts, crypto mining, and more.</p>
+      <div class="pc-footer">
+        <span class="ptag c">Falco</span><span class="ptag n">eBPF</span><span class="ptag c">Runtime Detection</span><span class="ptag n">Alerting</span>
+        <span class="diff med">◆ INTERMEDIATE</span>
+        <span class="ptime">⏱ 5–6 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="note purple"><div class="note-i">🦅</div><p><strong>What Falco does:</strong> Falco uses eBPF (or kernel modules) to intercept every system call made by every container. It compares them against rules — if a container that should only serve web traffic suddenly runs <code>bash</code>, opens <code>/etc/shadow</code>, or makes an outbound connection to an unknown IP, Falco fires an alert immediately. This is runtime security — catching attacks as they happen, not just preventing them.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Install Falco with Helm</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Add Falco Helm repo</span>
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+
+<span class="cm"># Install Falco with eBPF driver (works without kernel modules)</span>
+helm install falco falcosecurity/falco \
+  --namespace falco-system \
+  --create-namespace \
+  --set driver.kind=ebpf \
+  --set falcosidekick.enabled=true \
+  --set falcosidekick.webui.enabled=true \
+  --set falco.grpc.enabled=true \
+  --set falco.grpcOutput.enabled=true
+
+<span class="cm"># Verify Falco is running on ALL nodes (DaemonSet)</span>
+kubectl get pods -n falco-system
+kubectl get daemonset -n falco-system
+
+<span class="cm"># Stream Falco alerts in real-time</span>
+kubectl logs -n falco-system \
+  $(kubectl get pods -n falco-system -l app.kubernetes.io/name=falco -o name | head -1) \
+  -f</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Trigger Falco Alerts — Hands-on Testing</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Trigger each alert type, watch Falco catch it</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># In one terminal: stream Falco alerts</span>
+kubectl logs -n falco-system daemonset/falco -f | grep -v DEBUG
+
+<span class="cm"># In another terminal: trigger alerts</span>
+
+<span class="cm"># ── Alert 1: Shell spawned in container ───────────────</span>
+kubectl exec -it deployment/web-app -- /bin/bash
+<span class="cm"># Falco fires: "A shell was spawned in a container"
+# Priority: NOTICE  Rule: Terminal shell in container</span>
+
+<span class="cm"># ── Alert 2: Reading sensitive files ──────────────────</span>
+kubectl exec deployment/web-app -- cat /etc/shadow
+<span class="cm"># Falco fires: "Sensitive file opened for reading"
+# Priority: WARNING  Rule: Read sensitive file untrusted</span>
+
+<span class="cm"># ── Alert 3: Writing to /etc ───────────────────────────</span>
+kubectl exec deployment/web-app -- touch /etc/malicious
+<span class="cm"># Falco fires: "File below /etc opened for writing"
+# Priority: ERROR  Rule: Write below etc</span>
+
+<span class="cm"># ── Alert 4: Package management in container ──────────</span>
+kubectl exec deployment/web-app -- apt-get update
+<span class="cm"># Falco fires: "Launch Package Management Process"
+# Priority: ERROR  Rule: Launch Package Management Process in Container</span>
+
+<span class="cm"># ── Alert 5: Outbound connection to unexpected IP ──────</span>
+kubectl exec deployment/web-app -- wget http://evil.com -O /dev/null
+<span class="cm"># Falco fires: "Unexpected outbound connection destination"</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Write Custom Falco Rules</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — custom-falco-rules.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Custom rules for your specific application</span>
+customRules:
+  custom-rules.yaml: |-
+    <span class="cm"># Rule 1: Detect crypto mining (looks for known miner process names)</span>
+    - rule: Crypto Mining Activity
+      desc: Detect known cryptocurrency mining process names
+      condition: >
+        spawned_process and
+        (proc.name in (xmrig, minerd, cpuminer, cgminer,
+                       bfgminer, minergate, nicehash))
+      output: >
+        Crypto miner detected (user=%user.name command=%proc.cmdline
+        container=%container.name image=%container.image.repository)
+      priority: CRITICAL
+      tags: [cryptomining, malware]
+
+    <span class="cm"># Rule 2: Detect kubectl running inside a container</span>
+    - rule: Kubectl Inside Container
+      desc: kubectl running inside a container is suspicious
+      condition: >
+        spawned_process and
+        container and
+        proc.name = "kubectl"
+      output: >
+        kubectl executed inside container - possible cluster takeover attempt
+        (user=%user.name cmd=%proc.cmdline container=%container.name)
+      priority: HIGH
+      tags: [k8s, lateral_movement]
+
+    <span class="cm"># Rule 3: Detect netcat (common attacker tool)</span>
+    - rule: Netcat Execution
+      desc: Netcat is often used for backdoors and data exfiltration
+      condition: >
+        spawned_process and
+        (proc.name in (nc, ncat, netcat, nmap))
+      output: >
+        Netcat detected in container (cmd=%proc.cmdline
+        container=%container.name pod=%k8s.pod.name)
+      priority: CRITICAL
+      tags: [network, backdoor]
+
+    <span class="cm"># Rule 4: Privilege escalation attempt</span>
+    - rule: Sudo or Su in Container
+      desc: Privilege escalation attempt
+      condition: >
+        spawned_process and
+        container and
+        proc.name in (sudo, su)
+      output: >
+        Privilege escalation attempt in container
+        (cmd=%proc.cmdline user=%user.name container=%container.name)
+      priority: HIGH</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Deploy custom rules</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">helm upgrade falco falcosecurity/falco \
+  -n falco-system \
+  -f custom-falco-rules.yaml</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">4</div>
+        <div class="sb">
+          <h4>Route Falco Alerts to Slack/PagerDuty via Falcosidekick</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">helm upgrade falco falcosecurity/falco \
+  -n falco-system \
+  --set falcosidekick.enabled=true \
+  --set falcosidekick.config.slack.webhookurl="https://hooks.slack.com/xxx" \
+  --set falcosidekick.config.slack.minimumpriority="warning" \
+  --set falcosidekick.config.pagerduty.routingkey="xxx" \
+  --set falcosidekick.config.pagerduty.minimumpriority="critical" \
+  --set falcosidekick.config.alertmanager.hostport="http://alertmanager:9093"</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P7 -->
+
+<!-- ══ P8 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum b">8</div>
+    <div class="pc-meta">
+      <h3>Secrets Management — Vault + AWS Secrets Manager CSI</h3>
+      <p>Replace Kubernetes Secrets with real secrets management. Deploy HashiCorp Vault, use the CSI secrets driver for AWS Secrets Manager, and inject secrets as files at pod startup — never as environment variables.</p>
+      <div class="pc-footer">
+        <span class="ptag b">HashiCorp Vault</span><span class="ptag n">CSI Driver</span><span class="ptag b">AWS Secrets Mgr</span><span class="ptag n">External Secrets</span>
+        <span class="diff hard">▲ ADVANCED</span>
+        <span class="ptime">⏱ 6–8 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Deploy HashiCorp Vault in Dev Mode</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Vault with Helm</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install Vault</span>
+helm repo add hashicorp https://helm.releases.hashicorp.com
+helm repo update
+
+helm install vault hashicorp/vault \
+  --namespace vault \
+  --create-namespace \
+  --set "server.dev.enabled=true" \
+  --set "injector.enabled=true"
+
+<span class="cm"># Verify</span>
+kubectl get pods -n vault
+<span class="cm"># vault-0   1/1  Running ← Vault server
+# vault-agent-injector-xxx  1/1  Running ← Sidecar injector</span>
+
+<span class="cm"># Open Vault shell</span>
+kubectl exec -it vault-0 -n vault -- vault status</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Configure Vault Kubernetes Auth and Store Secrets</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Configure Vault</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Exec into Vault pod</span>
+kubectl exec -it vault-0 -n vault -- /bin/sh
+
+<span class="cm"># Enable Kubernetes authentication</span>
+vault auth enable kubernetes
+
+<span class="cm"># Configure K8s auth to validate pod service account tokens</span>
+vault write auth/kubernetes/config \
+  kubernetes_host="https://kubernetes.default.svc:443"
+
+<span class="cm"># Store a secret</span>
+vault secrets enable -path=secret kv-v2
+vault kv put secret/myapp/database \
+  username="appuser" \
+  password="SuperS3cret!" \
+  host="postgres.internal"
+
+<span class="cm"># Create a Vault policy — what can this app read?</span>
+vault policy write myapp-policy - &lt;&lt;EOF
+path "secret/data/myapp/*" {
+  capabilities = ["read"]
+}
+EOF
+
+<span class="cm"># Bind the policy to a Kubernetes service account</span>
+vault write auth/kubernetes/role/myapp \
+  bound_service_account_names=myapp-sa \
+  bound_service_account_namespaces=production \
+  policies=myapp-policy \
+  ttl=1h</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Use Vault Secrets in Pods via Annotations</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Pod with Vault agent sidecar injection</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+  namespace: production
+spec:
+  template:
+    metadata:
+      annotations:
+        <span class="cm"># These annotations trigger the Vault agent sidecar injection</span>
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "myapp"
+
+        <span class="cm"># Inject database secret as a file at /vault/secrets/db.txt</span>
+        vault.hashicorp.com/agent-inject-secret-db.txt: "secret/data/myapp/database"
+
+        <span class="cm"># Template the secret into a specific format</span>
+        vault.hashicorp.com/agent-inject-template-db.txt: |
+          {{- with secret "secret/data/myapp/database" -}}
+          export DB_HOST="{{ .Data.data.host }}"
+          export DB_USER="{{ .Data.data.username }}"
+          export DB_PASS="{{ .Data.data.password }}"
+          {{- end -}}
+
+    spec:
+      serviceAccountName: myapp-sa
+      containers:
+      - name: app
+        image: myapp:1.0
+        command: ["/bin/sh", "-c"]
+        args:
+          <span class="cm"># Source the file Vault injected — secrets never in env vars</span>
+          - "source /vault/secrets/db.txt && ./myapp"</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">4</div>
+        <div class="sb">
+          <h4>AWS Secrets Manager on EKS — CSI Driver</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install AWS Secrets CSI driver on EKS</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install secrets store CSI driver</span>
+helm repo add secrets-store-csi-driver \
+  https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+helm install csi-secrets-store \
+  secrets-store-csi-driver/secrets-store-csi-driver \
+  --namespace kube-system
+
+<span class="cm"># Install AWS provider</span>
+kubectl apply -f https://raw.githubusercontent.com/aws/secrets-store-csi-driver-provider-aws/main/deployment/aws-provider-installer.yaml</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — SecretProviderClass + Pod using AWS Secrets</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: aws-secrets
+  namespace: production
+spec:
+  provider: aws
+  parameters:
+    objects: |
+      - objectName: "prod/myapp/database"  <span class="cm"># AWS Secrets Manager secret name</span>
+        objectType: "secretsmanager"
+        jmesPath:
+          - path: username
+            objectAlias: db_user
+          - path: password
+            objectAlias: db_pass
+---
+<span class="cm"># Mount AWS secret in a pod</span>
+spec:
+  containers:
+  - name: app
+    image: myapp:1.0
+    volumeMounts:
+    - name: secrets-store
+      mountPath: "/mnt/secrets-store"
+      readOnly: true
+  volumes:
+  - name: secrets-store
+    csi:
+      driver: secrets-store.csi.k8s.io
+      readOnly: true
+      volumeAttributes:
+        secretProviderClass: "aws-secrets"</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P8 -->
+
+<!-- ══ P9 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum g">9</div>
+    <div class="pc-meta">
+      <h3>OPA Gatekeeper — Policy Enforcement as Code</h3>
+      <p>Install Open Policy Agent Gatekeeper and write policies that enforce: approved image registries only, required labels on all resources, no latest image tag, minimum replicas, and resource limits on every container.</p>
+      <div class="pc-footer">
+        <span class="ptag g">OPA Gatekeeper</span><span class="ptag n">Rego</span><span class="ptag g">Kyverno</span><span class="ptag n">Admission Control</span>
+        <span class="diff hard">▲ ADVANCED</span>
+        <span class="ptime">⏱ 6–7 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="note info"><div class="note-i">ℹ️</div><p><strong>What is Admission Control?</strong> When you run <code>kubectl apply</code>, your request goes to the API server. Before accepting it, K8s passes it through admission webhooks. Gatekeeper registers itself as a webhook — every create/update goes through it first. If the resource violates a policy, Gatekeeper rejects it with a clear error message before anything is created.</p></div>
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Install OPA Gatekeeper</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span></span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install Gatekeeper</span>
+kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
+
+<span class="cm"># Verify</span>
+kubectl get pods -n gatekeeper-system
+<span class="cm"># gatekeeper-audit-xxx       1/1 Running ← Audits existing resources
+# gatekeeper-controller-xxx  1/1 Running ← Validates new resources</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Policy 1: Approved Container Registries Only</h4>
+          <p>Block any pod that uses an image not from your approved registries. Prevents: running malware from Docker Hub, typosquatting attacks, unscanned images.</p>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — approved-registries-constraint.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Step 1: Create the ConstraintTemplate (defines the policy logic)</span>
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sallowedregistries
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sAllowedRegistries
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            registries:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sallowedregistries
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not starts_with_allowed(container.image)
+          msg := sprintf("Container '%v' uses image '%v' from an unapproved registry. Allowed: %v",
+            [container.name, container.image, input.parameters.registries])
+        }
+
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.initContainers[_]
+          not starts_with_allowed(container.image)
+          msg := sprintf("Init container '%v' uses image '%v' from an unapproved registry",
+            [container.name, container.image])
+        }
+
+        starts_with_allowed(image) {
+          registry := input.parameters.registries[_]
+          startswith(image, registry)
+        }
+---
+<span class="cm"># Step 2: Create the Constraint (applies the policy with parameters)</span>
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sAllowedRegistries
+metadata:
+  name: allowed-registries
+spec:
+  match:
+    kinds:
+    - apiGroups: [""]
+      kinds: ["Pod"]
+    namespaces: ["production", "staging"]   <span class="cm"># Enforce in prod/staging</span>
+  parameters:
+    registries:
+    - "123456789.dkr.ecr.us-east-1.amazonaws.com/"  <span class="cm"># Your ECR</span>
+    - "gcr.io/myproject/"
+    - "registry.mycompany.com/"</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Test it</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Try to deploy nginx from Docker Hub in production</span>
+kubectl run test --image=nginx:latest -n production
+<span class="cm"># Error: admission webhook denied the request:
+# Container 'test' uses image 'nginx:latest' from an unapproved registry</span>
+
+<span class="cm"># Approved registry image works</span>
+kubectl run approved \
+  --image=123456789.dkr.ecr.us-east-1.amazonaws.com/nginx:1.25.3 \
+  -n production
+<span class="cm"># pod/approved created</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Policy 2: No Latest Image Tag</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — no-latest-tag.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8snolatestimage
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sNoLatestImage
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8snolatestimage
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          endswith(container.image, ":latest")
+          msg := sprintf("Image '%v' uses ':latest' tag. Pin to a specific version.", [container.image])
+        }
+        violation[{"msg": msg}] {
+          container := input.review.object.spec.containers[_]
+          not contains(container.image, ":")
+          msg := sprintf("Image '%v' has no tag. Pin to a specific version.", [container.image])
+        }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sNoLatestImage
+metadata:
+  name: no-latest-image
+spec:
+  match:
+    kinds:
+    - apiGroups: ["apps"]
+      kinds: ["Deployment", "StatefulSet", "DaemonSet"]</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">4</div>
+        <div class="sb">
+          <h4>Policy 3: Required Labels (Ownership & Cost Tracking)</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — required-labels.yaml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequiredlabels
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequiredLabels
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            labels:
+              type: array
+              items: { type: string }
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequiredlabels
+        violation[{"msg": msg}] {
+          provided := {label | input.review.object.metadata.labels[label]}
+          required := {label | label := input.parameters.labels[_]}
+          missing := required - provided
+          count(missing) > 0
+          msg := sprintf("Missing required labels: %v", [missing])
+        }
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: deployment-required-labels
+spec:
+  match:
+    kinds:
+    - apiGroups: ["apps"]
+      kinds: ["Deployment"]
+  parameters:
+    labels:
+    - "app"
+    - "owner"
+    - "team"
+    - "environment"
+    - "version"</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P9 -->
+
+<!-- ══ P10 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum m">10</div>
+    <div class="pc-meta">
+      <h3>Hardened EKS Cluster on AWS with Terraform</h3>
+      <p>Deploy a production-ready EKS cluster using Terraform — private nodes, control plane logging, IRSA for every workload, node security groups, EKS add-ons, and all the security controls you've learned applied to real AWS infrastructure.</p>
+      <div class="pc-footer">
+        <span class="ptag m">AWS EKS</span><span class="ptag n">Terraform</span><span class="ptag m">IRSA</span><span class="ptag n">Private Nodes</span><span class="ptag m">Managed Node Groups</span>
+        <span class="diff hard">▲ ADVANCED</span>
+        <span class="ptime">⏱ 8–10 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Secure EKS Cluster — Terraform</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — eks-cluster.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">resource <span class="fn">"aws_eks_cluster"</span> <span class="str">"main"</span> {
+  name     = <span class="var">var</span>.cluster_name
+  version  = <span class="str">"1.29"</span>
+  role_arn = aws_iam_role.eks_cluster.arn
+
+  vpc_config {
+    subnet_ids              = module.vpc.private_subnet_ids
+    security_group_ids      = [aws_security_group.eks_cluster.id]
+    endpoint_private_access = <span class="kw">true</span>   <span class="cm"># API only accessible from VPC</span>
+    endpoint_public_access  = <span class="kw">false</span>  <span class="cm"># NO public API endpoint!</span>
+  }
+
+  <span class="cm"># Enable ALL control plane logging</span>
+  enabled_cluster_log_types = [
+    <span class="str">"api"</span>,           <span class="cm"># All API calls</span>
+    <span class="str">"audit"</span>,         <span class="cm"># K8s audit logs — who did what</span>
+    <span class="str">"authenticator"</span>, <span class="cm"># Auth events</span>
+    <span class="str">"controllerManager"</span>,
+    <span class="str">"scheduler"</span>
+  ]
+
+  kubernetes_network_config {
+    ip_family         = <span class="str">"ipv4"</span>
+    service_ipv4_cidr = <span class="str">"172.20.0.0/16"</span>
+  }
+
+  encryption_config {
+    resources = [<span class="str">"secrets"</span>]   <span class="cm"># Encrypt K8s secrets in etcd with KMS!</span>
+    provider { key_arn = aws_kms_key.eks.arn }
+  }
+
+  tags = <span class="var">var</span>.tags
+  depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
+}
+
+<span class="cm"># ── Managed Node Group — private subnet nodes ─────────</span>
+resource <span class="fn">"aws_eks_node_group"</span> <span class="str">"main"</span> {
+  cluster_name    = aws_eks_cluster.main.name
+  node_group_name = <span class="str">"main"</span>
+  node_role_arn   = aws_iam_role.eks_node.arn
+  subnet_ids      = module.vpc.private_subnet_ids   <span class="cm"># PRIVATE only</span>
+
+  instance_types = [<span class="str">"m5.large"</span>]
+  ami_type       = <span class="str">"AL2_x86_64"</span>
+
+  scaling_config {
+    desired_size = 3
+    min_size     = 2
+    max_size     = 10
+  }
+
+  update_config { max_unavailable = 1 }
+
+  labels = {
+    role        = <span class="str">"application"</span>
+    environment = <span class="var">var</span>.environment
+  }
+
+  launch_template {
+    id      = aws_launch_template.eks_node.id
+    version = aws_launch_template.eks_node.latest_version
+  }
+}
+
+<span class="cm"># ── Launch template for security hardening ────────────</span>
+resource <span class="fn">"aws_launch_template"</span> <span class="str">"eks_node"</span> {
+  name = <span class="str">"${var.cluster_name}-node"</span>
+
+  block_device_mappings {
+    device_name = <span class="str">"/dev/xvda"</span>
+    ebs {
+      volume_size           = 50
+      volume_type           = <span class="str">"gp3"</span>
+      encrypted             = <span class="kw">true</span>          <span class="cm"># Encrypt node disk</span>
+      kms_key_id            = aws_kms_key.eks_ebs.arn
+      delete_on_termination = <span class="kw">true</span>
+    }
+  }
+
+  metadata_options {
+    http_endpoint               = <span class="str">"enabled"</span>
+    http_tokens                 = <span class="str">"required"</span>  <span class="cm"># IMDSv2 on nodes</span>
+    http_put_response_hop_limit = 1            <span class="cm"># Prevents pods from accessing IMDS</span>
+    instance_metadata_tags      = <span class="str">"enabled"</span>
+  }
+
+  tag_specifications {
+    resource_type = <span class="str">"instance"</span>
+    tags = merge(<span class="var">var</span>.tags, { Name = <span class="str">"${var.cluster_name}-node"</span> })
+  }
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>IRSA — Every Workload Gets Its Own AWS Role</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — irsa.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># OIDC provider (enables IRSA)</span>
+data <span class="fn">"tls_certificate"</span> <span class="str">"eks"</span> {
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+resource <span class="fn">"aws_iam_openid_connect_provider"</span> <span class="str">"eks"</span> {
+  client_id_list  = [<span class="str">"sts.amazonaws.com"</span>]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+<span class="cm"># Helper locals for IRSA</span>
+locals {
+  oidc_provider_arn = aws_iam_openid_connect_provider.eks.arn
+  oidc_provider_url = replace(aws_iam_openid_connect_provider.eks.url, "https://", "")
+}
+
+<span class="cm"># IRSA role for a specific app in a specific namespace</span>
+resource <span class="fn">"aws_iam_role"</span> <span class="str">"myapp_irsa"</span> {
+  name = <span class="str">"${var.cluster_name}-myapp-irsa"</span>
+
+  assume_role_policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="str">"Allow"</span>
+      Principal = { Federated = local.oidc_provider_arn }
+      Action    = <span class="str">"sts:AssumeRoleWithWebIdentity"</span>
+      Condition = {
+        StringEquals = {
+          <span class="cm"># ONLY myapp-sa service account in production namespace</span>
+          <span class="str">"${local.oidc_provider_url}:sub"</span> =
+            <span class="str">"system:serviceaccount:production:myapp-sa"</span>
+          <span class="str">"${local.oidc_provider_url}:aud"</span> = <span class="str">"sts.amazonaws.com"</span>
+        }
+      }
+    }]
+  })
+}
+
+resource <span class="fn">"aws_iam_role_policy_attachment"</span> <span class="str">"myapp_s3"</span> {
+  role       = aws_iam_role.myapp_irsa.name
+  policy_arn = aws_iam_policy.myapp_s3_read.arn
+}
+
+<span class="cm"># Kubernetes side: annotate the service account</span>
+<span class="cm"># kubectl annotate serviceaccount myapp-sa -n production \
+#   eks.amazonaws.com/role-arn=arn:aws:iam::ACCOUNT:role/myapp-irsa</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">3</div>
+        <div class="sb">
+          <h4>Install Security Add-ons with Helm</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Post-EKS security setup</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Update kubeconfig</span>
+aws eks update-kubeconfig --name my-cluster --region us-east-1
+
+<span class="cm"># Install Calico for Network Policies (VPC CNI doesn't enforce them)</span>
+helm repo add projectcalico https://docs.tigera.io/calico/charts
+helm install calico projectcalico/tigera-operator \
+  --namespace tigera-operator --create-namespace
+
+<span class="cm"># Install Falco on EKS (use eBPF driver)</span>
+helm install falco falcosecurity/falco \
+  -n falco-system --create-namespace \
+  --set driver.kind=ebpf \
+  --set falcosidekick.enabled=true
+
+<span class="cm"># Install OPA Gatekeeper</span>
+kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
+
+<span class="cm"># Install metrics-server (needed for HPA and kubectl top)</span>
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+<span class="cm"># Install AWS Load Balancer Controller</span>
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=my-cluster \
+  --set serviceAccount.create=true \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=arn:aws:iam::ACCOUNT:role/aws-lb-controller-irsa
+
+<span class="cm"># Run kube-bench against EKS (EKS-specific checks)</span>
+kubectl apply -f https://raw.githubusercontent.com/aquasecurity/kube-bench/main/job-eks.yaml
+kubectl logs job/kube-bench-eks</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P10 -->
+
+<!-- ══ P11 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum p">11</div>
+    <div class="pc-meta">
+      <h3>Supply Chain Security — Image Signing & SBOM Attestation</h3>
+      <p>Sign every container image with Cosign. Generate SBOMs. Configure OPA to reject unsigned images. Implement in-toto attestations for end-to-end supply chain verification. Trust nothing that isn't cryptographically verified.</p>
+      <div class="pc-footer">
+        <span class="ptag p">Cosign</span><span class="ptag n">SBOM</span><span class="ptag p">Sigstore</span><span class="ptag n">in-toto</span><span class="ptag p">SLSA Level 3</span>
+        <span class="diff hard">▲ EXPERT</span>
+        <span class="ptime">⏱ 6–8 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Sign Images with Cosign in GitLab CI</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Cosign</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Install cosign</span>
+curl -LO https://github.com/sigstore/cosign/releases/download/v2.2.2/cosign-linux-amd64
+chmod +x cosign-linux-amd64 && mv cosign-linux-amd64 /usr/local/bin/cosign
+
+<span class="cm"># Generate a key pair for signing</span>
+cosign generate-key-pair
+<span class="cm"># → cosign.key (PRIVATE — keep secret in Vault/Secrets Manager!)
+# → cosign.pub (PUBLIC — share with clusters for verification)</span>
+
+<span class="cm"># Sign an image after building it</span>
+cosign sign --key cosign.key \
+  123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3
+
+<span class="cm"># Verify a signature</span>
+cosign verify --key cosign.pub \
+  123456789.dkr.ecr.us-east-1.amazonaws.com/myapp:v1.2.3</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — .gitlab-ci.yml — Sign after build and scan</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">build-and-sign:
+  stage: build
+  image: docker:24
+  services: [docker:24-dind]
+  script:
+    <span class="cm"># Build image</span>
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+    <span class="cm"># Scan BEFORE signing — only sign clean images</span>
+    - trivy image --exit-code 1 --severity CRITICAL $IMAGE_TAG
+
+    <span class="cm"># Generate SBOM</span>
+    - syft $IMAGE_TAG -o spdx-json > sbom.spdx.json
+
+    <span class="cm"># Sign the image</span>
+    - cosign sign --key $COSIGN_PRIVATE_KEY $IMAGE_TAG
+
+    <span class="cm"># Attach SBOM as attestation</span>
+    - cosign attest --key $COSIGN_PRIVATE_KEY \
+        --predicate sbom.spdx.json \
+        --type spdxjson \
+        $IMAGE_TAG
+
+    <span class="cm"># Attest the vulnerability scan results</span>
+    - trivy image --format cosign-vuln \
+        --output vuln.json $IMAGE_TAG
+    - cosign attest --key $COSIGN_PRIVATE_KEY \
+        --predicate vuln.json \
+        --type vuln \
+        $IMAGE_TAG</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Enforce Image Signature Verification with Kyverno</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Kyverno</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="cm"># Kyverno is easier than OPA for image verification</span>
+helm repo add kyverno https://kyverno.github.io/kyverno/
+helm install kyverno kyverno/kyverno -n kyverno --create-namespace</pre>
+          </div>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Kyverno policy: require signed images</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signature
+spec:
+  validationFailureAction: Enforce    <span class="cm"># Block, don't just warn</span>
+  background: false
+  rules:
+  - name: check-image-signature
+    match:
+      any:
+      - resources:
+          kinds: [Pod]
+          namespaces: [production, staging]
+    verifyImages:
+    - imageReferences:
+      - "123456789.dkr.ecr.us-east-1.amazonaws.com/*"
+      attestors:
+      - count: 1
+        entries:
+        - keys:
+            publicKeys: |-
+              -----BEGIN PUBLIC KEY-----
+              MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+              -----END PUBLIC KEY-----
+            signatureAlgorithm: sha256
+      <span class="cm"># Also verify the SBOM attestation exists</span>
+      attestations:
+      - predicateType: https://spdx.dev/Document
+        attestors:
+        - entries:
+          - keys:
+              publicKeys: |-
+                -----BEGIN PUBLIC KEY-----
+                MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...
+                -----END PUBLIC KEY-----</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /P11 -->
+
+<!-- ══ P12 ══ -->
+<div class="pc" onclick="tp(this)">
+  <div class="pc-head">
+    <div class="pnum c">12</div>
+    <div class="pc-meta">
+      <h3>🏆 Capstone — Full Secure Kubernetes Platform</h3>
+      <p>Tie everything together. Complete GitOps pipeline → signed and scanned images → hardened EKS → Falco runtime monitoring → Gatekeeper policies → Vault secrets → Network Policies → Security Hub integration. Production-ready.</p>
+      <div class="pc-footer">
+        <span class="ptag c">All Tools</span><span class="ptag n">GitOps</span><span class="ptag c">Production</span><span class="ptag n">Monitoring</span>
+        <span class="diff hard">▲ EXPERT CAPSTONE</span>
+        <span class="ptime">⏱ 12–16 hours</span>
+      </div>
+    </div>
+    <div class="pc-toggle">▼</div>
+  </div>
+  <div class="pc-body">
+    <div class="steps">
+      <div class="step">
+        <div class="sn">1</div>
+        <div class="sb">
+          <h4>Complete CI/CD → EKS GitOps Pipeline</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Complete secure K8s deployment pipeline</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre">stages:
+  - code-security     <span class="cm"># SAST, secrets, SCA (from Phase 1)</span>
+  - build             <span class="cm"># Build Docker image</span>
+  - image-security    <span class="cm"># Scan + sign image</span>
+  - deploy-staging    <span class="cm"># Deploy to staging EKS</span>
+  - k8s-security      <span class="cm"># Validate K8s manifests</span>
+  - integration-test  <span class="cm"># Run tests against staging</span>
+  - deploy-prod       <span class="cm"># Deploy to production EKS</span>
+  - verify            <span class="cm"># Post-deploy verification</span>
+
+build:
+  stage: build
+  script:
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+scan-and-sign:
+  stage: image-security
+  script:
+    <span class="cm"># Trivy scan — fail on CRITICAL</span>
+    - trivy image --exit-code 1 --severity CRITICAL $IMAGE_TAG
+    <span class="cm"># Generate SBOM</span>
+    - syft $IMAGE_TAG -o spdx-json > sbom.json
+    <span class="cm"># Sign image + attest SBOM</span>
+    - cosign sign --key $COSIGN_KEY $IMAGE_TAG
+    - cosign attest --key $COSIGN_KEY --predicate sbom.json --type spdxjson $IMAGE_TAG
+
+validate-k8s-manifests:
+  stage: k8s-security
+  script:
+    <span class="cm"># Validate K8s YAML with kubeconform</span>
+    - kubeconform -strict -summary ./k8s/
+    <span class="cm"># Check for security issues with kubesec</span>
+    - kubesec scan ./k8s/deployment.yaml | \
+        python3 -c "import json,sys; d=json.load(sys.stdin); \
+        [sys.exit(1) for r in d if r['score'] < 5]"
+    <span class="cm"># Verify Gatekeeper policies will accept manifests</span>
+    - gator test -f ./k8s/ --policy ./gatekeeper-policies/
+
+deploy-staging:
+  stage: deploy-staging
+  environment: staging
+  script:
+    - aws eks update-kubeconfig --name staging-cluster --region us-east-1
+    - kubectl apply -f ./k8s/ -n staging
+    - kubectl rollout status deployment/myapp -n staging --timeout=300s
+
+deploy-prod:
+  stage: deploy-prod
+  environment: production
+  when: manual   <span class="cm"># Human approval required</span>
+  script:
+    - aws eks update-kubeconfig --name prod-cluster --region us-east-1
+    - kubectl apply -f ./k8s/ -n production
+    - kubectl rollout status deployment/myapp -n production --timeout=300s
+
+verify-prod:
+  stage: verify
+  script:
+    <span class="cm"># Verify Falco is running on all nodes</span>
+    - kubectl get daemonset falco -n falco-system
+    <span class="cm"># Verify Gatekeeper is enforcing policies</span>
+    - kubectl get constrainttemplate
+    <span class="cm"># Verify no pods running as root in production</span>
+    - |
+      kubectl get pods -n production -o json | python3 -c "
+      import json,sys
+      pods = json.load(sys.stdin)['items']
+      violations = []
+      for p in pods:
+          for c in p['spec']['containers']:
+              sc = c.get('securityContext', {})
+              if sc.get('runAsUser', 0) == 0 or not sc.get('runAsNonRoot', False):
+                  violations.append(f'{p[\"metadata\"][\"name\"]}/{c[\"name\"]}')
+      if violations:
+          print(f'ROOT CONTAINERS FOUND: {violations}')
+          sys.exit(1)
+      print('All production containers running as non-root ✅')
+      "</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="sn">2</div>
+        <div class="sb">
+          <h4>Route Falco Alerts to AWS Security Hub</h4>
+          <div class="cb">
+            <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — falco-to-securityhub Lambda</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+            <pre"><span class="kw">import</span> boto3, json, datetime, hashlib
+
+securityhub = boto3.client(<span class="str">'securityhub'</span>)
+
+<span class="kw">def</span> <span class="fn">lambda_handler</span>(event, context):
+    <span class="cm"># Falco sends events to this Lambda via Falcosidekick</span>
+    falco_event = event
+
+    priority_map = {
+        <span class="str">"CRITICAL"</span>: <span class="str">"CRITICAL"</span>,
+        <span class="str">"ERROR"</span>: <span class="str">"HIGH"</span>,
+        <span class="str">"WARNING"</span>: <span class="str">"MEDIUM"</span>,
+        <span class="str">"NOTICE"</span>: <span class="str">"LOW"</span>,
+        <span class="str">"INFO"</span>: <span class="str">"INFORMATIONAL"</span>
+    }
+
+    finding = {
+        <span class="str">"SchemaVersion"</span>: <span class="str">"2018-10-08"</span>,
+        <span class="str">"Id"</span>: hashlib.sha256(f<span class="str">"{falco_event['rule']}{falco_event['time']}"</span>.encode()).hexdigest(),
+        <span class="str">"ProductArn"</span>: f<span class="str">"arn:aws:securityhub:{context.invoked_function_arn.split(':')[3]}:{context.invoked_function_arn.split(':')[4]}:product/{context.invoked_function_arn.split(':')[4]}/default"</span>,
+        <span class="str">"GeneratorId"</span>: <span class="str">"falco-runtime-security"</span>,
+        <span class="str">"AwsAccountId"</span>: context.invoked_function_arn.split(<span class="str">':'</span>)[4],
+        <span class="str">"Types"</span>: [<span class="str">"Software and Configuration Checks/Vulnerabilities/CVE"</span>],
+        <span class="str">"FirstObservedAt"</span>: falco_event[<span class="str">'time'</span>],
+        <span class="str">"LastObservedAt"</span>: falco_event[<span class="str">'time'</span>],
+        <span class="str">"CreatedAt"</span>: falco_event[<span class="str">'time'</span>],
+        <span class="str">"UpdatedAt"</span>: falco_event[<span class="str">'time'</span>],
+        <span class="str">"Severity"</span>: {<span class="str">"Label"</span>: priority_map.get(falco_event[<span class="str">'priority'</span>], <span class="str">"MEDIUM"</span>)},
+        <span class="str">"Title"</span>: f<span class="str">"Falco: {falco_event['rule']}"</span>,
+        <span class="str">"Description"</span>: falco_event[<span class="str">'output'</span>],
+        <span class="str">"Resources"</span>: [{
+            <span class="str">"Type"</span>: <span class="str">"Container"</span>,
+            <span class="str">"Id"</span>: falco_event.get(<span class="str">'output_fields'</span>, {}).get(<span class="str">'container.id'</span>, <span class="str">'unknown'</span>),
+            <span class="str">"Details"</span>: {<span class="str">"Other"</span>: {
+                <span class="str">"pod"</span>: falco_event.get(<span class="str">'output_fields'</span>, {}).get(<span class="str">'k8s.pod.name'</span>, <span class="str">'unknown'</span>),
+                <span class="str">"namespace"</span>: falco_event.get(<span class="str">'output_fields'</span>, {}).get(<span class="str">'k8s.ns.name'</span>, <span class="str">'unknown'</span>),
+            }}
+        }],
+        <span class="str">"RecordState"</span>: <span class="str">"ACTIVE"</span>
+    }
+
+    securityhub.batch_import_findings(Findings=[finding])
+    <span class="kw">return</span> {<span class="str">"statusCode"</span>: 200}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note ok"><div class="note-i">✅</div><p><strong>Phase 3 Complete — You Are Now a Kubernetes Security Engineer.</strong> You built your first cluster, understand every K8s concept, implemented RBAC, network policies, pod security, runtime detection with Falco, proper secrets management with Vault, admission control with OPA Gatekeeper, a hardened EKS cluster with Terraform, supply chain security with Cosign, and a complete GitOps pipeline. That's CKS-level knowledge.</p></div>
+  </div>
+</div><!-- /P12 -->
+
+</div><!-- /proj-grid -->
+</div><!-- /tab-all -->
+
+<!-- ══ P1-P3 quickref ══ -->
+<div id="tab-p1" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Projects 1–3 are in the <strong>All Projects</strong> tab. Expand P1 (Your First Cluster), P2 (Namespaces & Secrets), P3 (kube-bench).</p></div>
+  <div class="concept"><h3>📋 P1–P3 Summary</h3>
+  <p><strong>P1:</strong> Install minikube, kubectl, helm. Deploy pods, deployments, services. Learn 15 essential kubectl commands. Understand every cluster component.</p>
+  <p><strong>P2:</strong> Namespaces for environment isolation. ConfigMaps for configuration. K8s Secrets exposed as insecure — understand why you need Vault (P8).</p>
+  <p><strong>P3:</strong> kube-bench CIS benchmark audit. Fix critical API server, etcd, and kubelet misconfigurations. Automate audit in CI pipeline.</p></div>
+</div>
+
+<!-- ══ P4-P6 quickref ══ -->
+<div id="tab-p4" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Projects 4–6 are in the <strong>All Projects</strong> tab. Expand P4 (RBAC), P5 (Network Policies), P6 (Pod Security).</p></div>
+  <div class="concept"><h3>📋 P4–P6 Summary</h3>
+  <p><strong>P4:</strong> Full RBAC system — developer, viewer, auditor roles. Service accounts with <code>automountServiceAccountToken: false</code>. Testing permissions with <code>kubectl auth can-i</code>.</p>
+  <p><strong>P5:</strong> Default-deny all traffic. Explicit allowlist for 3-tier app (frontend→api→db). CNI choice matters (Calico/Cilium for EKS).</p>
+  <p><strong>P6:</strong> <code>runAsNonRoot: true</code>, <code>readOnlyRootFilesystem: true</code>, <code>capabilities: drop: [ALL]</code>, <code>allowPrivilegeEscalation: false</code>. Pod Security Standards enforcement at namespace level.</p></div>
+</div>
+
+<!-- ══ P7-P9 quickref ══ -->
+<div id="tab-p7" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Projects 7–9 are in the <strong>All Projects</strong> tab. Expand P7 (Falco), P8 (Vault), P9 (OPA Gatekeeper).</p></div>
+  <div class="concept"><h3>📋 P7–P9 Summary</h3>
+  <p><strong>P7:</strong> Falco DaemonSet via Helm. eBPF driver for cloud. Trigger and observe real alerts. Custom rules for crypto mining, kubectl-in-container, netcat. Route to Slack/PagerDuty via Falcosidekick.</p>
+  <p><strong>P8:</strong> Vault with K8s auth. Secrets injected as files by sidecar agent. AWS Secrets Manager CSI driver for EKS. Never env vars for secrets.</p>
+  <p><strong>P9:</strong> OPA Gatekeeper ConstraintTemplates in Rego. Enforce: approved registries, no latest tag, required labels, resource limits. Kyverno for image signature verification.</p></div>
+</div>
+
+<!-- ══ P10-P12 quickref ══ -->
+<div id="tab-p10" class="tab-pane">
+  <div class="note info"><div class="note-i">💡</div><p>Projects 10–12 are in the <strong>All Projects</strong> tab. Expand P10 (EKS), P11 (Supply Chain), P12 (Capstone).</p></div>
+  <div class="concept"><h3>📋 P10–P12 Summary</h3>
+  <p><strong>P10:</strong> EKS via Terraform — private API endpoint, encrypted secrets, control plane logging, IMDSv2 on nodes, IRSA for every workload, encrypted EBS, Calico for network policies.</p>
+  <p><strong>P11:</strong> Cosign key pair. Sign images only after scan passes. Attach SBOM and vuln scan as attestations. Kyverno policy rejects unsigned images. Full supply chain integrity.</p>
+  <p><strong>P12:</strong> Full GitOps pipeline tying all phases together. Falco → Security Hub integration. Post-deploy verification script checking all security controls are in place.</p></div>
+</div>
+
+<!-- ══ EKS tab ══ -->
+<div id="tab-eks" class="tab-pane">
+  <div class="sh"><div class="sh-icon">☁️</div><div class="sh-text"><h2>EKS on AWS — Key Differences from Local K8s</h2><p>What changes when you move from minikube to production EKS.</p></div></div>
+
+  <table class="ct">
+    <tr><th>Topic</th><th>Local (minikube)</th><th>AWS EKS</th><th>Security Action</th></tr>
+    <tr><td>API Server</td><td>localhost</td><td>AWS-managed endpoint</td><td>Private endpoint only, CIDR allowlist</td></tr>
+    <tr><td>Authentication</td><td>Kubeconfig cert</td><td>IAM + aws-auth ConfigMap</td><td>Use IAM roles, not static users</td></tr>
+    <tr><td>Node access</td><td>minikube ssh</td><td>EC2 instances</td><td>SSM Session Manager, no SSH keys</td></tr>
+    <tr><td>IAM for pods</td><td>N/A</td><td>IRSA (OIDC federation)</td><td>Every workload gets minimal IAM role</td></tr>
+    <tr><td>Network policies</td><td>Calico addon</td><td>VPC CNI (no enforcement)</td><td>Install Calico on top of VPC CNI</td></tr>
+    <tr><td>Secrets encryption</td><td>Optional</td><td>KMS envelope encryption</td><td>Always enable with dedicated KMS key</td></tr>
+    <tr><td>Image scanning</td><td>Manual</td><td>ECR built-in + Inspector v2</td><td>Enable ECR scan-on-push + Inspector</td></tr>
+    <tr><td>Audit logs</td><td>Optional</td><td>CloudWatch Logs</td><td>Enable all 5 control plane log types</td></tr>
+    <tr><td>Node OS</td><td>Minikube VM</td><td>Amazon Linux 2/Bottlerocket</td><td>Use Bottlerocket for minimal attack surface</td></tr>
+    <tr><td>Runtime security</td><td>Falco</td><td>Falco + GuardDuty EKS</td><td>GuardDuty EKS threat detection enabled</td></tr>
+  </table>
+
+  <div class="concept">
+    <h3>🔐 The aws-auth ConfigMap — Most Critical EKS Security Object</h3>
+    <p>The <code>aws-auth</code> ConfigMap in the <code>kube-system</code> namespace maps IAM roles to Kubernetes RBAC. If an attacker can modify this, they can grant themselves <code>cluster-admin</code>. <strong>Protect it aggressively.</strong></p>
+    <div class="cb">
+      <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — aws-auth ConfigMap (managed by Terraform, never manually)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+      <pre">apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    <span class="cm"># Node group role — must be present for nodes to join</span>
+    - rolearn: arn:aws:iam::ACCOUNT:role/eks-node-group-role
+      username: system:node:{{EC2PrivateDNSName}}
+      groups: [system:bootstrappers, system:nodes]
+
+    <span class="cm"># DevOps team — admin (only SRE team members!)</span>
+    - rolearn: arn:aws:iam::ACCOUNT:role/DevOpsAdminRole
+      username: devops-admin
+      groups: [system:masters]   <span class="cm"># cluster-admin equivalent — be very careful</span>
+
+    <span class="cm"># Developer role — namespace admin for dev only</span>
+    - rolearn: arn:aws:iam::ACCOUNT:role/DeveloperRole
+      username: developer
+      groups: [dev-namespace-admin]   <span class="cm"># Custom group with limited RBAC</span>
+
+    <span class="cm"># CI/CD pipeline role — deploy only, specific namespaces</span>
+    - rolearn: arn:aws:iam::ACCOUNT:role/GitLabRunnerRole
+      username: gitlab-ci
+      groups: [deploy-group]</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHEATSHEET ══ -->
+<div id="tab-cheatsheet" class="tab-pane">
+  <div class="sh"><div class="sh-icon">📋</div><div class="sh-text"><h2>Kubernetes Security Cheat Sheet</h2><p>Everything you need at your fingertips — commands, manifests, mental models.</p></div></div>
+
+  <div class="cb">
+    <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Daily Security Operations</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+    <pre"><span class="cm"># ═══ FIND SECURITY ISSUES ════════════════════════════════</span>
+<span class="cm"># Find pods running as root</span>
+kubectl get pods -A -o json | python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+for p in data['items']:
+    for c in p['spec']['containers']:
+        sc = c.get('securityContext', {})
+        if sc.get('runAsUser', 0) == 0 or not sc.get('runAsNonRoot'):
+            print(f'ROOT: {p[\"metadata\"][\"namespace\"]}/{p[\"metadata\"][\"name\"]}/{c[\"name\"]}')
+"
+
+<span class="cm"># Find pods with no resource limits</span>
+kubectl get pods -A -o json | python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+for p in data['items']:
+    for c in p['spec']['containers']:
+        if not c.get('resources', {}).get('limits'):
+            print(f'NO LIMITS: {p[\"metadata\"][\"namespace\"]}/{p[\"metadata\"][\"name\"]}/{c[\"name\"]}')
+"
+
+<span class="cm"># Find privileged containers</span>
+kubectl get pods -A -o json | python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+for p in data['items']:
+    for c in p['spec']['containers']:
+        if c.get('securityContext', {}).get('privileged'):
+            print(f'PRIVILEGED: {p[\"metadata\"][\"namespace\"]}/{p[\"metadata\"][\"name\"]}')
+"
+
+<span class="cm"># Find pods mounting host paths</span>
+kubectl get pods -A -o json | python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+for p in data['items']:
+    for v in p['spec'].get('volumes', []):
+        if 'hostPath' in v:
+            print(f'HOST MOUNT: {p[\"metadata\"][\"namespace\"]}/{p[\"metadata\"][\"name\"]} → {v[\"hostPath\"]}')
+"
+
+<span class="cm"># Find services exposed externally (LoadBalancer/NodePort)</span>
+kubectl get svc -A --field-selector spec.type=LoadBalancer
+kubectl get svc -A --field-selector spec.type=NodePort
+
+<span class="cm"># Check who has cluster-admin</span>
+kubectl get clusterrolebindings -o json | python3 -c "
+import json,sys
+data = json.load(sys.stdin)
+for rb in data['items']:
+    if rb['roleRef']['name'] == 'cluster-admin':
+        for s in rb.get('subjects', []):
+            print(f'cluster-admin: {s[\"kind\"]}/{s[\"name\"]}')
+"
+
+<span class="cm"># ═══ INVESTIGATE A SUSPICIOUS POD ═══════════════════════</span>
+POD=suspicious-pod-name
+NS=production
+
+kubectl describe pod $POD -n $NS          <span class="cm"># Full details</span>
+kubectl logs $POD -n $NS --previous       <span class="cm"># Crashed container logs</span>
+kubectl get events -n $NS --sort-by='.lastTimestamp'  <span class="cm"># Recent events</span>
+kubectl exec $POD -n $NS -- ps aux        <span class="cm"># Running processes</span>
+kubectl exec $POD -n $NS -- netstat -tlnp <span class="cm"># Open connections</span>
+kubectl exec $POD -n $NS -- cat /proc/1/cmdline  <span class="cm"># Main process</span>
+
+<span class="cm"># ═══ EMERGENCY: ISOLATE A COMPROMISED POD ════════════════</span>
+<span class="cm"># Remove pod labels → Service stops routing traffic to it</span>
+kubectl label pod $POD -n $NS app-   <span class="cm"># Remove the 'app' label</span>
+<span class="cm"># Apply a deny-all network policy targeting this pod's remaining labels</span>
+<span class="cm"># Take a snapshot for forensics</span>
+kubectl get pod $POD -n $NS -o yaml > forensic-pod-spec.yaml
+<span class="cm"># Delete the pod (Deployment will recreate a clean one)</span>
+kubectl delete pod $POD -n $NS</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Secure Pod Template — Copy This Every Time</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+    <pre"><span class="cm"># PASTE THIS as your default pod template — then modify</span>
+spec:
+  serviceAccountName: your-app-sa     <span class="cm"># Dedicated SA</span>
+  automountServiceAccountToken: false  <span class="cm"># Unless needed</span>
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    runAsGroup: 1001
+    fsGroup: 2000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: app
+    image: registry/image:specific-version  <span class="cm"># Never :latest</span>
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"
+    livenessProbe:
+      httpGet: { path: /health, port: 8080 }
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: { path: /ready, port: 8080 }
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    volumeMounts:
+    - { name: tmp, mountPath: /tmp }     <span class="cm"># For readOnlyRootFilesystem</span>
+  volumes:
+  - name: tmp
+    emptyDir: {}
+  topologySpreadConstraints:            <span class="cm"># Spread across nodes for HA</span>
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app: your-app</pre>
+  </div>
+
+  <table class="ct">
+    <tr><th>Tool</th><th>What It Does</th><th>When to Use</th></tr>
+    <tr><td>kube-bench</td><td>CIS K8s Benchmark audit</td><td>New cluster setup, quarterly audits</td></tr>
+    <tr><td>Falco</td><td>Runtime anomaly detection</td><td>Always running in production (DaemonSet)</td></tr>
+    <tr><td>OPA Gatekeeper</td><td>Admission control policies</td><td>Always running — gates every deployment</td></tr>
+    <tr><td>Kyverno</td><td>Policy engine + image verification</td><td>Alternative to Gatekeeper, easier for image signing</td></tr>
+    <tr><td>Trivy</td><td>Image + manifest vulnerability scan</td><td>CI pipeline before push</td></tr>
+    <tr><td>Cosign</td><td>Container image signing</td><td>CI pipeline after scan passes</td></tr>
+    <tr><td>Kubesec</td><td>Security risk score for manifests</td><td>CI pipeline, PR reviews</td></tr>
+    <tr><td>kubeconform</td><td>K8s schema validation</td><td>CI pipeline, validate YAML</td></tr>
+    <tr><td>rbac-tool</td><td>Visualize RBAC permissions</td><td>Auditing, quarterly RBAC review</td></tr>
+    <tr><td>Checkov</td><td>IaC scan (Helm charts, YAML)</td><td>CI pipeline for Helm charts</td></tr>
+    <tr><td>KubeAudit</td><td>Automated security audit</td><td>Periodic cluster health checks</td></tr>
+    <tr><td>Polaris</td><td>Best practices scanner</td><td>Developer feedback on manifests</td></tr>
+  </table>
+</div>
+
+</div><!-- /content -->
+</div><!-- /wrap -->
+
+<footer>
+  DevSecOps Mastery · <span>Phase 3 of 4</span> · Kubernetes Security · Zero to Expert · 12 Projects · Beginner → CKS Level
+</footer>
+
+<script>
+function st(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function tp(card) {
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.pc').forEach(c => c.classList.remove('open'));
+  if (!isOpen) {
+    card.classList.add('open');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
+}
+
+function cp(btn) {
+  const code = btn.closest('.cb').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('#tab-all .pc');
+  if (first) first.classList.add('open');
+});
+</script>
+</body>
+</html>

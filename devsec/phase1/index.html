@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevSecOps Phase 1 — Secure CI/CD Pipeline Mastery</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --bg2: #0d1117;
+    --bg3: #111820;
+    --panel: #141c25;
+    --border: #1e2d3d;
+    --border2: #243447;
+    --accent: #00d4ff;
+    --accent2: #00ff88;
+    --accent3: #ff6b35;
+    --accent4: #a855f7;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2eaf4;
+    --text2: #8ba3bf;
+    --text3: #4a6680;
+    --code-bg: #0a1520;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 48px 0 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+  }
+
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 212, 255, 0.08);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+
+  .phase-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  h1 span.hi { color: var(--accent); }
+  h1 span.hi2 { color: var(--accent2); }
+
+  .header-sub {
+    color: var(--text2);
+    font-size: 15px;
+    max-width: 640px;
+    margin-bottom: 28px;
+    font-weight: 300;
+  }
+
+  .skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .skill-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .tag-green { background: rgba(0, 255, 136, 0.1); color: var(--accent2); border: 1px solid rgba(0, 255, 136, 0.2); }
+  .tag-blue { background: rgba(0, 212, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 212, 255, 0.2); }
+  .tag-orange { background: rgba(255, 107, 53, 0.1); color: var(--accent3); border: 1px solid rgba(255, 107, 53, 0.2); }
+  .tag-purple { background: rgba(168, 85, 247, 0.1); color: var(--accent4); border: 1px solid rgba(168, 85, 247, 0.2); }
+  .tag-yellow { background: rgba(245, 158, 11, 0.1); color: var(--warn); border: 1px solid rgba(245, 158, 11, 0.2); }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin: 32px 0 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 12px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 40px 0 80px; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* CONCEPT BLOCK */
+  .concept-block {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+    position: relative;
+  }
+
+  .concept-block h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--accent);
+  }
+
+  .concept-block p { color: var(--text2); margin-bottom: 12px; }
+  .concept-block p:last-child { margin-bottom: 0; }
+
+  /* PIPELINE DIAGRAM */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow-x: auto;
+    padding: 20px 0;
+    margin: 20px 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .pipe-stage {
+    flex-shrink: 0;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 110px;
+  }
+
+  .pipe-stage .icon { font-size: 18px; margin-bottom: 4px; }
+  .pipe-stage .label { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 600; color: var(--text2); }
+  .pipe-stage .sublabel { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .pipe-stage.secure { border-color: var(--accent2); }
+  .pipe-stage.secure .label { color: var(--accent2); }
+
+  .pipe-arrow {
+    flex-shrink: 0;
+    color: var(--text3);
+    font-size: 18px;
+    padding: 0 4px;
+  }
+
+  /* PROJECT CARDS */
+  .projects-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .project-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .project-card:hover { border-color: var(--border2); }
+
+  .project-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 24px 28px 20px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .project-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    background: rgba(0, 212, 255, 0.08);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    border-radius: 4px;
+    padding: 4px 10px;
+    white-space: nowrap;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .project-num.green { color: var(--accent2); background: rgba(0,255,136,0.08); border-color: rgba(0,255,136,0.2); }
+  .project-num.orange { color: var(--accent3); background: rgba(255,107,53,0.08); border-color: rgba(255,107,53,0.2); }
+  .project-num.purple { color: var(--accent4); background: rgba(168,85,247,0.08); border-color: rgba(168,85,247,0.2); }
+  .project-num.yellow { color: var(--warn); background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); }
+
+  .project-meta { flex: 1; }
+  .project-meta h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .project-meta p { color: var(--text2); font-size: 14px; font-weight: 300; }
+
+  .project-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ptag { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 8px; border-radius: 3px; }
+
+  .toggle-icon {
+    font-size: 18px;
+    color: var(--text3);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .project-card.open .toggle-icon { transform: rotate(180deg); }
+
+  .project-body {
+    display: none;
+    padding: 0 28px 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .project-card.open .project-body { display: block; animation: fadeIn 0.3s ease; }
+
+  /* STEPS */
+  .steps { margin-top: 20px; }
+
+  .step {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  .step-body { flex: 1; }
+
+  .step-body h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .step-body p { color: var(--text2); font-size: 14px; margin-bottom: 10px; }
+
+  /* CODE BLOCKS */
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 12px 0;
+    position: relative;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--text3); }
+  .copy-btn.copied { color: var(--accent2); border-color: var(--accent2); }
+
+  pre {
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #c9d1d9;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .kw { color: #ff7b72; }
+  .str { color: #a5d6ff; }
+  .cm { color: #4a6680; font-style: italic; }
+  .fn { color: #d2a8ff; }
+  .num { color: #79c0ff; }
+  .var { color: #ffa657; }
+  .op { color: #ff7b72; }
+  .hl { background: rgba(0,212,255,0.08); display: block; border-left: 2px solid var(--accent); padding-left: 4px; margin-left: -2px; }
+
+  /* CALLOUTS */
+  .callout {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 6px;
+    margin: 14px 0;
+    font-size: 13.5px;
+  }
+
+  .callout-icon { flex-shrink: 0; font-size: 16px; margin-top: 1px; }
+  .callout p { margin: 0; }
+
+  .callout.info { background: rgba(0,212,255,0.07); border: 1px solid rgba(0,212,255,0.15); color: #9ecfdf; }
+  .callout.warn { background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.2); color: #d4aa60; }
+  .callout.success { background: rgba(0,255,136,0.07); border: 1px solid rgba(0,255,136,0.15); color: #80d4a8; }
+  .callout.danger { background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.2); color: #d48080; }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; margin: 12px 0; }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--text2);
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+  .check-box {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--accent2);
+  }
+
+  /* TOOLS TABLE */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .tool-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+  }
+
+  .tool-card .tool-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .tool-card .tool-desc { font-size: 12px; color: var(--text3); }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    margin-top: 40px;
+  }
+
+  .section-sub {
+    color: var(--text2);
+    font-size: 14px;
+    margin-bottom: 24px;
+    font-weight: 300;
+  }
+
+  /* DIFFICULTY BADGE */
+  .difficulty {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+    margin-top: 8px;
+  }
+
+  .diff-beginner { background: rgba(0,255,136,0.08); color: var(--accent2); border: 1px solid rgba(0,255,136,0.2); }
+  .diff-intermediate { background: rgba(245,158,11,0.08); color: var(--warn); border: 1px solid rgba(245,158,11,0.2); }
+  .diff-advanced { background: rgba(239,68,68,0.08); color: var(--danger); border: 1px solid rgba(239,68,68,0.2); }
+
+  /* TIME ESTIMATE */
+  .time-est {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  /* OVERVIEW TAB */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .overview-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: default;
+  }
+
+  .overview-card:hover {
+    border-color: var(--border2);
+    transform: translateY(-2px);
+  }
+
+  .overview-card .ov-icon { font-size: 24px; margin-bottom: 10px; }
+  .overview-card h4 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .overview-card p { font-size: 13px; color: var(--text3); }
+
+  /* PROGRESS TRACKER */
+  .progress-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+  }
+
+  .progress-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text2);
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bars { display: flex; flex-direction: column; gap: 12px; }
+
+  .prog-item { }
+  .prog-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .prog-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text2); }
+  .prog-pct { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text3); }
+
+  .prog-bar-bg {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .prog-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+
+  /* Inline code */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--accent);
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .project-header { flex-wrap: wrap; }
+    .pipeline { gap: 4px; }
+    .pipe-stage { min-width: 80px; padding: 8px 10px; }
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  footer span { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="phase-badge">Phase 1 of 4 — DevSecOps Mastery</div>
+    <h1>Secure <span class="hi">CI/CD</span> Pipeline<br><span class="hi2">Engineering</span></h1>
+    <p class="header-sub">Shift security left — embed SAST, SCA, secrets detection, container scanning, and DAST directly into your GitLab pipelines. 8 hands-on projects, full code, real-world walkthroughs.</p>
+    <div class="skill-tags">
+      <span class="skill-tag tag-green">GitLab CI/CD</span>
+      <span class="skill-tag tag-blue">SAST / DAST</span>
+      <span class="skill-tag tag-orange">Container Security</span>
+      <span class="skill-tag tag-purple">Secrets Detection</span>
+      <span class="skill-tag tag-yellow">SCA</span>
+      <span class="skill-tag tag-green">IaC Security</span>
+      <span class="skill-tag tag-blue">OWASP ZAP</span>
+      <span class="skill-tag tag-orange">Trivy</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab-btn" onclick="switchTab('projects', this)">All Projects</button>
+    <button class="tab-btn" onclick="switchTab('p1', this)">P1 · SAST</button>
+    <button class="tab-btn" onclick="switchTab('p2', this)">P2 · Secrets</button>
+    <button class="tab-btn" onclick="switchTab('p3', this)">P3 · SCA</button>
+    <button class="tab-btn" onclick="switchTab('p4', this)">P4 · Container Scan</button>
+    <button class="tab-btn" onclick="switchTab('p5', this)">P5 · DAST</button>
+    <button class="tab-btn" onclick="switchTab('p6', this)">P6 · Full Pipeline</button>
+    <button class="tab-btn" onclick="switchTab('p7', this)">P7 · Policy Gates</button>
+    <button class="tab-btn" onclick="switchTab('p8', this)">P8 · SBOM</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ==================== OVERVIEW ==================== -->
+    <div id="tab-overview" class="tab-content active">
+
+      <div class="concept-block">
+        <h2>⚡ The Core Philosophy: Shift Left</h2>
+        <p>Traditional security sits at the <strong>end</strong> of the pipeline — a gate before production. DevSecOps means security runs at <strong>every stage</strong>, automatically, without blocking developer velocity. Finding a vulnerability at commit time costs $80. Finding it in production costs $7,600 (NIST). That's the business case.</p>
+        <p>Below is the secure pipeline you will build across these 8 projects. Each stage adds a security control. By the end, your pipeline auto-blocks deployments with CVEs, exposed secrets, or vulnerable containers.</p>
+
+        <div class="pipeline">
+          <div class="pipe-stage">
+            <div class="icon">✍️</div>
+            <div class="label">Commit</div>
+            <div class="sublabel">Code Push</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage secure">
+            <div class="icon">🔍</div>
+            <div class="label">SAST</div>
+            <div class="sublabel">Semgrep</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage secure">
+            <div class="icon">🔑</div>
+            <div class="label">Secrets</div>
+            <div class="sublabel">TruffleHog</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage secure">
+            <div class="icon">📦</div>
+            <div class="label">SCA</div>
+            <div class="sublabel">OWASP DC</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage">
+            <div class="icon">🔨</div>
+            <div class="label">Build</div>
+            <div class="sublabel">Docker</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage secure">
+            <div class="icon">🐳</div>
+            <div class="label">Img Scan</div>
+            <div class="sublabel">Trivy</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage">
+            <div class="icon">🚀</div>
+            <div class="label">Staging</div>
+            <div class="sublabel">Deploy</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage secure">
+            <div class="icon">⚔️</div>
+            <div class="label">DAST</div>
+            <div class="sublabel">OWASP ZAP</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage secure">
+            <div class="icon">📋</div>
+            <div class="label">SBOM</div>
+            <div class="sublabel">Syft</div>
+          </div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-stage">
+            <div class="icon">✅</div>
+            <div class="label">Prod</div>
+            <div class="sublabel">Release</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">8 Projects in This Phase</div>
+      <p class="section-sub">Ordered by dependency — each builds on the previous. Estimated 6–10 weeks to complete all eight at a solid learning pace.</p>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <div class="ov-icon">🔍</div>
+          <h4>Project 1 — SAST Integration</h4>
+          <p>Embed Semgrep + SonarQube into GitLab CI. Scan code at commit time. Block on HIGH findings.</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">🔑</div>
+          <h4>Project 2 — Secrets Detection</h4>
+          <p>Pre-commit hooks + pipeline scanning with TruffleHog & GitLeaks. Prevent credential leaks.</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">📦</div>
+          <h4>Project 3 — SCA / Dependency Scanning</h4>
+          <p>OWASP Dependency-Check + Snyk. Find CVEs in your third-party libraries automatically.</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">🐳</div>
+          <h4>Project 4 — Container Image Scanning</h4>
+          <p>Trivy + Clair scanning every Docker image. Auto-fail builds with CRITICAL CVEs.</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">⚔️</div>
+          <h4>Project 5 — DAST with OWASP ZAP</h4>
+          <p>Active attack scanning against staging. Find SQLi, XSS, auth bypass in running apps.</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">🏗️</div>
+          <h4>Project 6 — Full Secure Pipeline</h4>
+          <p>Combine all tools into one complete .gitlab-ci.yml. The capstone pipeline with all stages.</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">🛡️</div>
+          <h4>Project 7 — Policy Gates with OPA</h4>
+          <p>Use Open Policy Agent to enforce security decisions. Define rules as code (Rego).</p>
+        </div>
+        <div class="overview-card">
+          <div class="ov-icon">📋</div>
+          <h4>Project 8 — SBOM Generation</h4>
+          <p>Generate Software Bill of Materials with Syft. Integrate with Grype for CVE matching.</p>
+        </div>
+      </div>
+
+      <div class="progress-section">
+        <h3>YOUR CURRENT SKILL COVERAGE</h3>
+        <div class="progress-bars">
+          <div class="prog-item">
+            <div class="prog-label"><span class="prog-name">CI/CD Pipelines (GitLab)</span><span class="prog-pct">60%</span></div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:60%"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-label"><span class="prog-name">Docker & Containers</span><span class="prog-pct">65%</span></div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:65%"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-label"><span class="prog-name">AWS Security Services</span><span class="prog-pct">50%</span></div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:50%"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-label"><span class="prog-name">SAST / DAST Tools</span><span class="prog-pct">15%</span></div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:15%"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-label"><span class="prog-name">Secrets Detection</span><span class="prog-pct">10%</span></div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:10%"></div></div>
+          </div>
+          <div class="prog-item">
+            <div class="prog-label"><span class="prog-name">Policy as Code (OPA)</span><span class="prog-pct">5%</span></div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:5%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PROJECTS LIST ==================== -->
+    <div id="tab-projects" class="tab-content">
+      <div class="section-title">All 8 Projects</div>
+      <p class="section-sub">Click any project to expand the full walkthrough, code, and learning objectives.</p>
+      <div class="projects-grid" id="main-project-list">
+
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num">P-01</div>
+            <div class="project-meta">
+              <h3>SAST Integration — Static Code Analysis in CI</h3>
+              <p>Integrate Semgrep and SonarQube into GitLab CI to scan every commit for security vulnerabilities before they reach your main branch.</p>
+              <div class="project-tags">
+                <span class="ptag tag-blue">Semgrep</span>
+                <span class="ptag tag-blue">SonarQube</span>
+                <span class="ptag tag-green">GitLab CI</span>
+                <span class="ptag tag-orange">Python/Node App</span>
+              </div>
+              <div class="difficulty diff-beginner">● BEGINNER FRIENDLY</div>
+              <div class="time-est">⏱ Estimated: 3–5 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>What is SAST?</strong> Static Application Security Testing analyzes source code <em>without running it</em>. It catches vulnerabilities like SQL injection, hardcoded credentials, insecure deserialization, and dangerous function calls at the code level, before a single line executes in production.</p></div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Set Up a Vulnerable Sample Application</h4>
+                  <p>Use a deliberately vulnerable Python Flask app to see SAST in action. This gives you real findings to work with.</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Clone a vulnerable test app</span>
+git clone https://github.com/OWASP/WebGoat.git
+<span class="cm"># Or create a simple Python Flask app with intentional vulnerabilities</span>
+mkdir devsecops-lab && cd devsecops-lab
+git init
+python3 -m venv venv && source venv/bin/activate
+pip install flask sqlalchemy</pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">python — app.py (intentionally vulnerable)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="kw">from</span> flask <span class="kw">import</span> Flask, request
+<span class="kw">import</span> sqlite3, subprocess, os
+
+app = Flask(__name__)
+
+<span class="cm"># ❌ VULNERABILITY 1: SQL Injection</span>
+<span class="fn">@app.route</span>(<span class="str">'/user'</span>)
+<span class="kw">def</span> <span class="fn">get_user</span>():
+    username = request.args.get(<span class="str">'name'</span>)
+    conn = sqlite3.connect(<span class="str">'users.db'</span>)
+    <span class="cm"># Never do this — direct string concatenation</span>
+    query = <span class="str">f"SELECT * FROM users WHERE name = '</span>{username}<span class="str">'"</span>
+    <span class="kw">return</span> conn.execute(query).fetchall()
+
+<span class="cm"># ❌ VULNERABILITY 2: OS Command Injection</span>
+<span class="fn">@app.route</span>(<span class="str">'/ping'</span>)
+<span class="kw">def</span> <span class="fn">ping</span>():
+    host = request.args.get(<span class="str">'host'</span>)
+    result = subprocess.run(<span class="str">f"ping -c 1 </span>{host}<span class="str">"</span>, shell=<span class="kw">True</span>)
+    <span class="kw">return</span> str(result)
+
+<span class="cm"># ❌ VULNERABILITY 3: Hardcoded secret</span>
+SECRET_KEY = <span class="str">"super-secret-password-123"</span>
+AWS_KEY    = <span class="str">"AKIAIOSFODNN7EXAMPLE"</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>Run Semgrep Locally First</h4>
+                  <p>Always understand a tool locally before putting it in CI. This way you know what to expect.</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Install Semgrep</span>
+pip install semgrep
+
+<span class="cm"># Run with auto-detection (picks rules based on language)</span>
+semgrep --config=auto .
+
+<span class="cm"># Run specific security ruleset</span>
+semgrep --config=p/security-audit .
+semgrep --config=p/owasp-top-ten .
+semgrep --config=p/python .
+
+<span class="cm"># Output JSON for pipeline consumption</span>
+semgrep --config=auto . --json > semgrep-results.json
+
+<span class="cm"># View summary</span>
+cat semgrep-results.json | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+findings = data['results']
+print(f'Total findings: {len(findings)}')
+for f in findings:
+    print(f'  [{f[\"extra\"][\"severity\"]}] {f[\"check_id\"]}')
+    print(f'    File: {f[\"path\"]}:{f[\"start\"][\"line\"]}')
+"</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>Create GitLab CI SAST Stage</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>stages:
+  - security
+  - test
+  - build
+  - deploy
+
+<span class="cm"># ── SAST with Semgrep ─────────────────────────────────</span>
+semgrep-sast:
+  stage: security
+  image: returntocorp/semgrep:latest
+  script:
+    - semgrep --config=auto
+              --config=p/owasp-top-ten
+              --config=p/python
+              --json
+              --output semgrep-report.json
+              ./src
+    <span class="cm"># Fail pipeline if HIGH or CRITICAL severity found</span>
+    - |
+      python3 &lt;&lt;EOF
+      import json, sys
+      with open("semgrep-report.json") as f:
+          data = json.load(f)
+      critical = [r for r in data["results"]
+                  if r["extra"]["severity"] in ["ERROR", "WARNING"]]
+      if critical:
+          print(f"BLOCKING: {len(critical)} high-severity findings")
+          sys.exit(1)
+      print("SAST passed: no high-severity issues")
+      EOF
+  artifacts:
+    when: always
+    reports:
+      sast: semgrep-report.json
+    paths:
+      - semgrep-report.json
+    expire_in: 7 days
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+<span class="cm"># ── SAST with Bandit (Python specific) ───────────────</span>
+bandit-sast:
+  stage: security
+  image: python:3.11-slim
+  script:
+    - pip install bandit
+    - bandit -r ./src -f json -o bandit-report.json -ll
+    - |
+      python3 &lt;&lt;EOF
+      import json, sys
+      with open("bandit-report.json") as f:
+          data = json.load(f)
+      high = [i for i in data["results"]
+              if i["issue_severity"] == "HIGH"]
+      print(f"Bandit findings - HIGH: {len(high)}")
+      if len(high) > 0:
+          for i in high:
+              print(f"  {i['issue_text']} at {i['filename']}:{i['line_number']}")
+          sys.exit(1)
+      EOF
+  artifacts:
+    when: always
+    paths: [bandit-report.json]
+    expire_in: 7 days</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-body">
+                  <h4>Deploy SonarQube for Deeper Analysis</h4>
+                  <p>SonarQube gives you a full dashboard with historical tracking, code coverage gates, and security hotspot review.</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — docker-compose.yml (local SonarQube)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>version: <span class="str">'3.8'</span>
+services:
+  sonarqube:
+    image: sonarqube:community
+    ports:
+      - <span class="str">"9000:9000"</span>
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: <span class="str">"true"</span>
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+
+  sonar-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonarqube
+
+volumes:
+  sonarqube_data:
+  sonarqube_logs:</pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash — Run and configure</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>docker-compose up -d
+
+<span class="cm"># Access: http://localhost:9000  (admin/admin)</span>
+<span class="cm"># Create a project token in UI, then:</span>
+
+<span class="cm"># Scan with sonar-scanner</span>
+docker run --rm \
+  -e SONAR_HOST_URL=http://sonarqube:9000 \
+  -e SONAR_TOKEN=$SONAR_TOKEN \
+  -v "$(pwd):/usr/src" \
+  sonarsource/sonar-scanner-cli \
+  -Dsonar.projectKey=devsecops-lab \
+  -Dsonar.sources=./src</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-body">
+                  <h4>Add SonarQube Quality Gate to Pipeline</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — append to .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>sonarqube-scan:
+  stage: security
+  image: sonarsource/sonar-scanner-cli:latest
+  variables:
+    SONAR_USER_HOME: <span class="str">"${CI_PROJECT_DIR}/.sonar"</span>
+    GIT_DEPTH: <span class="str">"0"</span>
+  cache:
+    key: <span class="str">"${CI_JOB_NAME}"</span>
+    paths: [.sonar/cache]
+  script:
+    - sonar-scanner
+        -Dsonar.projectKey=<span class="var">$CI_PROJECT_NAME</span>
+        -Dsonar.sources=.
+        -Dsonar.host.url=<span class="var">$SONAR_HOST_URL</span>
+        -Dsonar.token=<span class="var">$SONAR_TOKEN</span>
+        -Dsonar.qualitygate.wait=true
+  allow_failure: false</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="callout success"><div class="callout-icon">✅</div><p><strong>Outcome:</strong> Every commit is now scanned for SQL injection, command injection, hardcoded secrets (code-level), XSS, insecure deserialization, and 100+ other vulnerability patterns. Pipelines block automatically on HIGH severity findings.</p></div>
+          </div>
+        </div>
+
+        <!-- PROJECT 2 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num green">P-02</div>
+            <div class="project-meta">
+              <h3>Secrets Detection — Pre-commit Hooks + Pipeline Scanning</h3>
+              <p>Stop API keys, AWS credentials, private keys, and tokens from ever reaching your repository. Pre-commit hooks + TruffleHog + GitLeaks in CI.</p>
+              <div class="project-tags">
+                <span class="ptag tag-green">TruffleHog</span>
+                <span class="ptag tag-green">GitLeaks</span>
+                <span class="ptag tag-purple">pre-commit</span>
+                <span class="ptag tag-blue">detect-secrets</span>
+              </div>
+              <div class="difficulty diff-beginner">● BEGINNER FRIENDLY</div>
+              <div class="time-est">⏱ Estimated: 2–4 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="callout warn"><div class="callout-icon">⚠️</div><p><strong>Why this matters:</strong> In 2023, over 10 million secrets were exposed in public GitHub repos. One leaked AWS key can cost thousands in unauthorized charges within minutes. Secrets scanning is the highest ROI security control you can add — it takes 2 hours to set up and prevents catastrophic breaches.</p></div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Install Pre-commit Framework</h4>
+                  <p>Pre-commit hooks run <em>before</em> any commit is recorded. The secret never enters git history.</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>pip install pre-commit detect-secrets
+
+<span class="cm"># Initialize in your repo</span>
+cd your-repo
+pre-commit install</pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .pre-commit-config.yaml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>repos:
+  <span class="cm"># detect-secrets baseline approach</span>
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: [<span class="str">'--baseline'</span>, <span class="str">'.secrets.baseline'</span>]
+
+  <span class="cm"># GitLeaks pre-commit hook</span>
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+  <span class="cm"># General hygiene</span>
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [<span class="str">'--maxkb=500'</span>]</pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash — Initialize baseline</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Create initial secrets baseline (marks known false positives)</span>
+detect-secrets scan > .secrets.baseline
+git add .secrets.baseline .pre-commit-config.yaml
+git commit -m "chore: add secrets detection pre-commit hooks"
+
+<span class="cm"># Test it — try committing a fake key</span>
+echo "AWS_SECRET=AKIAIOSFODNN7EXAMPLE" > test.py
+git add test.py
+git commit -m "test"
+<span class="cm"># → Should be BLOCKED by pre-commit</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>GitLeaks Configuration File</h4>
+                  <p>Define custom regex rules for your org-specific secrets (internal API keys, DB connection strings, etc.)</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">toml — .gitleaks.toml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>[extend]
+useDefault = true
+
+[[rules]]
+id = <span class="str">"custom-internal-api-key"</span>
+description = <span class="str">"Internal API Key"</span>
+regex = <span class="str">'''MYORG-[A-Z0-9]{32}'''</span>
+tags = [<span class="str">"key"</span>, <span class="str">"internal"</span>]
+
+[[rules]]
+id = <span class="str">"db-connection-string"</span>
+description = <span class="str">"Database connection string with credentials"</span>
+regex = <span class="str">'''(postgres|mysql|mongodb)\:\/\/[^:]+:[^@]+@'''</span>
+tags = [<span class="str">"database"</span>, <span class="str">"credentials"</span>]
+
+[allowlist]
+description = <span class="str">"Global Allowlist"</span>
+regexes = [
+  <span class="str">'''EXAMPLE_KEY'''</span>,          <span class="cm"># Documentation examples</span>
+  <span class="str">'''test_secret_value'''</span>     <span class="cm"># Unit test fixtures</span>
+]
+paths = [
+  <span class="str">'''tests/fixtures/'''</span>,
+  <span class="str">'''docs/examples/'''</span>
+]</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>TruffleHog in GitLab CI</h4>
+                  <p>TruffleHog uses entropy analysis + 800+ regex patterns. It can scan your entire git history, not just the latest commit.</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>trufflehog-scan:
+  stage: security
+  image: trufflesecurity/trufflehog:latest
+  script:
+    <span class="cm"># Scan entire git history for verified secrets</span>
+    - trufflehog git file://. --only-verified --json > trufflehog-report.json || true
+    - |
+      python3 &lt;&lt;EOF
+      import json, sys
+      findings = []
+      with open("trufflehog-report.json") as f:
+          for line in f:
+              if line.strip():
+                  findings.append(json.loads(line))
+      if findings:
+          print(f"CRITICAL: {len(findings)} verified secrets found!")
+          for s in findings:
+              print(f"  Type: {s.get('DetectorName', 'unknown')}")
+              print(f"  File: {s.get('SourceMetadata', {}).get('Data', {})}")
+          sys.exit(1)
+      print("No verified secrets found.")
+      EOF
+  artifacts:
+    when: always
+    paths: [trufflehog-report.json]
+    expire_in: 7 days
+
+gitleaks-scan:
+  stage: security
+  image: zricethezav/gitleaks:latest
+  script:
+    - gitleaks detect
+        --source .
+        --config .gitleaks.toml
+        --report-format json
+        --report-path gitleaks-report.json
+        --exit-code 1
+  artifacts:
+    when: always
+    paths: [gitleaks-report.json]</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-body">
+                  <h4>Scan Historical Git History</h4>
+                  <p>If you're adding this to an existing repo, you need to check what's already committed.</p>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Scan all git history</span>
+docker run --rm -v "$(pwd):/repo" \
+  trufflesecurity/trufflehog:latest \
+  git file:///repo --only-verified
+
+<span class="cm"># If secrets found in history, you MUST rotate them AND rewrite history</span>
+<span class="cm"># Use git-filter-repo to remove secrets from history</span>
+pip install git-filter-repo
+
+git filter-repo \
+  --path-regex '.*\.env' \
+  --invert-paths \
+  --force
+
+<span class="cm"># Then force push ALL branches (coordinate with team)</span>
+git push origin --all --force</pre>
+                  </div>
+                  <div class="callout danger"><div class="callout-icon">🚨</div><p>If a secret is found in git history, <strong>assume it is compromised</strong>. Rotate the credential immediately — even if the repo was private. History rewrites do not help if anyone cloned the repo while the secret was present.</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT 3 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num orange">P-03</div>
+            <div class="project-meta">
+              <h3>SCA — Software Composition Analysis</h3>
+              <p>Automatically find CVEs in your third-party dependencies (npm, pip, Maven, etc.) before they reach production. OWASP Dependency-Check + Snyk.</p>
+              <div class="project-tags">
+                <span class="ptag tag-orange">OWASP Dep-Check</span>
+                <span class="ptag tag-orange">Snyk</span>
+                <span class="ptag tag-blue">Trivy FS</span>
+                <span class="ptag tag-green">CVSS Scoring</span>
+              </div>
+              <div class="difficulty diff-beginner">● BEGINNER FRIENDLY</div>
+              <div class="time-est">⏱ Estimated: 3–4 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>Log4Shell context:</strong> The Log4j vulnerability (CVE-2021-44228) affected millions of applications. SCA tools detect exactly this — a vulnerable version of a transitive dependency buried 4 layers deep in your dependency tree. Without SCA, you wouldn't know until your app is being exploited.</p></div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>OWASP Dependency-Check Setup</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash — Local run</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Run against your project directory</span>
+docker run --rm \
+  -v $(pwd):/src \
+  -v $(pwd)/reports:/report \
+  owasp/dependency-check \
+  --project "MyApp" \
+  --scan /src \
+  --format HTML \
+  --format JSON \
+  --out /report \
+  --failOnCVSS 7
+
+<span class="cm"># Output: /report/dependency-check-report.html</span>
+<span class="cm"># Open in browser to see all CVEs with CVSS scores</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>SCA in GitLab CI Pipeline</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>dependency-check:
+  stage: security
+  image: owasp/dependency-check:latest
+  script:
+    - /usr/share/dependency-check/bin/dependency-check.sh
+        --project "$CI_PROJECT_NAME"
+        --scan .
+        --format JSON
+        --format HTML
+        --out ./reports
+        --failOnCVSS 7.0
+        --enableRetired
+  artifacts:
+    when: always
+    paths: [reports/]
+    expose_as: "OWASP Dependency Check Report"
+    expire_in: 30 days
+
+<span class="cm"># Trivy filesystem scan (faster, great SBOM support)</span>
+trivy-fs-scan:
+  stage: security
+  image: aquasec/trivy:latest
+  script:
+    - trivy fs
+        --exit-code 0
+        --severity HIGH,CRITICAL
+        --format json
+        --output trivy-fs-report.json
+        .
+    - |
+      python3 &lt;&lt;EOF
+      import json, sys
+      with open("trivy-fs-report.json") as f:
+          data = json.load(f)
+      critical = []
+      for result in data.get("Results", []):
+          for vuln in result.get("Vulnerabilities", []) or []:
+              if vuln["Severity"] == "CRITICAL":
+                  critical.append(vuln)
+      if critical:
+          print(f"BLOCKING: {len(critical)} CRITICAL CVEs in dependencies")
+          for v in critical[:5]:
+              print(f"  {v['VulnerabilityID']}: {v['PkgName']}@{v.get('InstalledVersion', '?')}")
+          sys.exit(1)
+      EOF
+  artifacts:
+    when: always
+    paths: [trivy-fs-report.json]</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>Create a requirements.txt with Known Vulnerabilities (Lab Exercise)</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">text — requirements.txt (intentionally vulnerable)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># These contain real CVEs — for learning purposes only</span>
+Django==2.2.0          <span class="cm"># CVE-2021-35042 - SQL Injection</span>
+Pillow==5.4.0          <span class="cm"># CVE-2021-25287 - Buffer Overflow</span>
+requests==2.6.0        <span class="cm"># CVE-2018-18074 - Credential Leak</span>
+PyYAML==3.13           <span class="cm"># CVE-2017-18342 - Arbitrary Code Exec</span></pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash — Snyk scan (requires free account)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>npm install -g snyk
+snyk auth   <span class="cm"># Authenticate with your Snyk account</span>
+
+snyk test   <span class="cm"># Test current directory</span>
+snyk test --file=requirements.txt --severity-threshold=high
+
+<span class="cm"># Auto-fix where possible</span>
+snyk fix</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="callout success"><div class="callout-icon">✅</div><p><strong>Outcome:</strong> Your pipeline now blocks any build where dependencies contain CVSS ≥ 7.0 vulnerabilities. You get a full HTML report with CVE IDs, affected packages, and remediation recommendations.</p></div>
+          </div>
+        </div>
+
+        <!-- PROJECT 4 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num purple">P-04</div>
+            <div class="project-meta">
+              <h3>Container Image Scanning — Trivy + Clair</h3>
+              <p>Every Docker image you build gets scanned for OS-level CVEs, misconfigurations, and vulnerable packages before it's pushed to your registry or deployed.</p>
+              <div class="project-tags">
+                <span class="ptag tag-purple">Trivy</span>
+                <span class="ptag tag-purple">Clair</span>
+                <span class="ptag tag-blue">Docker</span>
+                <span class="ptag tag-orange">Registry Security</span>
+              </div>
+              <div class="difficulty diff-intermediate">◆ INTERMEDIATE</div>
+              <div class="time-est">⏱ Estimated: 4–6 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Build a Deliberately Vulnerable Image</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">dockerfile — Dockerfile.vulnerable</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># ❌ Old base image with known CVEs</span>
+FROM ubuntu:18.04
+
+<span class="cm"># ❌ Running as root</span>
+USER root
+
+<span class="cm"># ❌ Installing vulnerable packages</span>
+RUN apt-get update && apt-get install -y \
+    openssl=1.1.1-1ubuntu2.1~18.04.20 \
+    curl \
+    python3 \
+    python3-pip
+
+<span class="cm"># ❌ Hardcoded credentials in image layer</span>
+ENV DB_PASSWORD=mysecretpassword
+
+COPY . /app
+RUN pip3 install -r /app/requirements.txt
+
+CMD ["python3", "/app/app.py"]</pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">dockerfile — Dockerfile.secure (fixed)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># ✅ Use minimal, current base image</span>
+FROM python:3.11-alpine AS builder
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM python:3.11-alpine AS runtime
+
+<span class="cm"># ✅ Non-root user</span>
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
+WORKDIR /app
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --chown=appuser:appgroup . .
+
+<span class="cm"># ✅ No secrets in image — use runtime env injection</span>
+<span class="cm"># DB_PASSWORD passed at runtime via AWS Secrets Manager or env</span>
+
+EXPOSE 8080
+CMD ["python3", "app.py"]</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>Trivy Container Scan — Local</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Install Trivy</span>
+docker pull aquasec/trivy:latest
+
+<span class="cm"># Build and scan the vulnerable image</span>
+docker build -f Dockerfile.vulnerable -t myapp:vulnerable .
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image \
+  --severity HIGH,CRITICAL \
+  --format table \
+  myapp:vulnerable
+
+<span class="cm"># Now scan the secure version</span>
+docker build -f Dockerfile.secure -t myapp:secure .
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image \
+  --severity HIGH,CRITICAL \
+  myapp:secure
+
+<span class="cm"># Compare the CVE counts — dramatic difference</span>
+
+<span class="cm"># Also scan for misconfigurations in Dockerfile</span>
+docker run --rm -v "$(pwd):/src" aquasec/trivy config /src</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>Container Scanning in GitLab CI</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>build-image:
+  stage: build
+  image: docker:24
+  services: [docker:24-dind]
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+container-scan:
+  stage: build
+  image: aquasec/trivy:latest
+  needs: [build-image]
+  variables:
+    TRIVY_EXIT_CODE: <span class="str">"1"</span>
+    TRIVY_SEVERITY: <span class="str">"HIGH,CRITICAL"</span>
+    TRIVY_NO_PROGRESS: <span class="str">"true"</span>
+  script:
+    <span class="cm"># Cache Trivy DB between runs</span>
+    - mkdir -p /tmp/trivy-cache
+    - trivy image
+        --cache-dir /tmp/trivy-cache
+        --exit-code $TRIVY_EXIT_CODE
+        --severity $TRIVY_SEVERITY
+        --ignore-unfixed
+        --format json
+        --output trivy-image-report.json
+        $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+  cache:
+    key: trivy-db
+    paths: [/tmp/trivy-cache/]
+  artifacts:
+    when: always
+    reports:
+      container_scanning: trivy-image-report.json
+    paths: [trivy-image-report.json]
+
+<span class="cm"># Only push to registry AFTER scan passes</span>
+promote-image:
+  stage: deploy
+  needs: [container-scan]
+  script:
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+               $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT 5 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num yellow">P-05</div>
+            <div class="project-meta">
+              <h3>DAST — Dynamic Application Security Testing with OWASP ZAP</h3>
+              <p>Attack your own staging environment automatically. Find vulnerabilities that only appear at runtime: XSS, SQLi, auth bypass, CSRF, insecure headers.</p>
+              <div class="project-tags">
+                <span class="ptag tag-yellow">OWASP ZAP</span>
+                <span class="ptag tag-yellow">Nikto</span>
+                <span class="ptag tag-orange">Active Scanning</span>
+                <span class="ptag tag-blue">API Security</span>
+              </div>
+              <div class="difficulty diff-intermediate">◆ INTERMEDIATE</div>
+              <div class="time-est">⏱ Estimated: 5–7 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>SAST vs DAST:</strong> SAST reads your code. DAST <em>runs your application</em> and throws real attack payloads at it — SQL injection strings, XSS scripts, path traversals. It finds vulnerabilities that only appear at runtime, like misconfigured frameworks or insecure third-party integrations.</p></div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Set Up Target Application (DVWA)</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Damn Vulnerable Web Application — perfect DAST target</span>
+docker run --rm -d \
+  --name dvwa \
+  -p 8080:80 \
+  vulnerables/web-dvwa
+
+<span class="cm"># Access: http://localhost:8080 (admin/password)</span>
+<span class="cm"># Setup: Click "Create / Reset Database" on first login</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>OWASP ZAP Baseline Scan (Passive)</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Baseline: passive scan only (no active attacks) — safe for production</span>
+docker run --rm \
+  -v $(pwd):/zap/wrk \
+  -t ghcr.io/zaproxy/zaproxy:stable \
+  zap-baseline.py \
+  -t http://host.docker.internal:8080 \
+  -J zap-baseline-report.json \
+  -r zap-baseline-report.html
+
+<span class="cm"># Open zap-baseline-report.html to see findings</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>ZAP Full Active Scan (Staging Only)</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># ⚠️  ONLY run against staging — active scan sends real attack payloads</span>
+docker run --rm \
+  -v $(pwd):/zap/wrk \
+  -t ghcr.io/zaproxy/zaproxy:stable \
+  zap-full-scan.py \
+  -t http://host.docker.internal:8080 \
+  -J zap-full-report.json \
+  -r zap-full-report.html \
+  -l WARN \
+  -I   <span class="cm"># Don't fail on warnings, only errors</span></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-body">
+                  <h4>ZAP API Scan (for REST APIs)</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># If your app has an OpenAPI/Swagger spec:</span>
+docker run --rm \
+  -v $(pwd):/zap/wrk \
+  -t ghcr.io/zaproxy/zaproxy:stable \
+  zap-api-scan.py \
+  -t http://host.docker.internal:8080/api/openapi.json \
+  -f openapi \
+  -J zap-api-report.json \
+  -r zap-api-report.html</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-body">
+                  <h4>DAST in GitLab CI Pipeline</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>deploy-staging:
+  stage: deploy
+  script:
+    - <span class="cm"># Your deployment commands here</span>
+    - echo $STAGING_URL > staging_url.txt
+  artifacts:
+    paths: [staging_url.txt]
+
+dast-baseline:
+  stage: dast
+  image: ghcr.io/zaproxy/zaproxy:stable
+  needs: [deploy-staging]
+  variables:
+    TARGET_URL: <span class="str">"https://staging.myapp.example.com"</span>
+  script:
+    - mkdir -p /zap/wrk
+    - zap-baseline.py
+        -t $TARGET_URL
+        -J zap-report.json
+        -r zap-report.html
+        -I
+    - |
+      python3 &lt;&lt;EOF
+      import json, sys
+      with open("/zap/wrk/zap-report.json") as f:
+          data = json.load(f)
+      high_alerts = [a for a in data.get("site", [{}])[0].get("alerts", [])
+                     if a.get("riskcode", "0") in ["3", "4"]]
+      if high_alerts:
+          print(f"DAST found {len(high_alerts)} HIGH/CRITICAL alerts!")
+          for a in high_alerts:
+              print(f"  {a['alert']}: {a['desc'][:100]}")
+          sys.exit(1)
+      print("DAST baseline passed!")
+      EOF
+  artifacts:
+    when: always
+    paths: [/zap/wrk/zap-report.html, /zap/wrk/zap-report.json]
+    expose_as: "ZAP DAST Report"</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT 6 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num">P-06</div>
+            <div class="project-meta">
+              <h3>Full Secure Pipeline — Capstone Integration</h3>
+              <p>Combine all tools into one complete, production-ready .gitlab-ci.yml. The complete DevSecOps pipeline with every security stage, parallel execution, and smart failure policies.</p>
+              <div class="project-tags">
+                <span class="ptag tag-blue">All Tools</span>
+                <span class="ptag tag-blue">Parallel Jobs</span>
+                <span class="ptag tag-green">DAG Pipeline</span>
+                <span class="ptag tag-orange">Reporting</span>
+              </div>
+              <div class="difficulty diff-advanced">▲ ADVANCED</div>
+              <div class="time-est">⏱ Estimated: 6–10 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Complete Production .gitlab-ci.yml</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml (complete)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># ═══════════════════════════════════════════════════════
+# DEVSECOPS MASTER PIPELINE — Full Secure CI/CD
+# ═══════════════════════════════════════════════════════</span>
+
+stages:
+  - security      <span class="cm"># All static scanning (parallel)</span>
+  - build         <span class="cm"># Build + image scan</span>
+  - test          <span class="cm"># Unit + integration tests</span>
+  - staging       <span class="cm"># Deploy to staging</span>
+  - dast          <span class="cm"># Dynamic attack scanning</span>
+  - sbom          <span class="cm"># Software Bill of Materials</span>
+  - release       <span class="cm"># Production release gate</span>
+
+variables:
+  DOCKER_DRIVER: overlay2
+  TRIVY_SEVERITY: HIGH,CRITICAL
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+
+<span class="cm"># ── Reusable security job template ───────────────────</span>
+.security-template: &security-template
+  stage: security
+  interruptible: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH =~ /^(main|develop|release\/)/'
+
+<span class="cm"># ── STAGE 1: Security (all parallel) ─────────────────</span>
+
+semgrep:
+  <<: *security-template
+  image: returntocorp/semgrep
+  script:
+    - semgrep --config=auto --config=p/owasp-top-ten
+              --json --output semgrep.json . || true
+    - python3 -c "
+import json,sys; d=json.load(open('semgrep.json'))
+h=[r for r in d['results'] if r['extra']['severity']=='ERROR']
+print(f'SAST: {len(h)} HIGH'); [print(f'  {r[\"check_id\"]}') for r in h[:3]]
+sys.exit(1) if h else None"
+  artifacts:
+    reports: { sast: semgrep.json }
+    when: always
+
+secrets-scan:
+  <<: *security-template
+  image: trufflesecurity/trufflehog:latest
+  script:
+    - trufflehog git file://. --only-verified
+              --json > trufflehog.json || true
+    - |
+      count=$(wc -l < trufflehog.json)
+      [ $count -gt 0 ] && echo "SECRETS FOUND: $count" && exit 1
+      echo "No verified secrets"
+  artifacts:
+    paths: [trufflehog.json]
+    when: always
+
+gitleaks:
+  <<: *security-template
+  image: zricethezav/gitleaks:latest
+  script:
+    - gitleaks detect --source . --format json
+              --report-path gitleaks.json --exit-code 1
+  artifacts:
+    paths: [gitleaks.json]
+    when: always
+
+sca-scan:
+  <<: *security-template
+  image: aquasec/trivy:latest
+  script:
+    - trivy fs --exit-code 1 --severity $TRIVY_SEVERITY
+              --format json --output trivy-fs.json .
+  artifacts:
+    paths: [trivy-fs.json]
+    when: always
+
+<span class="cm"># ── STAGE 2: Build + Image Scan ───────────────────────</span>
+
+build:
+  stage: build
+  image: docker:24
+  services: [docker:24-dind]
+  needs: [semgrep, secrets-scan, sca-scan]
+  script:
+    - docker login -u $CI_REGISTRY_USER
+              -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE .
+    - docker push $IMAGE
+
+image-scan:
+  stage: build
+  image: aquasec/trivy:latest
+  needs: [build]
+  script:
+    - trivy image --exit-code 1
+              --severity $TRIVY_SEVERITY
+              --ignore-unfixed
+              --format json --output trivy-img.json
+              $IMAGE
+  artifacts:
+    reports: { container_scanning: trivy-img.json }
+    when: always
+
+<span class="cm"># ── STAGE 3: Tests ────────────────────────────────────</span>
+
+unit-tests:
+  stage: test
+  needs: [build]
+  image: python:3.11
+  script:
+    - pip install -r requirements-test.txt
+    - pytest tests/ --junitxml=junit.xml --cov=src
+              --cov-report xml:coverage.xml
+  artifacts:
+    reports:
+      junit: junit.xml
+      coverage_report: { coverage_format: cobertura, path: coverage.xml }
+
+<span class="cm"># ── STAGE 4-5: Staging + DAST ─────────────────────────</span>
+
+deploy-staging:
+  stage: staging
+  needs: [unit-tests, image-scan]
+  environment:
+    name: staging
+    url: https://staging.myapp.example.com
+  script:
+    - <span class="cm"># kubectl apply or docker-compose on staging server</span>
+    - echo "Deployed to staging"
+
+dast-scan:
+  stage: dast
+  image: ghcr.io/zaproxy/zaproxy:stable
+  needs: [deploy-staging]
+  script:
+    - zap-baseline.py -t $STAGING_URL -J zap.json -I
+  artifacts:
+    paths: [zap.json]
+    when: always
+
+<span class="cm"># ── STAGE 6-7: SBOM + Release Gate ───────────────────</span>
+
+generate-sbom:
+  stage: sbom
+  image: anchore/syft:latest
+  needs: [image-scan]
+  script:
+    - syft $IMAGE -o spdx-json > sbom.spdx.json
+    - syft $IMAGE -o cyclonedx-json > sbom.cyclonedx.json
+  artifacts:
+    paths: [sbom.spdx.json, sbom.cyclonedx.json]
+
+release:
+  stage: release
+  needs: [dast-scan, generate-sbom]
+  environment:
+    name: production
+    url: https://myapp.example.com
+  script:
+    - docker tag $IMAGE $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+    - echo "Released to production"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual   <span class="cm"># Require human approval for prod</span></pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT 7 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num green">P-07</div>
+            <div class="project-meta">
+              <h3>Policy as Code — OPA / Open Policy Agent</h3>
+              <p>Define security decisions as code using Rego language. Enforce that images come from approved registries, all containers run non-root, and no CRITICAL CVEs pass through.</p>
+              <div class="project-tags">
+                <span class="ptag tag-green">OPA</span>
+                <span class="ptag tag-green">Rego</span>
+                <span class="ptag tag-blue">Conftest</span>
+                <span class="ptag tag-purple">Policy Gates</span>
+              </div>
+              <div class="difficulty diff-advanced">▲ ADVANCED</div>
+              <div class="time-est">⏱ Estimated: 6–8 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>What is OPA?</strong> Open Policy Agent is a general-purpose policy engine. You write policies in Rego (a declarative language). OPA decides: should this Docker image be deployed? Should this Terraform plan be applied? Should this API request be allowed? It's the enforcement brain for all your security rules.</p></div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Install Conftest (OPA for CI/CD)</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>brew install conftest   <span class="cm"># macOS</span>
+<span class="cm"># or</span>
+wget https://github.com/open-policy-agent/conftest/releases/download/v0.46.0/conftest_0.46.0_Linux_x86_64.tar.gz
+tar xzf conftest*.tar.gz && mv conftest /usr/local/bin/</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>Write Security Policies in Rego</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">rego — policy/docker.rego</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="kw">package</span> main
+
+<span class="cm"># ── Policy 1: No running as root ─────────────────────</span>
+<span class="kw">deny</span>[msg] {
+  input.config.User == <span class="str">""</span>
+  msg := <span class="str">"Dockerfile must specify a non-root USER"</span>
+}
+
+<span class="kw">deny</span>[msg] {
+  input.config.User == <span class="str">"root"</span>
+  msg := <span class="str">"Dockerfile must not run as root user"</span>
+}
+
+<span class="cm"># ── Policy 2: Base image must be approved ────────────</span>
+approved_base_images := {
+  <span class="str">"python:3.11-alpine"</span>,
+  <span class="str">"node:20-alpine"</span>,
+  <span class="str">"golang:1.21-alpine"</span>,
+  <span class="str">"ubuntu:22.04"</span>
+}
+
+<span class="kw">deny</span>[msg] {
+  image := input.config.Image
+  <span class="kw">not</span> approved_base_images[image]
+  msg := sprintf(<span class="str">"Base image '%v' is not in approved list"</span>, [image])
+}
+
+<span class="cm"># ── Policy 3: No hardcoded secrets in ENV ────────────</span>
+secret_patterns := [
+  <span class="str">"password"</span>, <span class="str">"secret"</span>, <span class="str">"key"</span>, <span class="str">"token"</span>, <span class="str">"credential"</span>
+]
+
+<span class="kw">deny</span>[msg] {
+  env_var := input.config.Env[_]
+  parts := split(env_var, <span class="str">"="</span>)
+  key := lower(parts[0])
+  pattern := secret_patterns[_]
+  contains(key, pattern)
+  count(parts) > 1
+  parts[1] != <span class="str">""</span>
+  msg := sprintf(<span class="str">"ENV var '%v' may contain a hardcoded secret"</span>, [parts[0]])
+}
+
+<span class="cm"># ── Policy 4: HEALTHCHECK must be defined ────────────</span>
+<span class="kw">deny</span>[msg] {
+  <span class="kw">not</span> input.config.Healthcheck
+  msg := <span class="str">"Dockerfile must define a HEALTHCHECK"</span>
+}</pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">rego — policy/trivy.rego (enforce CVE threshold)</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="kw">package</span> main
+
+<span class="kw">deny</span>[msg] {
+  result := input.Results[_]
+  vuln := result.Vulnerabilities[_]
+  vuln.Severity == <span class="str">"CRITICAL"</span>
+  msg := sprintf(
+    <span class="str">"CRITICAL CVE %v in %v@%v — must be fixed before deploy"</span>,
+    [vuln.VulnerabilityID, vuln.PkgName, vuln.InstalledVersion]
+  )
+}
+
+<span class="kw">warn</span>[msg] {
+  result := input.Results[_]
+  vuln := result.Vulnerabilities[_]
+  vuln.Severity == <span class="str">"HIGH"</span>
+  msg := sprintf(
+    <span class="str">"HIGH CVE %v in %v — consider updating"</span>,
+    [vuln.VulnerabilityID, vuln.PkgName]
+  )
+}</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>Run Conftest in Pipeline</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash — Local test</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Test Dockerfile against policies</span>
+docker inspect myapp:latest | conftest test - --policy policy/
+
+<span class="cm"># Test Trivy output against CVE policy</span>
+conftest test trivy-img.json --policy policy/trivy.rego
+
+<span class="cm"># Expected output:</span>
+<span class="cm"># FAIL - Dockerfile must specify a non-root USER</span>
+<span class="cm"># FAIL - CRITICAL CVE CVE-2021-44228 in log4j@2.14.0</span></pre>
+                  </div>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — GitLab CI job</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>policy-gate:
+  stage: security
+  image: openpolicyagent/conftest:latest
+  needs: [container-scan]
+  script:
+    <span class="cm"># Evaluate Trivy results against policy</span>
+    - conftest test trivy-img.json
+              --policy policy/trivy.rego
+              --output json > policy-results.json
+    <span class="cm"># Evaluate Dockerfile against policy</span>
+    - docker inspect $IMAGE | conftest test -
+              --policy policy/docker.rego
+  artifacts:
+    when: always
+    paths: [policy-results.json]</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROJECT 8 -->
+        <div class="project-card" onclick="toggleProject(this)">
+          <div class="project-header">
+            <div class="project-num orange">P-08</div>
+            <div class="project-meta">
+              <h3>SBOM — Software Bill of Materials with Syft + Grype</h3>
+              <p>Generate a complete inventory of every component in your software. SPDX and CycloneDX format SBOMs fed into Grype for continuous CVE matching across your entire fleet.</p>
+              <div class="project-tags">
+                <span class="ptag tag-orange">Syft</span>
+                <span class="ptag tag-orange">Grype</span>
+                <span class="ptag tag-blue">SPDX</span>
+                <span class="ptag tag-blue">CycloneDX</span>
+              </div>
+              <div class="difficulty diff-advanced">▲ ADVANCED</div>
+              <div class="time-est">⏱ Estimated: 4–6 hours</div>
+            </div>
+            <div class="toggle-icon">▼</div>
+          </div>
+          <div class="project-body">
+            <div class="callout info"><div class="callout-icon">ℹ️</div><p><strong>Why SBOM?</strong> US Executive Order 14028 (2021) mandates SBOMs for software sold to the federal government. Even outside government, an SBOM lets you answer in minutes: "Are any of our 200 services using the vulnerable version of OpenSSL?" Without it, that answer takes weeks.</p></div>
+
+            <div class="steps">
+              <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-body">
+                  <h4>Generate SBOM with Syft</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Install</span>
+curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
+
+<span class="cm"># Generate SBOM from a container image</span>
+syft myapp:latest -o spdx-json > sbom.spdx.json
+syft myapp:latest -o cyclonedx-json > sbom.cyclonedx.json
+syft myapp:latest -o table   <span class="cm"># human-readable</span>
+
+<span class="cm"># Generate from directory (source code)</span>
+syft dir:./src -o spdx-json > sbom-source.spdx.json
+
+<span class="cm"># Count components</span>
+cat sbom.spdx.json | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+pkgs = d.get('packages', [])
+print(f'Total components: {len(pkgs)}')
+by_type = {}
+for p in pkgs:
+    t = p.get('externalRefs', [{}])[0].get('referenceCategory', 'OTHER')
+    by_type[t] = by_type.get(t, 0) + 1
+for k, v in sorted(by_type.items(), key=lambda x: -x[1]):
+    print(f'  {k}: {v}')
+"</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-body">
+                  <h4>Scan SBOM with Grype</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre><span class="cm"># Install Grype</span>
+curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh
+
+<span class="cm"># Scan SBOM for CVEs</span>
+grype sbom:./sbom.spdx.json
+grype sbom:./sbom.spdx.json --fail-on critical
+
+<span class="cm"># JSON output for automation</span>
+grype sbom:./sbom.spdx.json -o json > grype-results.json
+
+<span class="cm"># Parse results</span>
+cat grype-results.json | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+matches = d.get('matches', [])
+by_sev = {}
+for m in matches:
+    s = m['vulnerability']['severity']
+    by_sev[s] = by_sev.get(s, 0) + 1
+print('CVE Summary:')
+for sev in ['Critical', 'High', 'Medium', 'Low']:
+    print(f'  {sev}: {by_sev.get(sev, 0)}')
+"</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-body">
+                  <h4>SBOM in GitLab CI + Attestation</h4>
+                  <div class="code-block">
+                    <div class="code-header"><span class="code-lang">yaml — .gitlab-ci.yml</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+                    <pre>generate-sbom:
+  stage: sbom
+  image: anchore/syft:latest
+  script:
+    <span class="cm"># Generate in multiple formats</span>
+    - syft $IMAGE -o spdx-json  > sbom.spdx.json
+    - syft $IMAGE -o cyclonedx-json > sbom.cyclonedx.json
+
+    <span class="cm"># Immediately scan SBOM with Grype</span>
+    - grype sbom:./sbom.spdx.json
+            --fail-on critical
+            -o json > grype-results.json
+
+    <span class="cm"># Attach SBOM to image as OCI artifact</span>
+    - cosign attach sbom --sbom sbom.spdx.json $IMAGE
+  artifacts:
+    paths: [sbom.spdx.json, sbom.cyclonedx.json, grype-results.json]
+    expire_in: 90 days
+
+<span class="cm"># Sign the SBOM with Cosign (supply chain security)</span>
+sign-attestation:
+  stage: sbom
+  needs: [generate-sbom]
+  image: gcr.io/projectsigstore/cosign:latest
+  script:
+    - cosign sign --key cosign.key $IMAGE
+    - cosign attest --predicate sbom.cyclonedx.json
+                    --type cyclonedx
+                    --key cosign.key
+                    $IMAGE</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="callout success"><div class="callout-icon">✅</div><p><strong>Final Outcome — Phase 1 Complete:</strong> You now have an enterprise-grade DevSecOps pipeline. Every commit is scanned for code vulnerabilities, secrets, and dependency CVEs. Every Docker image is scanned before deployment. Your running app is attacked dynamically in staging. Policy gates enforce security decisions as code. And you generate a full software inventory (SBOM) for every release. This is what senior DevSecOps engineers build at top-tier companies.</p></div>
+          </div>
+        </div>
+
+      </div><!-- /projects-grid -->
+    </div><!-- /tab-projects -->
+
+    <!-- ==================== INDIVIDUAL PROJECT TABS ==================== -->
+    <!-- These tabs deep-link to specific projects for quick access -->
+    <div id="tab-p1" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 1 is in the <strong>All Projects</strong> tab. Click it above, then expand "P-01 — SAST Integration".</p></div>
+      <div class="section-title">Quick Reference — SAST Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-name">Semgrep</div><div class="tool-desc">Fast, pattern-based SAST. 2000+ rules. Free tier available.</div></div>
+        <div class="tool-card"><div class="tool-name">SonarQube</div><div class="tool-desc">Full dashboard, historical tracking, quality gates.</div></div>
+        <div class="tool-card"><div class="tool-name">Bandit</div><div class="tool-desc">Python-specific security linter. Part of Python ecosystem.</div></div>
+        <div class="tool-card"><div class="tool-name">ESLint Security</div><div class="tool-desc">JavaScript/Node.js security rules via ESLint plugin.</div></div>
+        <div class="tool-card"><div class="tool-name">Brakeman</div><div class="tool-desc">Rails-specific SAST scanner.</div></div>
+        <div class="tool-card"><div class="tool-name">SpotBugs</div><div class="tool-desc">Java bytecode analysis with Find Security Bugs plugin.</div></div>
+      </div>
+    </div>
+
+    <div id="tab-p2" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 2 is in the <strong>All Projects</strong> tab. Click it above, then expand "P-02 — Secrets Detection".</p></div>
+      <div class="section-title">Quick Reference — Secrets Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-name">TruffleHog</div><div class="tool-desc">Verified secrets via entropy + 800 detectors. Scans git history.</div></div>
+        <div class="tool-card"><div class="tool-name">GitLeaks</div><div class="tool-desc">Fast regex + entropy scanner. Great pre-commit integration.</div></div>
+        <div class="tool-card"><div class="tool-name">detect-secrets</div><div class="tool-desc">Yelp's tool. Baseline approach reduces false positives.</div></div>
+        <div class="tool-card"><div class="tool-name">git-secrets</div><div class="tool-desc">AWS-focused. Prevents committing AWS keys.</div></div>
+      </div>
+    </div>
+
+    <div id="tab-p3" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 3 is in the <strong>All Projects</strong> tab. Expand "P-03 — SCA".</p></div>
+      <div class="section-title">Quick Reference — SCA Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-name">OWASP Dep-Check</div><div class="tool-desc">Industry standard. Checks NVD database. Multi-language.</div></div>
+        <div class="tool-card"><div class="tool-name">Snyk</div><div class="tool-desc">Commercial with free tier. Auto-fix PRs. Developer-friendly.</div></div>
+        <div class="tool-card"><div class="tool-name">Trivy FS</div><div class="tool-desc">Trivy in filesystem mode. Fast, comprehensive.</div></div>
+        <div class="tool-card"><div class="tool-name">Safety (pip)</div><div class="tool-desc">Python-specific. Checks PyPI packages against CVE DB.</div></div>
+      </div>
+    </div>
+
+    <div id="tab-p4" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 4 is in the <strong>All Projects</strong> tab. Expand "P-04 — Container Scan".</p></div>
+      <div class="section-title">Quick Reference — Container Security</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-name">Trivy</div><div class="tool-desc">Best all-around. Images, filesystems, IaC. Very fast.</div></div>
+        <div class="tool-card"><div class="tool-name">Clair</div><div class="tool-desc">CoreOS scanner. Integrates with Harbor registry.</div></div>
+        <div class="tool-card"><div class="tool-name">Grype</div><div class="tool-desc">Anchore's scanner. Pairs with Syft for SBOM.</div></div>
+        <div class="tool-card"><div class="tool-name">Snyk Container</div><div class="tool-desc">Commercial. Integrates with Dockerfile for fix suggestions.</div></div>
+        <div class="tool-card"><div class="tool-name">Docker Scout</div><div class="tool-desc">Docker's native scanner. Built into Docker Desktop.</div></div>
+      </div>
+    </div>
+
+    <div id="tab-p5" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 5 is in the <strong>All Projects</strong> tab. Expand "P-05 — DAST".</p></div>
+      <div class="section-title">Quick Reference — DAST Tools</div>
+      <div class="tools-grid">
+        <div class="tool-card"><div class="tool-name">OWASP ZAP</div><div class="tool-desc">Industry standard DAST. Free, powerful, CI-ready.</div></div>
+        <div class="tool-card"><div class="tool-name">Nikto</div><div class="tool-desc">Quick web server scanner. Good for baseline checks.</div></div>
+        <div class="tool-card"><div class="tool-name">Burp Suite</div><div class="tool-desc">Professional DAST + manual pentest platform.</div></div>
+        <div class="tool-card"><div class="tool-name">Nuclei</div><div class="tool-desc">Template-based scanner. 7000+ community templates.</div></div>
+      </div>
+    </div>
+
+    <div id="tab-p6" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 6 (complete pipeline) is in the <strong>All Projects</strong> tab. Expand "P-06 — Full Secure Pipeline".</p></div>
+    </div>
+    <div id="tab-p7" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 7 (OPA/Policy as Code) is in the <strong>All Projects</strong> tab. Expand "P-07 — Policy Gates with OPA".</p></div>
+    </div>
+    <div id="tab-p8" class="tab-content">
+      <div class="callout info"><div class="callout-icon">ℹ️</div><p>Full walkthrough for Project 8 (SBOM) is in the <strong>All Projects</strong> tab. Expand "P-08 — SBOM Generation".</p></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /container -->
+
+<footer>
+  <div class="container">
+    DevSecOps Mastery · Phase 1 of 4 · <span>Secure CI/CD Pipeline</span> · Build → Scan → Deploy Safely
+  </div>
+</footer>
+
+<script>
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function toggleProject(card) {
+    const isOpen = card.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.project-card').forEach(c => c.classList.remove('open'));
+    if (!isOpen) card.classList.add('open');
+  }
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Open first project by default
+  document.addEventListener('DOMContentLoaded', () => {
+    const first = document.querySelector('#main-project-list .project-card');
+    if (first) first.classList.add('open');
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,3347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevSecOps Phase 2 — IaC Security & AWS Terraform Mastery</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@300;400;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0e0c09;
+  --bg2:      #141108;
+  --bg3:      #1a160e;
+  --panel:    #1f1a10;
+  --panel2:   #252015;
+  --border:   #2e2618;
+  --border2:  #3d3320;
+  --amber:    #f59e0b;
+  --amber2:   #fbbf24;
+  --amber3:   #fcd34d;
+  --green:    #4ade80;
+  --green2:   #86efac;
+  --red:      #f87171;
+  --blue:     #60a5fa;
+  --teal:     #2dd4bf;
+  --orange:   #fb923c;
+  --text:     #f0e8d8;
+  --text2:    #a89880;
+  --text3:    #5c5040;
+  --code-bg:  #0b0906;
+  --shadow:   rgba(0,0,0,0.6);
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* GRID TEXTURE */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(245,158,11,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245,158,11,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrap { max-width:1120px; margin:0 auto; padding:0 28px; position:relative; z-index:1; }
+
+/* ══════════ HEADER ══════════ */
+header {
+  padding: 56px 0 48px;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+header::after {
+  content:'';
+  position:absolute;
+  bottom:-1px; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--amber), var(--teal), transparent);
+}
+
+.breadcrumb {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--text3);
+  margin-bottom:24px;
+  letter-spacing:0.08em;
+}
+.breadcrumb .sep { color: var(--border2); }
+.breadcrumb .current { color: var(--amber); }
+
+h1 {
+  font-family:'Fraunces', serif;
+  font-size: clamp(32px, 6vw, 60px);
+  font-weight:900;
+  line-height:1.0;
+  letter-spacing:-0.02em;
+  margin-bottom:20px;
+}
+h1 .line2 { color: var(--amber); display:block; }
+h1 .line3 { color: var(--teal); font-style:italic; font-weight:400; font-size:0.65em; display:block; margin-top:4px; }
+
+.header-desc {
+  max-width:680px;
+  color:var(--text2);
+  font-size:15px;
+  font-weight:300;
+  margin-bottom:32px;
+  line-height:1.8;
+}
+
+.stat-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  margin-bottom:32px;
+}
+
+.stat-pill {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-radius:100px;
+  padding:8px 16px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+}
+.stat-pill .dot { width:7px; height:7px; border-radius:50%; }
+.stat-pill.amber .dot { background:var(--amber); }
+.stat-pill.teal .dot { background:var(--teal); }
+.stat-pill.green .dot { background:var(--green); }
+.stat-pill.red .dot { background:var(--red); }
+.stat-pill .label { color:var(--text3); }
+.stat-pill .val { color:var(--text); font-weight:600; }
+
+/* ══════════ TABS ══════════ */
+.tab-bar {
+  display:flex;
+  gap:0;
+  border-bottom:1px solid var(--border);
+  margin:36px 0 0;
+  overflow-x:auto;
+  scrollbar-width:none;
+  position:sticky;
+  top:0;
+  background:rgba(14,12,9,0.95);
+  backdrop-filter:blur(12px);
+  z-index:100;
+  padding-top:8px;
+}
+.tab-bar::-webkit-scrollbar{display:none;}
+
+.tb {
+  background:none;
+  border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text3);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding:10px 18px 12px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all 0.2s;
+  margin-bottom:-1px;
+}
+.tb:hover{color:var(--text2);}
+.tb.active{color:var(--amber); border-bottom-color:var(--amber);}
+
+/* ══════════ CONTENT ══════════ */
+.content { padding:44px 0 100px; }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; animation: rise 0.3s ease; }
+@keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+/* ══════════ CONCEPT PANEL ══════════ */
+.concept {
+  background:var(--panel);
+  border:1px solid var(--border2);
+  border-left:4px solid var(--amber);
+  border-radius:10px;
+  padding:30px 36px;
+  margin-bottom:36px;
+}
+.concept h2 {
+  font-family:'Fraunces', serif;
+  font-size:24px;
+  font-weight:700;
+  color:var(--amber2);
+  margin-bottom:12px;
+}
+.concept p { color:var(--text2); margin-bottom:10px; font-weight:300; }
+.concept p:last-child{margin-bottom:0;}
+.concept strong { color:var(--text); font-weight:600; }
+
+/* ══════════ ARCHITECTURE DIAGRAM ══════════ */
+.arch-diagram {
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:24px;
+  margin:20px 0;
+  overflow-x:auto;
+}
+.arch-title {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  color:var(--text3);
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  margin-bottom:16px;
+}
+.arch-row {
+  display:flex;
+  align-items:center;
+  gap:0;
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  padding-bottom:4px;
+}
+.arch-box {
+  flex-shrink:0;
+  background:var(--panel2);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:10px 14px;
+  min-width:110px;
+  text-align:center;
+}
+.arch-box.secure { border-color:var(--amber); }
+.arch-box .ab-icon { font-size:18px; margin-bottom:4px; }
+.arch-box .ab-name { font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:700; color:var(--text2); }
+.arch-box .ab-tool { font-size:10px; color:var(--text3); margin-top:2px; }
+.arch-box.secure .ab-name { color:var(--amber); }
+.arch-arrow { flex-shrink:0; padding:0 6px; color:var(--text3); font-size:16px; }
+
+/* ══════════ PROJECT CARDS ══════════ */
+.proj-list { display:flex; flex-direction:column; gap:20px; }
+
+.proj-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  transition:border-color 0.2s;
+}
+.proj-card:hover { border-color:var(--border2); }
+
+.proj-head {
+  display:flex;
+  align-items:flex-start;
+  gap:18px;
+  padding:24px 28px 20px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.pnum {
+  flex-shrink:0;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  font-weight:700;
+  padding:5px 12px;
+  border-radius:4px;
+  margin-top:2px;
+  white-space:nowrap;
+  letter-spacing:0.05em;
+}
+.pnum.a { color:var(--amber); background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.25); }
+.pnum.t { color:var(--teal); background:rgba(45,212,191,0.1); border:1px solid rgba(45,212,191,0.25); }
+.pnum.g { color:var(--green); background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.25); }
+.pnum.r { color:var(--red); background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.25); }
+.pnum.b { color:var(--blue); background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.25); }
+.pnum.o { color:var(--orange); background:rgba(251,146,60,0.1); border:1px solid rgba(251,146,60,0.25); }
+
+.pmeta { flex:1; min-width:0; }
+.pmeta h3 {
+  font-family:'Fraunces', serif;
+  font-size:19px;
+  font-weight:700;
+  margin-bottom:6px;
+  line-height:1.2;
+}
+.pmeta p { color:var(--text2); font-size:14px; font-weight:300; line-height:1.6; }
+
+.ptags { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.ptag {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  padding:3px 9px;
+  border-radius:3px;
+  font-weight:600;
+}
+.ptag.a{color:var(--amber);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);}
+.ptag.t{color:var(--teal);background:rgba(45,212,191,0.08);border:1px solid rgba(45,212,191,0.2);}
+.ptag.g{color:var(--green);background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);}
+.ptag.b{color:var(--blue);background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);}
+.ptag.o{color:var(--orange);background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.2);}
+.ptag.r{color:var(--red);background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);}
+
+.pmeta-footer { display:flex; align-items:center; gap:12px; margin-top:8px; }
+
+.diff {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  font-weight:700;
+  padding:3px 10px;
+  border-radius:3px;
+  letter-spacing:0.05em;
+}
+.diff.easy{color:var(--green);background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);}
+.diff.med{color:var(--amber);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);}
+.diff.hard{color:var(--red);background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);}
+
+.ptime {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  color:var(--text3);
+}
+
+.toggle {
+  flex-shrink:0;
+  color:var(--text3);
+  font-size:16px;
+  transition:transform 0.3s;
+  margin-top:2px;
+}
+.proj-card.open .toggle { transform:rotate(180deg); }
+
+.proj-body {
+  display:none;
+  padding:8px 28px 32px;
+  border-top:1px solid var(--border);
+}
+.proj-card.open .proj-body { display:block; animation:rise 0.3s ease; }
+
+/* ══════════ STEPS ══════════ */
+.steps { margin-top:24px; display:flex; flex-direction:column; gap:0; }
+
+.step {
+  display:flex;
+  gap:20px;
+  padding-bottom:28px;
+  position:relative;
+}
+.step:not(:last-child)::before {
+  content:'';
+  position:absolute;
+  left:13px; top:32px; bottom:0;
+  width:1px;
+  background:var(--border);
+}
+
+.snum {
+  flex-shrink:0;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  font-weight:700;
+  color:var(--amber);
+  z-index:1;
+  flex-shrink:0;
+}
+
+.sbody { flex:1; min-width:0; }
+.sbody h4 {
+  font-family:'Fraunces', serif;
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:8px;
+  color:var(--text);
+}
+.sbody p { color:var(--text2); font-size:14px; margin-bottom:10px; font-weight:300; }
+.sbody p strong { color:var(--text); font-weight:600; }
+
+/* ══════════ CODE BLOCKS ══════════ */
+.cb {
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+  margin:12px 0;
+}
+.cb-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 14px;
+  border-bottom:1px solid var(--border);
+  background:rgba(245,158,11,0.03);
+}
+.cb-lang {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  font-weight:700;
+  color:var(--text3);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+}
+.cb-lang .fn { color: var(--amber2); }
+
+.cpbtn {
+  background:none;
+  border:1px solid var(--border2);
+  color:var(--text3);
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  padding:3px 10px;
+  border-radius:3px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.cpbtn:hover{color:var(--text);border-color:var(--text3);}
+.cpbtn.ok{color:var(--green);border-color:var(--green);}
+
+pre {
+  padding:18px 20px;
+  overflow-x:auto;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px;
+  line-height:1.75;
+  color:#d4c9b8;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+}
+.kw{color:#ff9d5c;}
+.str{color:#a3d9a5;}
+.cm{color:#4a4030;font-style:italic;}
+.fn{color:#fcd34d;}
+.num{color:#7dd3fc;}
+.var{color:#f9a8d4;}
+.res{color:#2dd4bf;}
+.hl{background:rgba(245,158,11,0.06);display:block;border-left:2px solid var(--amber);padding-left:4px;margin-left:-2px;}
+
+code {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  padding:1px 7px;
+  border-radius:3px;
+  color:var(--amber2);
+}
+
+/* ══════════ CALLOUTS ══════════ */
+.note {
+  display:flex;
+  gap:12px;
+  padding:14px 16px;
+  border-radius:6px;
+  margin:14px 0;
+  font-size:13.5px;
+  font-weight:300;
+}
+.note-ico { flex-shrink:0; font-size:16px; margin-top:2px; }
+.note p { margin:0; }
+.note.info{background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.2);color:#93c5fd;}
+.note.warn{background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.2);color:#fcd34d;}
+.note.ok{background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);color:#86efac;}
+.note.danger{background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.2);color:#fca5a5;}
+
+/* ══════════ OVERVIEW CARDS ══════════ */
+.ov-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(255px,1fr));
+  gap:16px;
+  margin:24px 0;
+}
+.ov-card {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px 22px;
+  transition:border-color 0.2s, transform 0.2s;
+  cursor:default;
+}
+.ov-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+.ov-card .ov-num {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  color:var(--text3);
+  font-weight:700;
+  letter-spacing:0.1em;
+  margin-bottom:8px;
+}
+.ov-card .ov-icon { font-size:26px; margin-bottom:8px; }
+.ov-card h4 {
+  font-family:'Fraunces', serif;
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:6px;
+  color:var(--amber2);
+}
+.ov-card p { font-size:13px; color:var(--text3); line-height:1.6; }
+
+/* ══════════ SECTION TITLE ══════════ */
+.sec-title {
+  font-family:'Fraunces', serif;
+  font-size:28px;
+  font-weight:800;
+  margin-bottom:8px;
+  color:var(--text);
+}
+.sec-sub { color:var(--text2); font-size:14px; margin-bottom:28px; font-weight:300; }
+
+/* ══════════ TOOLS TABLE ══════════ */
+.tools-table {
+  width:100%;
+  border-collapse:collapse;
+  margin:16px 0;
+  font-size:13.5px;
+}
+.tools-table th {
+  text-align:left;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:var(--text3);
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+}
+.tools-table td {
+  padding:12px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--text2);
+  vertical-align:top;
+}
+.tools-table tr:hover td { background:rgba(245,158,11,0.03); }
+.tools-table td:first-child { font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--amber); font-weight:600; }
+.tools-table td:last-child { font-size:12px; }
+
+/* ══════════ AWS SERVICES GRID ══════════ */
+.aws-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:12px;
+  margin:16px 0;
+}
+.aws-card {
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:16px;
+}
+.aws-card .aws-name {
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px;
+  font-weight:700;
+  color:var(--orange);
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.aws-card p { font-size:12px; color:var(--text3); line-height:1.5; }
+
+/* ══════════ CHECKLIST ══════════ */
+.checklist { list-style:none; margin:12px 0; }
+.checklist li {
+  display:flex;
+  gap:10px;
+  padding:7px 0;
+  font-size:14px;
+  color:var(--text2);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  font-weight:300;
+}
+.checklist li:last-child{border-bottom:none;}
+.chk {
+  flex-shrink:0;
+  width:16px; height:16px;
+  border:1px solid var(--border2);
+  border-radius:3px;
+  margin-top:3px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:9px;
+  color:var(--green);
+}
+
+/* ══════════ DIVIDER ══════════ */
+.divider {
+  border:none;
+  border-top:1px solid var(--border);
+  margin:28px 0;
+}
+
+/* ══════════ FOOTER ══════════ */
+footer {
+  border-top:1px solid var(--border);
+  padding:24px 0;
+  text-align:center;
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  color:var(--text3);
+}
+footer span { color:var(--amber); }
+
+/* ══════════ RESP ══════════ */
+@media(max-width:640px){
+  .proj-head{flex-wrap:wrap;}
+  .arch-row{gap:4px;}
+  .arch-box{min-width:80px;padding:8px 10px;}
+  .stat-row{gap:8px;}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="wrap">
+  <div class="breadcrumb">
+    <span>DevSecOps Mastery</span>
+    <span class="sep">›</span>
+    <span class="current">Phase 2 — IaC Security & AWS Terraform</span>
+  </div>
+
+  <h1>
+    Infrastructure as Code
+    <span class="line2">Security Mastery</span>
+    <span class="line3">Terraform · AWS · Checkov · tfsec · Security Hub · 10 Deep Projects</span>
+  </h1>
+
+  <p class="header-desc">Stop misconfigured infrastructure before it's ever provisioned. You already know AWS services hands-on — now you'll codify them securely, scan IaC before <code>terraform apply</code>, enforce compliance as code, and build automated AWS security posture management from scratch.</p>
+
+  <div class="stat-row">
+    <div class="stat-pill amber"><div class="dot"></div><span class="label">Projects:&nbsp;</span><span class="val">10 Hands-On</span></div>
+    <div class="stat-pill teal"><div class="dot"></div><span class="label">Duration:&nbsp;</span><span class="val">8–12 Weeks</span></div>
+    <div class="stat-pill green"><div class="dot"></div><span class="label">Level:&nbsp;</span><span class="val">Intermediate → Expert</span></div>
+    <div class="stat-pill red"><div class="dot"></div><span class="label">Focus:&nbsp;</span><span class="val">AWS + Terraform + Compliance</span></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="tab-bar">
+    <button class="tb active" onclick="switchTab('overview',this)">Overview</button>
+    <button class="tb" onclick="switchTab('all',this)">All Projects</button>
+    <button class="tb" onclick="switchTab('terraform',this)">Terraform Foundations</button>
+    <button class="tb" onclick="switchTab('scanning',this)">IaC Scanning</button>
+    <button class="tb" onclick="switchTab('aws-security',this)">AWS Security Services</button>
+    <button class="tb" onclick="switchTab('compliance',this)">Compliance as Code</button>
+    <button class="tb" onclick="switchTab('advanced',this)">Advanced Projects</button>
+    <button class="tb" onclick="switchTab('cheatsheet',this)">Cheat Sheet</button>
+  </div>
+</div>
+</header>
+
+<div class="wrap">
+<div class="content">
+
+<!-- ══════════════════════════ OVERVIEW ══════════════════════════ -->
+<div id="tab-overview" class="tab-pane active">
+
+  <div class="concept">
+    <h2>🏗️ What Is IaC Security and Why Does It Change Everything?</h2>
+    <p>You've been provisioning AWS infrastructure manually — clicking through the console or running CLI commands. That works, but it doesn't <strong>scale</strong> and it doesn't <strong>audit</strong>. Infrastructure as Code means your entire AWS environment — VPCs, security groups, EC2 instances, IAM roles, S3 buckets — is defined in version-controlled files.</p>
+    <p><strong>The security superpower:</strong> If your infrastructure is code, it can be scanned like code. Before you run <code>terraform apply</code> and create a real S3 bucket with public access, Checkov can catch it in your CI pipeline and block the merge. Before you push a security group that opens port 22 to 0.0.0.0/0, tfsec flags it.</p>
+    <p><strong>Real numbers:</strong> The Capital One breach (2019, $80M fine) was caused by an overly permissive IAM role on an EC2 instance — the exact type of misconfiguration that Checkov catches in under 1 second. Every project below teaches you how to prevent exactly these scenarios.</p>
+  </div>
+
+  <div class="arch-diagram">
+    <div class="arch-title">Phase 2 — IaC Security Pipeline Architecture</div>
+    <div class="arch-row">
+      <div class="arch-box"><div class="ab-icon">✍️</div><div class="ab-name">Write TF</div><div class="ab-tool">Terraform</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box secure"><div class="ab-icon">🔍</div><div class="ab-name">Checkov</div><div class="ab-tool">IaC SAST</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box secure"><div class="ab-icon">🔒</div><div class="ab-name">tfsec</div><div class="ab-tool">TF Security</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box secure"><div class="ab-icon">📋</div><div class="ab-name">OPA/Rego</div><div class="ab-tool">Policies</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box secure"><div class="ab-icon">📐</div><div class="ab-name">tf-compliance</div><div class="ab-tool">BDD Tests</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box"><div class="ab-icon">🚀</div><div class="ab-name">TF Plan</div><div class="ab-tool">Review</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box"><div class="ab-icon">✅</div><div class="ab-name">TF Apply</div><div class="ab-tool">AWS</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box secure"><div class="ab-icon">🛡️</div><div class="ab-name">GuardDuty</div><div class="ab-tool">Runtime</div></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-box secure"><div class="ab-icon">📊</div><div class="ab-name">Sec Hub</div><div class="ab-tool">CSPM</div></div>
+    </div>
+  </div>
+
+  <div class="sec-title">10 Projects in This Phase</div>
+  <p class="sec-sub">Built in dependency order. Projects 1–3 are Terraform fundamentals with security baked in. Projects 4–6 add scanning tools. Projects 7–8 cover AWS native security services. Projects 9–10 are expert-level capstones.</p>
+
+  <div class="ov-grid">
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 01</div>
+      <div class="ov-icon">🏠</div>
+      <h4>Terraform Secure VPC</h4>
+      <p>Build a production VPC from scratch with public/private subnets, NAT gateways, flow logs, and every security best practice encoded in Terraform.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 02</div>
+      <div class="ov-icon">🔐</div>
+      <h4>Secure IAM as Code</h4>
+      <p>Define IAM roles, policies, and MFA enforcement entirely in Terraform. Least privilege by default. Auto-detect privilege escalation paths.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 03</div>
+      <div class="ov-icon">🪣</div>
+      <h4>Secure S3 Buckets</h4>
+      <p>Terraform modules for S3 with encryption, versioning, access logging, bucket policies, and public access blocking enforced.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 04</div>
+      <div class="ov-icon">🔬</div>
+      <h4>Checkov Deep Dive</h4>
+      <p>Run Checkov against 500+ CIS/NIST checks. Custom policies in Python. CI/CD integration that blocks misconfigured infrastructure.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 05</div>
+      <div class="ov-icon">🔭</div>
+      <h4>tfsec + Terrascan</h4>
+      <p>Multi-tool IaC scanning pipeline. tfsec for Terraform-native checks, Terrascan for multi-cloud policy enforcement.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 06</div>
+      <div class="ov-icon">📜</div>
+      <h4>Terraform Compliance (BDD)</h4>
+      <p>Write security tests in plain English using Gherkin syntax. "Given I have an S3 bucket, it must have encryption enabled."</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 07</div>
+      <div class="ov-icon">🕵️</div>
+      <h4>AWS GuardDuty + Config</h4>
+      <p>Enable GuardDuty and AWS Config via Terraform. Automated remediation Lambda functions triggered by compliance findings.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 08</div>
+      <div class="ov-icon">🌐</div>
+      <h4>AWS Security Hub CSPM</h4>
+      <p>Centralize findings from GuardDuty, Inspector, Config, Macie into Security Hub. Build compliance dashboards and alerting.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 09</div>
+      <div class="ov-icon">🏭</div>
+      <h4>Terraform Modules Library</h4>
+      <p>Build a secure-by-default module library. Every resource pre-hardened. Teams consume modules and get security for free.</p>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num">PROJECT 10</div>
+      <div class="ov-icon">🚀</div>
+      <h4>Full GitOps Pipeline</h4>
+      <p>Combine everything: GitLab CI + Terraform + all scanning tools + AWS security services. Full infrastructure deployment pipeline.</p>
+    </div>
+  </div>
+
+</div><!-- /overview -->
+
+<!-- ══════════════════════════ ALL PROJECTS ══════════════════════════ -->
+<div id="tab-all" class="tab-pane">
+<div class="proj-list">
+
+  <!-- ════ PROJECT 1 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum a">P-01</div>
+      <div class="pmeta">
+        <h3>Secure VPC from Scratch with Terraform</h3>
+        <p>Build a production-grade AWS VPC with public and private subnets across multiple AZs, NAT gateways, VPC flow logs, network ACLs, and all security controls encoded in Terraform — no console clicking.</p>
+        <div class="ptags">
+          <span class="ptag a">Terraform</span>
+          <span class="ptag o">AWS VPC</span>
+          <span class="ptag t">Flow Logs</span>
+          <span class="ptag g">Security Groups</span>
+          <span class="ptag b">NACLs</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff easy">● FOUNDATIONAL</span>
+          <span class="ptime">⏱ 4–6 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="note info"><div class="note-ico">ℹ️</div><p><strong>Why start here?</strong> The VPC is your security boundary in AWS. Every EC2, RDS, Lambda, and EKS cluster lives inside it. A misconfigured VPC means an attacker who compromises one service can pivot to everything else. Your existing AWS experience means this will click fast — you're just codifying what you've done manually.</p></div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Project Structure — Terraform Best Practices</h4>
+            <p>Always organize Terraform into logical files. This is the professional structure used at enterprise scale.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash — Directory Structure</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>mkdir -p secure-vpc/{modules/vpc,environments/dev,environments/prod}
+cd secure-vpc
+
+<span class="cm">├── modules/
+│   └── vpc/
+│       ├── main.tf          # VPC resources
+│       ├── variables.tf     # Input variables
+│       ├── outputs.tf       # Outputs for other modules
+│       └── versions.tf      # Provider requirements
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf          # Dev environment config
+│   │   ├── terraform.tfvars # Dev-specific values
+│   │   └── backend.tf       # Remote state config
+│   └── prod/
+│       ├── main.tf          # Prod environment config
+│       └── terraform.tfvars # Prod-specific values
+└── .gitlab-ci.yml            # IaC pipeline</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>Provider & Backend Configuration</h4>
+            <p><strong>Critical security point:</strong> Store Terraform state in S3 with encryption and locking — never commit <code>.tfstate</code> files to git. They contain sensitive resource data.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — environments/dev/backend.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Remote state — encrypted, locked, versioned</span>
+terraform {
+  backend <span class="str">"s3"</span> {
+    bucket         = <span class="str">"myorg-terraform-state-dev"</span>
+    key            = <span class="str">"vpc/terraform.tfstate"</span>
+    region         = <span class="str">"us-east-1"</span>
+    encrypt        = <span class="kw">true</span>           <span class="cm"># AES-256 encryption at rest</span>
+    dynamodb_table = <span class="str">"terraform-state-lock"</span>  <span class="cm"># Prevents concurrent runs</span>
+    kms_key_id     = <span class="str">"arn:aws:kms:us-east-1:123456789:key/xxx"</span>
+  }
+
+  required_providers {
+    aws = {
+      source  = <span class="str">"hashicorp/aws"</span>
+      version = <span class="str">"~> 5.0"</span>
+    }
+  }
+  required_version = <span class="str">">= 1.6.0"</span>
+}
+
+provider <span class="str">"aws"</span> {
+  region = <span class="kw">var</span>.aws_region
+
+  <span class="cm"># Default tags applied to EVERY resource</span>
+  default_tags {
+    tags = {
+      Environment = <span class="kw">var</span>.environment
+      ManagedBy   = <span class="str">"Terraform"</span>
+      Owner       = <span class="kw">var</span>.team_name
+      CostCenter  = <span class="kw">var</span>.cost_center
+      Project     = <span class="kw">var</span>.project_name
+    }
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>VPC Core — main.tf</h4>
+            <p>Build the VPC with proper CIDR planning, DNS settings, and a 3-tier subnet architecture: public (ALB), private (EC2/EKS), and isolated (RDS/ElastiCache).</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — modules/vpc/main.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># ═══ VPC ════════════════════════════════════════════════</span>
+resource <span class="str">"aws_vpc"</span> <span class="str">"main"</span> {
+  cidr_block           = <span class="kw">var</span>.vpc_cidr
+  enable_dns_hostnames = <span class="kw">true</span>   <span class="cm"># Required for EKS, RDS endpoints</span>
+  enable_dns_support   = <span class="kw">true</span>
+
+  tags = { Name = <span class="str">"${var.name}-vpc"</span> }
+}
+
+<span class="cm"># ═══ INTERNET GATEWAY ═══════════════════════════════════</span>
+resource <span class="str">"aws_internet_gateway"</span> <span class="str">"main"</span> {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = <span class="str">"${var.name}-igw"</span> }
+}
+
+<span class="cm"># ═══ PUBLIC SUBNETS (ALB, NAT GW live here) ═════════════</span>
+resource <span class="str">"aws_subnet"</span> <span class="str">"public"</span> {
+  count             = length(<span class="kw">var</span>.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(<span class="kw">var</span>.vpc_cidr, 8, count.index)
+  availability_zone = <span class="kw">var</span>.availability_zones[count.index]
+
+  <span class="cm"># ✅ Do NOT auto-assign public IPs — assign explicitly when needed</span>
+  map_public_ip_on_launch = <span class="kw">false</span>
+
+  tags = { Name = <span class="str">"${var.name}-public-${count.index + 1}"</span>, Tier = <span class="str">"public"</span> }
+}
+
+<span class="cm"># ═══ PRIVATE SUBNETS (EC2, EKS nodes) ══════════════════</span>
+resource <span class="str">"aws_subnet"</span> <span class="str">"private"</span> {
+  count             = length(<span class="kw">var</span>.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(<span class="kw">var</span>.vpc_cidr, 8, count.index + 10)
+  availability_zone = <span class="kw">var</span>.availability_zones[count.index]
+
+  map_public_ip_on_launch = <span class="kw">false</span>   <span class="cm"># Never public</span>
+
+  tags = { Name = <span class="str">"${var.name}-private-${count.index + 1}"</span>, Tier = <span class="str">"private"</span> }
+}
+
+<span class="cm"># ═══ ISOLATED SUBNETS (RDS, ElastiCache — NO internet) ══</span>
+resource <span class="str">"aws_subnet"</span> <span class="str">"isolated"</span> {
+  count             = length(<span class="kw">var</span>.availability_zones)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = cidrsubnet(<span class="kw">var</span>.vpc_cidr, 8, count.index + 20)
+  availability_zone = <span class="kw">var</span>.availability_zones[count.index]
+
+  map_public_ip_on_launch = <span class="kw">false</span>
+
+  tags = { Name = <span class="str">"${var.name}-isolated-${count.index + 1}"</span>, Tier = <span class="str">"isolated"</span> }
+}
+
+<span class="cm"># ═══ ELASTIC IPs FOR NAT GATEWAYS ════════════════════════</span>
+resource <span class="str">"aws_eip"</span> <span class="str">"nat"</span> {
+  count  = length(<span class="kw">var</span>.availability_zones)
+  domain = <span class="str">"vpc"</span>
+  tags   = { Name = <span class="str">"${var.name}-nat-eip-${count.index + 1}"</span> }
+}
+
+<span class="cm"># ═══ NAT GATEWAYS (one per AZ for HA) ═══════════════════</span>
+resource <span class="str">"aws_nat_gateway"</span> <span class="str">"main"</span> {
+  count         = length(<span class="kw">var</span>.availability_zones)
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
+  depends_on    = [aws_internet_gateway.main]
+
+  tags = { Name = <span class="str">"${var.name}-nat-${count.index + 1}"</span> }
+}
+
+<span class="cm"># ═══ ROUTE TABLES ════════════════════════════════════════</span>
+resource <span class="str">"aws_route_table"</span> <span class="str">"public"</span> {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = <span class="str">"0.0.0.0/0"</span>
+    gateway_id = aws_internet_gateway.main.id
+  }
+  tags = { Name = <span class="str">"${var.name}-public-rt"</span> }
+}
+
+resource <span class="str">"aws_route_table"</span> <span class="str">"private"</span> {
+  count  = length(<span class="kw">var</span>.availability_zones)
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block     = <span class="str">"0.0.0.0/0"</span>
+    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  }
+  tags = { Name = <span class="str">"${var.name}-private-rt-${count.index + 1}"</span> }
+}
+
+<span class="cm"># Isolated subnets have NO default route — no internet at all</span>
+resource <span class="str">"aws_route_table"</span> <span class="str">"isolated"</span> {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = <span class="str">"${var.name}-isolated-rt"</span> }
+}
+
+<span class="cm"># Route table associations</span>
+resource <span class="str">"aws_route_table_association"</span> <span class="str">"public"</span> {
+  count          = length(<span class="kw">var</span>.availability_zones)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+resource <span class="str">"aws_route_table_association"</span> <span class="str">"private"</span> {
+  count          = length(<span class="kw">var</span>.availability_zones)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[count.index].id
+}
+
+resource <span class="str">"aws_route_table_association"</span> <span class="str">"isolated"</span> {
+  count          = length(<span class="kw">var</span>.availability_zones)
+  subnet_id      = aws_subnet.isolated[count.index].id
+  route_table_id = aws_route_table.isolated.id
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">4</div>
+          <div class="sbody">
+            <h4>VPC Flow Logs — Critical for Security Investigation</h4>
+            <p>Flow logs capture all network traffic metadata. Essential for detecting port scanning, data exfiltration, and lateral movement. Without them, you're blind during an incident.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — VPC Flow Logs</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># CloudWatch Log Group for flow logs</span>
+resource <span class="str">"aws_cloudwatch_log_group"</span> <span class="str">"flow_logs"</span> {
+  name              = <span class="str">"/aws/vpc/${var.name}/flow-logs"</span>
+  retention_in_days = 90    <span class="cm"># Keep 90 days minimum for compliance</span>
+  kms_key_id        = <span class="kw">var</span>.kms_key_arn   <span class="cm"># Encrypt logs at rest</span>
+}
+
+<span class="cm"># IAM role for VPC to write to CloudWatch</span>
+resource <span class="str">"aws_iam_role"</span> <span class="str">"flow_logs"</span> {
+  name = <span class="str">"${var.name}-vpc-flow-logs"</span>
+
+  assume_role_policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Action    = <span class="str">"sts:AssumeRole"</span>
+      Effect    = <span class="str">"Allow"</span>
+      Principal = { Service = <span class="str">"vpc-flow-logs.amazonaws.com"</span> }
+    }]
+  })
+}
+
+resource <span class="str">"aws_iam_role_policy"</span> <span class="str">"flow_logs"</span> {
+  name = <span class="str">"vpc-flow-logs-policy"</span>
+  role = aws_iam_role.flow_logs.id
+
+  policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect = <span class="str">"Allow"</span>
+      Action = [
+        <span class="str">"logs:CreateLogGroup"</span>,
+        <span class="str">"logs:CreateLogStream"</span>,
+        <span class="str">"logs:PutLogEvents"</span>,
+        <span class="str">"logs:DescribeLogGroups"</span>,
+        <span class="str">"logs:DescribeLogStreams"</span>
+      ]
+      Resource = <span class="str">"*"</span>
+    }]
+  })
+}
+
+<span class="cm"># VPC Flow Log — capture ALL traffic (ACCEPT + REJECT)</span>
+resource <span class="str">"aws_flow_log"</span> <span class="str">"main"</span> {
+  iam_role_arn    = aws_iam_role.flow_logs.arn
+  log_destination = aws_cloudwatch_log_group.flow_logs.arn
+  traffic_type    = <span class="str">"ALL"</span>    <span class="cm"># ACCEPT, REJECT, or ALL</span>
+  vpc_id          = aws_vpc.main.id
+
+  tags = { Name = <span class="str">"${var.name}-flow-logs"</span> }
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">5</div>
+          <div class="sbody">
+            <h4>Security Groups — Least Privilege Networking</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — Security Groups</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># ── Application Load Balancer SG ─────────────────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"alb"</span> {
+  name        = <span class="str">"${var.name}-alb-sg"</span>
+  description = <span class="str">"ALB: HTTPS only from internet"</span>
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = <span class="str">"HTTPS from internet"</span>
+    from_port   = 443
+    to_port     = 443
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+  }
+
+  <span class="cm"># ❌ NEVER add port 80 here — redirect via ALB listener rule instead</span>
+
+  egress {
+    description     = <span class="str">"To app layer only"</span>
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.app.id]
+  }
+
+  tags = { Name = <span class="str">"${var.name}-alb-sg"</span> }
+}
+
+<span class="cm"># ── Application (EC2) SG ─────────────────────────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"app"</span> {
+  name        = <span class="str">"${var.name}-app-sg"</span>
+  description = <span class="str">"App: traffic only from ALB, no direct internet"</span>
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = <span class="str">"From ALB only"</span>
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  <span class="cm"># ❌ NO SSH from internet — use AWS SSM Session Manager instead</span>
+
+  egress {
+    description     = <span class="str">"To database only"</span>
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.db.id]
+  }
+
+  egress {
+    description = <span class="str">"HTTPS to internet via NAT (for package downloads)"</span>
+    from_port   = 443
+    to_port     = 443
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+  }
+
+  tags = { Name = <span class="str">"${var.name}-app-sg"</span> }
+}
+
+<span class="cm"># ── Database SG ──────────────────────────────────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"db"</span> {
+  name        = <span class="str">"${var.name}-db-sg"</span>
+  description = <span class="str">"DB: PostgreSQL from app tier only. No egress."</span>
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description     = <span class="str">"PostgreSQL from app only"</span>
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.app.id]
+  }
+
+  <span class="cm"># No egress rules = no outbound traffic (implicit deny)</span>
+  tags = { Name = <span class="str">"${var.name}-db-sg"</span> }
+}</pre>
+            </div>
+            <div class="note warn"><div class="note-ico">⚠️</div><p><strong>Golden Rule:</strong> Never use <code>cidr_blocks = ["0.0.0.0/0"]</code> for ingress on any port other than 80/443 on the ALB. Always reference security group IDs instead of CIDRs for internal traffic. This is one of the most common misconfigurations Checkov catches.</p></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">6</div>
+          <div class="sbody">
+            <h4>Variables and Outputs</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — modules/vpc/variables.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>variable <span class="str">"name"</span> {
+  description = <span class="str">"Name prefix for all resources"</span>
+  type        = string
+  validation {
+    condition     = can(regex(<span class="str">"^[a-z0-9-]+$"</span>, <span class="kw">var</span>.name))
+    error_message = <span class="str">"Name must be lowercase alphanumeric and hyphens only."</span>
+  }
+}
+
+variable <span class="str">"vpc_cidr"</span> {
+  description = <span class="str">"CIDR block for the VPC"</span>
+  type        = string
+  default     = <span class="str">"10.0.0.0/16"</span>
+  validation {
+    condition     = can(cidrhost(<span class="kw">var</span>.vpc_cidr, 0))
+    error_message = <span class="str">"Must be a valid CIDR block."</span>
+  }
+}
+
+variable <span class="str">"availability_zones"</span> {
+  description = <span class="str">"List of AZs — minimum 2 for HA"</span>
+  type        = list(string)
+  validation {
+    condition     = length(<span class="kw">var</span>.availability_zones) >= 2
+    error_message = <span class="str">"At least 2 AZs required for high availability."</span>
+  }
+}
+
+variable <span class="str">"kms_key_arn"</span> {
+  description = <span class="str">"KMS key ARN for encrypting flow logs"</span>
+  type        = string
+  sensitive   = <span class="kw">true</span>
+}</pre>
+            </div>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — modules/vpc/outputs.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>output <span class="str">"vpc_id"</span>              { value = aws_vpc.main.id }
+output <span class="str">"public_subnet_ids"</span>   { value = aws_subnet.public[*].id }
+output <span class="str">"private_subnet_ids"</span>  { value = aws_subnet.private[*].id }
+output <span class="str">"isolated_subnet_ids"</span> { value = aws_subnet.isolated[*].id }
+output <span class="str">"alb_sg_id"</span>           { value = aws_security_group.alb.id }
+output <span class="str">"app_sg_id"</span>           { value = aws_security_group.app.id }
+output <span class="str">"db_sg_id"</span>            { value = aws_security_group.db.id }
+output <span class="str">"flow_log_group"</span>      { value = aws_cloudwatch_log_group.flow_logs.name }</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">7</div>
+          <div class="sbody">
+            <h4>Run and Test</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>cd environments/dev
+
+<span class="cm"># Initialize Terraform and download providers</span>
+terraform init
+
+<span class="cm"># Validate syntax and config</span>
+terraform validate
+
+<span class="cm"># Format all HCL files consistently</span>
+terraform fmt -recursive
+
+<span class="cm"># Plan — see exactly what will be created</span>
+terraform plan -out=tfplan
+
+<span class="cm"># Review the plan carefully, then apply</span>
+terraform apply tfplan
+
+<span class="cm"># Verify resources were created correctly</span>
+aws ec2 describe-vpcs --filters Name=tag:Name,Values=dev-vpc
+aws ec2 describe-flow-logs --filter Name=resource-id,Values=vpc-xxxxx</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note ok"><div class="note-ico">✅</div><p><strong>Outcome:</strong> A production VPC in code — version-controlled, peer-reviewable, reproducible. Private/isolated subnets with no internet exposure. Flow logs capturing all traffic. Security groups enforcing least-privilege network access. This is the security foundation every other AWS resource will live on.</p></div>
+    </div>
+  </div><!-- /P1 -->
+
+  <!-- ════ PROJECT 2 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum t">P-02</div>
+      <div class="pmeta">
+        <h3>Secure IAM Roles & Policies as Code</h3>
+        <p>Define all IAM roles, policies, and trust relationships in Terraform. Enforce least privilege, MFA conditions, service control policies, and auto-detect privilege escalation paths before deployment.</p>
+        <div class="ptags">
+          <span class="ptag a">Terraform IAM</span>
+          <span class="ptag t">Least Privilege</span>
+          <span class="ptag g">MFA Enforcement</span>
+          <span class="ptag b">SCPs</span>
+          <span class="ptag o">IRSA (EKS)</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff med">◆ INTERMEDIATE</span>
+          <span class="ptime">⏱ 5–7 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="note info"><div class="note-ico">ℹ️</div><p><strong>IAM is the blast radius controller.</strong> A misconfigured IAM role is the #1 cause of AWS breaches. If your EC2 instance's IAM role has <code>*:*</code> permissions, one SSRF vulnerability gives an attacker access to your entire AWS account. Every permission must be justified and minimal.</p></div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>The Dangerous Pattern vs The Secure Pattern</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — ❌ DANGEROUS IAM (what most people write)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># This is found everywhere — and it's a disaster waiting to happen</span>
+resource <span class="str">"aws_iam_role_policy"</span> <span class="str">"bad"</span> {
+  policy = jsonencode({
+    Statement = [{
+      Effect   = <span class="str">"Allow"</span>
+      Action   = <span class="str">"*"</span>        <span class="cm"># ❌ Wildcard action</span>
+      Resource = <span class="str">"*"</span>        <span class="cm"># ❌ Wildcard resource</span>
+    }]
+  })
+}
+
+<span class="cm"># This gives the role FULL AWS ACCOUNT ACCESS</span>
+<span class="cm"># One compromised EC2 = attacker controls everything</span></pre>
+            </div>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — ✅ SECURE IAM — EC2 role for S3 read-only access</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Instance role — only what the app actually needs</span>
+resource <span class="str">"aws_iam_role"</span> <span class="str">"app_role"</span> {
+  name = <span class="str">"${var.name}-app-role"</span>
+
+  assume_role_policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="str">"Allow"</span>
+      Principal = { Service = <span class="str">"ec2.amazonaws.com"</span> }
+      Action    = <span class="str">"sts:AssumeRole"</span>
+      <span class="cm"># Condition: only from your VPC endpoints</span>
+      Condition = {
+        StringEquals = {
+          <span class="str">"aws:SourceVpc"</span> = [<span class="kw">var</span>.vpc_id]
+        }
+      }
+    }]
+  })
+}
+
+resource <span class="str">"aws_iam_policy"</span> <span class="str">"app_s3_read"</span> {
+  name        = <span class="str">"${var.name}-app-s3-read"</span>
+  description = <span class="str">"App: read-only access to specific S3 prefix"</span>
+
+  policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [
+      {
+        Effect = <span class="str">"Allow"</span>
+        Action = [
+          <span class="str">"s3:GetObject"</span>,      <span class="cm"># Read files</span>
+          <span class="str">"s3:ListBucket"</span>       <span class="cm"># List files (needed for GetObject)</span>
+        ]
+        Resource = [
+          <span class="str">"arn:aws:s3:::${var.bucket_name}"</span>,
+          <span class="str">"arn:aws:s3:::${var.bucket_name}/app-data/*"</span>
+          <span class="cm"># ✅ Specific prefix only, not entire bucket</span>
+        ]
+        Condition = {
+          Bool = { <span class="str">"aws:SecureTransport"</span> = <span class="str">"true"</span> }  <span class="cm"># HTTPS only</span>
+        }
+      },
+      {
+        Effect = <span class="str">"Allow"</span>
+        Action = [
+          <span class="str">"secretsmanager:GetSecretValue"</span>
+        ]
+        Resource = [
+          <span class="str">"arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:${var.name}/*"</span>
+        ]
+      },
+      {
+        Effect = <span class="str">"Allow"</span>
+        Action = [
+          <span class="str">"ssm:GetParameter"</span>,
+          <span class="str">"ssm:GetParameters"</span>
+        ]
+        Resource = [
+          <span class="str">"arn:aws:ssm:${var.region}:${var.account_id}:parameter/${var.name}/*"</span>
+        ]
+      }
+    ]
+  })
+}
+
+resource <span class="str">"aws_iam_role_policy_attachment"</span> <span class="str">"app_s3"</span> {
+  role       = aws_iam_role.app_role.name
+  policy_arn = aws_iam_policy.app_s3_read.arn
+}
+
+resource <span class="str">"aws_iam_instance_profile"</span> <span class="str">"app"</span> {
+  name = <span class="str">"${var.name}-app-profile"</span>
+  role = aws_iam_role.app_role.name
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>MFA Enforcement Policy</h4>
+            <p>Enforce MFA for all human users — a must for compliance (CIS AWS Benchmark, SOC2).</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — IAM MFA enforcement</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>resource <span class="str">"aws_iam_policy"</span> <span class="str">"require_mfa"</span> {
+  name        = <span class="str">"RequireMFA"</span>
+  description = <span class="str">"Forces users to use MFA. Allows only MFA setup actions without MFA."</span>
+
+  policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [
+      {
+        <span class="cm"># Allow MFA device management even without MFA</span>
+        Sid    = <span class="str">"AllowManageOwnMFA"</span>
+        Effect = <span class="str">"Allow"</span>
+        Action = [
+          <span class="str">"iam:CreateVirtualMFADevice"</span>,
+          <span class="str">"iam:EnableMFADevice"</span>,
+          <span class="str">"iam:ListMFADevices"</span>
+        ]
+        Resource = [
+          <span class="str">"arn:aws:iam::*:mfa/&{aws:username}"</span>,
+          <span class="str">"arn:aws:iam::*:user/&{aws:username}"</span>
+        ]
+      },
+      {
+        <span class="cm"># Deny EVERYTHING else if no MFA session</span>
+        Sid    = <span class="str">"DenyWithoutMFA"</span>
+        Effect = <span class="str">"Deny"</span>
+        NotAction = [
+          <span class="str">"iam:CreateVirtualMFADevice"</span>,
+          <span class="str">"iam:EnableMFADevice"</span>,
+          <span class="str">"sts:GetSessionToken"</span>
+        ]
+        Resource = <span class="str">"*"</span>
+        Condition = {
+          BoolIfExists = {
+            <span class="str">"aws:MultiFactorAuthPresent"</span> = <span class="str">"false"</span>
+          }
+        }
+      }
+    ]
+  })
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>IRSA — IAM Roles for Service Accounts (EKS)</h4>
+            <p>For EKS, pods should never share the node's IAM role. Each pod gets its own minimal role via IRSA (OIDC federation). This is the secure EKS pattern.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — EKS IRSA</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># OIDC provider for EKS cluster</span>
+data <span class="str">"tls_certificate"</span> <span class="str">"eks"</span> {
+  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+resource <span class="str">"aws_iam_openid_connect_provider"</span> <span class="str">"eks"</span> {
+  client_id_list  = [<span class="str">"sts.amazonaws.com"</span>]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.main.identity[0].oidc[0].issuer
+}
+
+<span class="cm"># Role for a specific pod/service account</span>
+resource <span class="str">"aws_iam_role"</span> <span class="str">"pod_s3"</span> {
+  name = <span class="str">"${var.name}-pod-s3-role"</span>
+
+  assume_role_policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="str">"Allow"</span>
+      Principal = {
+        Federated = aws_iam_openid_connect_provider.eks.arn
+      }
+      Action = <span class="str">"sts:AssumeRoleWithWebIdentity"</span>
+      Condition = {
+        StringEquals = {
+          <span class="cm"># Only THIS specific service account in THIS namespace can assume this role</span>
+          <span class="str">"${aws_iam_openid_connect_provider.eks.url}:sub"</span> =
+            <span class="str">"system:serviceaccount:${var.k8s_namespace}:${var.k8s_service_account}"</span>
+        }
+      }
+    }]
+  })
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">4</div>
+          <div class="sbody">
+            <h4>Service Control Policies — AWS Organization Guard Rails</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — SCP: Deny actions outside approved regions</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>resource <span class="str">"aws_organizations_policy"</span> <span class="str">"deny_unapproved_regions"</span> {
+  name        = <span class="str">"DenyUnapprovedRegions"</span>
+  description = <span class="str">"Prevent resource creation in non-approved regions"</span>
+
+  content = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="str">"Deny"</span>
+      Action    = <span class="str">"*"</span>
+      Resource  = <span class="str">"*"</span>
+      Condition = {
+        StringNotEquals = {
+          <span class="str">"aws:RequestedRegion"</span> = [<span class="str">"us-east-1"</span>, <span class="str">"us-west-2"</span>]
+        }
+      }
+      NotPrincipal = {
+        <span class="cm"># Except global services: IAM, Route53, CloudFront</span>
+        Service = [<span class="str">"iam.amazonaws.com"</span>, <span class="str">"route53.amazonaws.com"</span>]
+      }
+    }]
+  })
+}
+
+resource <span class="str">"aws_organizations_policy"</span> <span class="str">"deny_root_actions"</span> {
+  name    = <span class="str">"DenyRootAccountActions"</span>
+  content = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [{
+      Effect    = <span class="str">"Deny"</span>
+      Action    = <span class="str">"*"</span>
+      Resource  = <span class="str">"*"</span>
+      Condition = {
+        StringLike = { <span class="str">"aws:PrincipalArn"</span> = <span class="str">"arn:aws:iam::*:root"</span> }
+      }
+    }]
+  })
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P2 -->
+
+  <!-- ════ PROJECT 3 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum g">P-03</div>
+      <div class="pmeta">
+        <h3>Secure S3 Buckets — Encryption, Versioning & Access Control</h3>
+        <p>Build a Terraform module for fully hardened S3 buckets: server-side encryption (KMS), versioning, access logging, bucket policies with explicit deny, lifecycle rules, and public access blocking.</p>
+        <div class="ptags">
+          <span class="ptag g">S3 Security</span>
+          <span class="ptag a">KMS Encryption</span>
+          <span class="ptag t">Versioning</span>
+          <span class="ptag b">Bucket Policy</span>
+          <span class="ptag o">Access Logging</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff easy">● FOUNDATIONAL</span>
+          <span class="ptime">⏱ 3–5 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Complete Secure S3 Module</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — modules/s3-secure/main.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># ═══ KMS KEY for bucket encryption ══════════════════════</span>
+resource <span class="str">"aws_kms_key"</span> <span class="str">"bucket"</span> {
+  description             = <span class="str">"KMS key for ${var.bucket_name}"</span>
+  deletion_window_in_days = 30
+  enable_key_rotation     = <span class="kw">true</span>    <span class="cm"># Auto-rotate annually</span>
+
+  policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [
+      {
+        Sid    = <span class="str">"Enable IAM User Permissions"</span>
+        Effect = <span class="str">"Allow"</span>
+        Principal = { AWS = <span class="str">"arn:aws:iam::${var.account_id}:root"</span> }
+        Action   = <span class="str">"kms:*"</span>
+        Resource = <span class="str">"*"</span>
+      }
+    ]
+  })
+}
+
+resource <span class="str">"aws_kms_alias"</span> <span class="str">"bucket"</span> {
+  name          = <span class="str">"alias/${var.bucket_name}"</span>
+  target_key_id = aws_kms_key.bucket.key_id
+}
+
+<span class="cm"># ═══ LOGGING BUCKET (separate, access logs go here) ═════</span>
+resource <span class="str">"aws_s3_bucket"</span> <span class="str">"logs"</span> {
+  bucket = <span class="str">"${var.bucket_name}-access-logs"</span>
+}
+
+resource <span class="str">"aws_s3_bucket_ownership_controls"</span> <span class="str">"logs"</span> {
+  bucket = aws_s3_bucket.logs.id
+  rule { object_ownership = <span class="str">"BucketOwnerPreferred"</span> }
+}
+
+<span class="cm"># ═══ MAIN BUCKET ═════════════════════════════════════════</span>
+resource <span class="str">"aws_s3_bucket"</span> <span class="str">"main"</span> {
+  bucket        = <span class="kw">var</span>.bucket_name
+  force_destroy = <span class="kw">false</span>   <span class="cm"># Never allow accidental deletion in prod</span>
+}
+
+<span class="cm"># ✅ Block ALL public access — the most critical setting</span>
+resource <span class="str">"aws_s3_bucket_public_access_block"</span> <span class="str">"main"</span> {
+  bucket                  = aws_s3_bucket.main.id
+  block_public_acls       = <span class="kw">true</span>
+  block_public_policy     = <span class="kw">true</span>
+  ignore_public_acls      = <span class="kw">true</span>
+  restrict_public_buckets = <span class="kw">true</span>
+}
+
+<span class="cm"># ✅ KMS encryption on every object</span>
+resource <span class="str">"aws_s3_bucket_server_side_encryption_configuration"</span> <span class="str">"main"</span> {
+  bucket = aws_s3_bucket.main.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = <span class="str">"aws:kms"</span>
+      kms_master_key_id = aws_kms_key.bucket.arn
+    }
+    bucket_key_enabled = <span class="kw">true</span>   <span class="cm"># Reduces KMS API calls</span>
+  }
+}
+
+<span class="cm"># ✅ Versioning — recover from accidental deletes</span>
+resource <span class="str">"aws_s3_bucket_versioning"</span> <span class="str">"main"</span> {
+  bucket = aws_s3_bucket.main.id
+  versioning_configuration { status = <span class="str">"Enabled"</span> }
+}
+
+<span class="cm"># ✅ Access logging</span>
+resource <span class="str">"aws_s3_bucket_logging"</span> <span class="str">"main"</span> {
+  bucket        = aws_s3_bucket.main.id
+  target_bucket = aws_s3_bucket.logs.id
+  target_prefix = <span class="str">"access-logs/"</span>
+}
+
+<span class="cm"># ✅ Lifecycle rules — manage cost and retention</span>
+resource <span class="str">"aws_s3_bucket_lifecycle_configuration"</span> <span class="str">"main"</span> {
+  bucket = aws_s3_bucket.main.id
+
+  rule {
+    id     = <span class="str">"transition-old-versions"</span>
+    status = <span class="str">"Enabled"</span>
+
+    noncurrent_version_transition {
+      noncurrent_days = 30
+      storage_class   = <span class="str">"STANDARD_IA"</span>
+    }
+    noncurrent_version_expiration {
+      noncurrent_days = 90   <span class="cm"># Delete old versions after 90 days</span>
+    }
+  }
+
+  rule {
+    id     = <span class="str">"abort-incomplete-uploads"</span>
+    status = <span class="str">"Enabled"</span>
+    abort_incomplete_multipart_upload { days_after_initiation = 7 }
+  }
+}
+
+<span class="cm"># ✅ Bucket policy — enforce HTTPS and deny unencrypted uploads</span>
+resource <span class="str">"aws_s3_bucket_policy"</span> <span class="str">"main"</span> {
+  bucket     = aws_s3_bucket.main.id
+  depends_on = [aws_s3_bucket_public_access_block.main]
+
+  policy = jsonencode({
+    Version = <span class="str">"2012-10-17"</span>
+    Statement = [
+      {
+        Sid    = <span class="str">"DenyHTTP"</span>
+        Effect = <span class="str">"Deny"</span>
+        Principal = <span class="str">"*"</span>
+        Action = <span class="str">"s3:*"</span>
+        Resource = [
+          aws_s3_bucket.main.arn,
+          <span class="str">"${aws_s3_bucket.main.arn}/*"</span>
+        ]
+        Condition = {
+          Bool = { <span class="str">"aws:SecureTransport"</span> = <span class="str">"false"</span> }
+        }
+      },
+      {
+        Sid    = <span class="str">"DenyUnencryptedUploads"</span>
+        Effect = <span class="str">"Deny"</span>
+        Principal = <span class="str">"*"</span>
+        Action = <span class="str">"s3:PutObject"</span>
+        Resource = <span class="str">"${aws_s3_bucket.main.arn}/*"</span>
+        Condition = {
+          StringNotEquals = {
+            <span class="str">"s3:x-amz-server-side-encryption"</span> = <span class="str">"aws:kms"</span>
+          }
+        }
+      },
+      {
+        Sid    = <span class="str">"DenyIncorrectKMSKey"</span>
+        Effect = <span class="str">"Deny"</span>
+        Principal = <span class="str">"*"</span>
+        Action = <span class="str">"s3:PutObject"</span>
+        Resource = <span class="str">"${aws_s3_bucket.main.arn}/*"</span>
+        Condition = {
+          StringNotEquals = {
+            <span class="str">"s3:x-amz-server-side-encryption-aws-kms-key-id"</span> = aws_kms_key.bucket.arn
+          }
+        }
+      }
+    ]
+  })
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P3 -->
+
+  <!-- ════ PROJECT 4 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum b">P-04</div>
+      <div class="pmeta">
+        <h3>Checkov Deep Dive — 500+ IaC Security Checks</h3>
+        <p>Master Checkov: run it against all your Terraform, write custom Python policies, integrate into GitLab CI, understand every check against CIS AWS Benchmark, and build a failure threshold system.</p>
+        <div class="ptags">
+          <span class="ptag b">Checkov</span>
+          <span class="ptag a">CIS Benchmark</span>
+          <span class="ptag t">Custom Policies</span>
+          <span class="ptag g">GitLab CI</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff med">◆ INTERMEDIATE</span>
+          <span class="ptime">⏱ 4–5 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Install and Explore Checkov</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>pip install checkov --break-system-packages
+
+<span class="cm"># Scan your Terraform directory</span>
+checkov -d ./terraform --framework terraform
+
+<span class="cm"># Scan with specific framework</span>
+checkov -d . --framework terraform,cloudformation,kubernetes
+
+<span class="cm"># Show only failures</span>
+checkov -d . --quiet
+
+<span class="cm"># Generate HTML report</span>
+checkov -d . --output html --output-file-path ./reports/
+
+<span class="cm"># List all available checks</span>
+checkov --list
+
+<span class="cm"># Run only specific checks (CIS Level 1)</span>
+checkov -d . --check CKV_AWS_18,CKV_AWS_19,CKV_AWS_20
+
+<span class="cm"># Skip checks you've accepted risk on</span>
+checkov -d . --skip-check CKV_AWS_144 --skip-check CKV_AWS_145
+
+<span class="cm"># Fail if more than X failures</span>
+checkov -d . --soft-fail-on-checks-count 10</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>Key Checkov Checks You Must Know</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">text — Critical Checkov checks for AWS</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># S3 Checks</span>
+CKV_AWS_18   S3 bucket has access logging enabled
+CKV_AWS_19   S3 bucket server-side encryption enabled
+CKV_AWS_20   S3 bucket not publicly accessible
+CKV_AWS_52   S3 bucket has MFA deletion enabled
+CKV_AWS_144  S3 bucket cross-region replication enabled
+CKV2_AWS_6   S3 bucket should have public access block
+
+<span class="cm"># IAM Checks</span>
+CKV_AWS_1    IAM policy not attached directly to user
+CKV_AWS_40   IAM user has programmatic access AND console access
+CKV_AWS_274  IAM policy should not have admin permissions
+
+<span class="cm"># EC2 Checks</span>
+CKV_AWS_8    EC2 instance launched with no key pair (use SSM)
+CKV_AWS_79   EC2 uses IMDSv2 (prevents SSRF metadata theft)
+CKV_AWS_135  EBS volume encryption enabled
+
+<span class="cm"># Security Group Checks</span>
+CKV_AWS_24   No ingress on port 22 from 0.0.0.0/0
+CKV_AWS_25   No ingress on port 3389 from 0.0.0.0/0
+CKV_AWS_277  No ingress on ALL ports from 0.0.0.0/0
+
+<span class="cm"># RDS Checks</span>
+CKV_AWS_16   RDS database encrypted
+CKV_AWS_17   RDS not publicly accessible
+CKV_AWS_133  RDS deletion protection enabled
+
+<span class="cm"># CloudTrail</span>
+CKV_AWS_35   CloudTrail logs encrypted with KMS
+CKV_AWS_36   CloudTrail log file validation enabled
+CKV_AWS_67   CloudTrail multi-region enabled</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>Write a Custom Checkov Policy in Python</h4>
+            <p>When built-in checks don't cover your org's specific requirements, write your own.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">python — custom_checks/check_s3_name_convention.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="kw">from</span> checkov.common.models.enums <span class="kw">import</span> CheckResult, CheckCategories
+<span class="kw">from</span> checkov.terraform.checks.resource.base_resource_check <span class="kw">import</span> BaseResourceCheck
+<span class="kw">import</span> re
+
+<span class="kw">class</span> <span class="fn">S3BucketNamingConvention</span>(BaseResourceCheck):
+    <span class="str">"""
+    Custom check: S3 buckets must follow naming convention
+    Pattern: {env}-{team}-{purpose}-{account_short}
+    e.g., prod-platform-logs-1234
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        name = <span class="str">"S3BucketFollowsNamingConvention"</span>
+        id = <span class="str">"CKV_CUSTOM_1"</span>
+        supported_resources = [<span class="str">'aws_s3_bucket'</span>]
+        categories = [CheckCategories.GENERAL_SECURITY]
+        super().__init__(name=name, id=id,
+                         categories=categories,
+                         supported_resources=supported_resources)
+
+    <span class="kw">def</span> <span class="fn">scan_resource_conf</span>(self, conf):
+        bucket_name = conf.get(<span class="str">"bucket"</span>, [<span class="str">""</span>])
+        <span class="kw">if</span> isinstance(bucket_name, list):
+            bucket_name = bucket_name[0]
+
+        pattern = <span class="str">r'^(dev|staging|prod)-[a-z]+-[a-z]+-\d{4}$'</span>
+
+        <span class="kw">if</span> re.match(pattern, str(bucket_name)):
+            <span class="kw">return</span> CheckResult.PASSED
+        <span class="kw">return</span> CheckResult.FAILED
+
+scanner = S3BucketNamingConvention()</pre>
+            </div>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash — Run with custom checks</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>checkov -d ./terraform \
+  --external-checks-dir ./custom_checks \
+  --check CKV_CUSTOM_1</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">4</div>
+          <div class="sbody">
+            <h4>Checkov in GitLab CI with SARIF Output</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">yaml — .gitlab-ci.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>checkov-scan:
+  stage: security
+  image: bridgecrew/checkov:latest
+  script:
+    - checkov
+        -d .
+        --framework terraform
+        --external-checks-dir ./custom_checks
+        --output json
+        --output-file-path ./checkov-results/
+        --output sarif
+        --soft-fail   <span class="cm"># Don't fail pipeline yet — collect results</span>
+    - |
+      python3 &lt;&lt;EOF
+      import json, sys
+      with open("checkov-results/results_json.json") as f:
+          data = json.load(f)
+
+      summary = data.get("summary", {})
+      passed  = summary.get("passed", 0)
+      failed  = summary.get("failed", 0)
+      total   = passed + failed
+      pass_rate = (passed / total * 100) if total > 0 else 0
+
+      print(f"Checkov Results: {passed}/{total} checks passed ({pass_rate:.1f}%)")
+
+      <span class="cm"># Fail if critical checks fail</span>
+      critical_checks = [
+          "CKV_AWS_20",   <span class="cm"># S3 not public</span>
+          "CKV_AWS_79",   <span class="cm"># IMDSv2</span>
+          "CKV_AWS_17",   <span class="cm"># RDS not public</span>
+          "CKV_AWS_24",   <span class="cm"># No SSH from internet</span>
+      ]
+
+      failed_checks = [
+          r["check_id"]
+          for r in data.get("results", {}).get("failed_checks", [])
+      ]
+
+      critical_failures = [c for c in critical_checks if c in failed_checks]
+      if critical_failures:
+          print(f"BLOCKING: Critical checks failed: {critical_failures}")
+          sys.exit(1)
+      EOF
+  artifacts:
+    when: always
+    paths: [checkov-results/]
+    reports:
+      sast: checkov-results/results_sarif.sarif</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P4 -->
+
+  <!-- ════ PROJECT 5 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum o">P-05</div>
+      <div class="pmeta">
+        <h3>tfsec + Terrascan — Multi-Tool IaC Scanning</h3>
+        <p>Layer tfsec (Terraform-native rules with deep HCL understanding) and Terrascan (multi-cloud OPA-based) for comprehensive coverage. Compare findings and create a unified security report.</p>
+        <div class="ptags">
+          <span class="ptag o">tfsec</span>
+          <span class="ptag r">Terrascan</span>
+          <span class="ptag b">SARIF</span>
+          <span class="ptag t">Multi-tool</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff med">◆ INTERMEDIATE</span>
+          <span class="ptime">⏱ 3–4 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>tfsec — Terraform Security Scanner</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Install</span>
+brew install tfsec    <span class="cm"># macOS</span>
+<span class="cm"># or</span>
+docker pull aquasec/tfsec:latest
+
+<span class="cm"># Basic scan</span>
+tfsec .
+
+<span class="cm"># JSON output for CI</span>
+tfsec . --format json > tfsec-results.json
+
+<span class="cm"># Filter by severity</span>
+tfsec . --minimum-severity HIGH
+
+<span class="cm"># SARIF output (GitLab security dashboard)</span>
+tfsec . --format sarif --out tfsec.sarif
+
+<span class="cm"># Soft fail — report but don't block</span>
+tfsec . --soft-fail
+
+<span class="cm"># Show detailed explanation of each finding</span>
+tfsec . --verbose</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>tfsec Custom Configuration</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">yaml — .tfsec/config.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>minimum_severity: MEDIUM
+
+exclude:
+  - AVD-AWS-0144   <span class="cm"># S3 replication — not required for dev</span>
+
+<span class="cm"># Override severity for specific checks</span>
+severity_overrides:
+  AVD-AWS-0086:
+    new_severity: CRITICAL   <span class="cm"># Escalate IMDSv1 to CRITICAL</span>
+
+<span class="cm"># Custom check — inline Rego</span>
+custom_checks:
+  - name: check_require_tags
+    description: All resources must have required tags
+    impact: Untagged resources can't be tracked for cost or ownership
+    resolution: Add required tags to all resources
+    required_types:
+      - resource
+    required_labels:
+      - aws_instance
+      - aws_s3_bucket
+      - aws_rds_cluster
+    block: |
+      deny[msg] {
+        resource := input.resource[_][_][_]
+        required_tags := {"Environment", "Owner", "CostCenter"}
+        missing := required_tags - {key | resource.tags[key]}
+        count(missing) > 0
+        msg := sprintf("Missing required tags: %v", [missing])
+      }</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>Combined Pipeline: Checkov + tfsec + Terrascan</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">yaml — .gitlab-ci.yml (multi-tool scan)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Run all three scanners in parallel</span>
+checkov:
+  stage: security
+  image: bridgecrew/checkov:latest
+  script:
+    - checkov -d . --output json --output-file-path ./results/ --soft-fail
+  artifacts: { paths: [results/], when: always }
+
+tfsec:
+  stage: security
+  image: aquasec/tfsec:latest
+  script:
+    - tfsec . --format json --out results/tfsec.json --minimum-severity MEDIUM --soft-fail || true
+  artifacts: { paths: [results/tfsec.json], when: always }
+
+terrascan:
+  stage: security
+  image: tenable/terrascan:latest
+  script:
+    - terrascan scan -i terraform -d . --output json > results/terrascan.json || true
+  artifacts: { paths: [results/terrascan.json], when: always }
+
+<span class="cm"># Aggregate and enforce threshold AFTER all three complete</span>
+iac-gate:
+  stage: security
+  image: python:3.11-slim
+  needs: [checkov, tfsec, terrascan]
+  script:
+    - |
+      python3 &lt;&lt;'EOF'
+      import json, sys, os
+
+      total_critical = 0
+
+      <span class="cm"># Parse tfsec</span>
+      try:
+          with open("results/tfsec.json") as f:
+              data = json.load(f)
+          critical = [r for r in data.get("results", [])
+                      if r.get("severity") == "CRITICAL"]
+          print(f"tfsec CRITICAL: {len(critical)}")
+          total_critical += len(critical)
+      except: pass
+
+      <span class="cm"># Parse checkov</span>
+      try:
+          with open("results/results_json.json") as f:
+              data = json.load(f)
+          failed = data.get("summary", {}).get("failed", 0)
+          print(f"Checkov failed: {failed}")
+      except: pass
+
+      if total_critical > 0:
+          print(f"\nBLOCKING DEPLOYMENT: {total_critical} CRITICAL IaC findings")
+          sys.exit(1)
+      print("IaC security gate: PASSED")
+      EOF</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P5 -->
+
+  <!-- ════ PROJECT 6 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum r">P-06</div>
+      <div class="pmeta">
+        <h3>Terraform-Compliance — Security Tests in Plain English</h3>
+        <p>Write security requirements as human-readable BDD (Behavior Driven Development) tests using Gherkin. "Given I have an S3 bucket, it must have encryption enabled." Perfect for auditors and compliance teams.</p>
+        <div class="ptags">
+          <span class="ptag r">terraform-compliance</span>
+          <span class="ptag t">BDD</span>
+          <span class="ptag b">Gherkin</span>
+          <span class="ptag g">Compliance</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff med">◆ INTERMEDIATE</span>
+          <span class="ptime">⏱ 3–4 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Install and Understand the BDD Approach</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>pip install terraform-compliance
+
+<span class="cm"># Generate plan file (terraform-compliance works against the plan)</span>
+terraform plan -out=tfplan.binary
+terraform show -json tfplan.binary > tfplan.json
+
+<span class="cm"># Run compliance checks</span>
+terraform-compliance -f compliance/ -p tfplan.json</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>Write Compliance Tests in Gherkin</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">gherkin — compliance/s3_security.feature</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>Feature: S3 Bucket Security Requirements
+  As a security team
+  I want all S3 buckets to be securely configured
+  So that sensitive data is never exposed
+
+  Scenario: S3 buckets must block public access
+    Given I have aws_s3_bucket_public_access_block defined
+    Then it must contain block_public_acls
+    And its value must be true
+    Then it must contain block_public_policy
+    And its value must be true
+
+  Scenario: S3 buckets must use KMS encryption
+    Given I have aws_s3_bucket_server_side_encryption_configuration defined
+    Then it must contain sse_algorithm
+    And its value must match the "aws:kms" regex
+
+  Scenario: S3 buckets must have versioning enabled
+    Given I have aws_s3_bucket_versioning defined
+    Then it must contain status
+    And its value must be Enabled
+
+  Scenario: S3 access logs must be sent to a logging bucket
+    Given I have aws_s3_bucket_logging defined
+    Then it must contain target_bucket</pre>
+            </div>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">gherkin — compliance/ec2_security.feature</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>Feature: EC2 Instance Security Requirements
+
+  Scenario: EC2 instances must use IMDSv2
+    Given I have aws_instance defined
+    Then it must contain metadata_options
+    And it must contain http_tokens
+    And its value must be required
+
+  Scenario: EC2 instances must not have public IPs
+    Given I have aws_instance defined
+    Then it must not contain associate_public_ip_address
+    Or its associate_public_ip_address must be false
+
+  Scenario: EC2 instances must have encrypted root volumes
+    Given I have aws_instance defined
+    When it contains root_block_device
+    Then it must contain encrypted
+    And its value must be true
+
+  Scenario: EBS volumes must be encrypted
+    Given I have aws_ebs_volume defined
+    Then it must contain encrypted
+    And its value must be true</pre>
+            </div>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">gherkin — compliance/iam_security.feature</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>Feature: IAM Security Requirements
+
+  Scenario: IAM policies must not have admin wildcards
+    Given I have aws_iam_policy defined
+    When it contains policy
+    Then it must not contain Action with "*"
+    And it must not contain Resource with "*" together with Allow effect
+
+  Scenario: IAM roles must have description
+    Given I have aws_iam_role defined
+    Then it must contain description
+    And its value must not be empty
+
+  Scenario: Root account must not have access keys
+    Given I have aws_iam_user defined
+    When its name is root
+    Then it must not have aws_iam_access_key configured</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>CI Integration</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">yaml — .gitlab-ci.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>terraform-compliance:
+  stage: security
+  image: python:3.11-slim
+  script:
+    - pip install terraform-compliance
+    <span class="cm"># Plan must be generated first</span>
+    - terraform-compliance -f ./compliance/ -p ./tfplan.json
+  artifacts:
+    when: always
+    paths: [compliance-report/]</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P6 -->
+
+  <!-- ════ PROJECT 7 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum a">P-07</div>
+      <div class="pmeta">
+        <h3>AWS GuardDuty + Config — Runtime Threat Detection via Terraform</h3>
+        <p>Enable and configure AWS GuardDuty and AWS Config entirely via Terraform. Build auto-remediation Lambda functions that respond automatically to security findings.</p>
+        <div class="ptags">
+          <span class="ptag a">GuardDuty</span>
+          <span class="ptag o">AWS Config</span>
+          <span class="ptag t">Lambda</span>
+          <span class="ptag g">Auto-remediation</span>
+          <span class="ptag b">EventBridge</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff med">◆ INTERMEDIATE</span>
+          <span class="ptime">⏱ 6–8 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="note info"><div class="note-ico">ℹ️</div><p><strong>This is where AWS security gets powerful.</strong> GuardDuty analyzes CloudTrail, VPC flow logs, and DNS logs using ML to detect threats you'd never manually catch: unusual API calls from an impossible location, EC2 communicating with cryptocurrency mining pools, IAM credentials used from a Tor exit node. Config tracks every resource change and flags non-compliant configurations.</p></div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Enable GuardDuty Across All Regions via Terraform</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — guardduty.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Enable GuardDuty in primary region</span>
+resource <span class="str">"aws_guardduty_detector"</span> <span class="str">"main"</span> {
+  enable = <span class="kw">true</span>
+
+  datasources {
+    s3_logs { enable = <span class="kw">true</span> }
+    kubernetes {
+      audit_logs { enable = <span class="kw">true</span> }
+    }
+    malware_protection {
+      scan_ec2_instance_with_findings {
+        ebs_volumes { enable = <span class="kw">true</span> }
+      }
+    }
+  }
+
+  tags = { Name = <span class="str">"${var.name}-guardduty"</span> }
+}
+
+<span class="cm"># SNS topic for GuardDuty alerts</span>
+resource <span class="str">"aws_sns_topic"</span> <span class="str">"security_alerts"</span> {
+  name              = <span class="str">"${var.name}-security-alerts"</span>
+  kms_master_key_id = <span class="str">"alias/aws/sns"</span>
+}
+
+resource <span class="str">"aws_sns_topic_subscription"</span> <span class="str">"email"</span> {
+  topic_arn = aws_sns_topic.security_alerts.arn
+  protocol  = <span class="str">"email"</span>
+  endpoint  = <span class="kw">var</span>.security_email
+}
+
+<span class="cm"># EventBridge rule — trigger on HIGH/CRITICAL GuardDuty findings</span>
+resource <span class="str">"aws_cloudwatch_event_rule"</span> <span class="str">"guardduty_findings"</span> {
+  name        = <span class="str">"guardduty-high-severity"</span>
+  description = <span class="str">"Capture HIGH and CRITICAL GuardDuty findings"</span>
+
+  event_pattern = jsonencode({
+    source      = [<span class="str">"aws.guardduty"</span>]
+    detail-type = [<span class="str">"GuardDuty Finding"</span>]
+    detail = {
+      severity = [{ numeric = [<span class="str">">="</span>, <span class="num">7</span>] }]  <span class="cm"># HIGH = 7+, CRITICAL = 9+</span>
+    }
+  })
+}
+
+<span class="cm"># Route findings to Lambda for auto-remediation</span>
+resource <span class="str">"aws_cloudwatch_event_target"</span> <span class="str">"remediation"</span> {
+  rule = aws_cloudwatch_event_rule.guardduty_findings.name
+  arn  = aws_lambda_function.guardduty_remediation.arn
+}
+
+<span class="cm"># Also route to SNS for alerts</span>
+resource <span class="str">"aws_cloudwatch_event_target"</span> <span class="str">"alert"</span> {
+  rule = aws_cloudwatch_event_rule.guardduty_findings.name
+  arn  = aws_sns_topic.security_alerts.arn
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>Auto-Remediation Lambda</h4>
+            <p>When GuardDuty finds a compromised EC2 instance, automatically isolate it by moving it to a quarantine security group — buying you time to investigate.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">python — lambda/guardduty_remediation.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="kw">import</span> boto3
+<span class="kw">import</span> json
+<span class="kw">import</span> os
+<span class="kw">import</span> logging
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+ec2 = boto3.client(<span class="str">'ec2'</span>)
+sns = boto3.client(<span class="str">'sns'</span>)
+
+QUARANTINE_SG = os.environ[<span class="str">'QUARANTINE_SG_ID'</span>]
+ALERT_TOPIC   = os.environ[<span class="str">'ALERT_TOPIC_ARN'</span>]
+
+<span class="kw">def</span> <span class="fn">lambda_handler</span>(event, context):
+    finding = event[<span class="str">'detail'</span>]
+    finding_type = finding[<span class="str">'type'</span>]
+    severity     = finding[<span class="str">'severity'</span>]
+    account_id   = finding[<span class="str">'accountId'</span>]
+
+    logger.info(f<span class="str">"GuardDuty finding: {finding_type} (severity: {severity})"</span>)
+
+    resource = finding.get(<span class="str">'resource'</span>, {})
+    resource_type = resource.get(<span class="str">'resourceType'</span>)
+
+    <span class="cm"># Handle compromised EC2 instance</span>
+    <span class="kw">if</span> resource_type == <span class="str">'Instance'</span>:
+        instance_id = resource[<span class="str">'instanceDetails'</span>][<span class="str">'instanceId'</span>]
+        <span class="fn">isolate_instance</span>(instance_id, finding_type, severity)
+
+    <span class="cm"># Handle compromised IAM credentials</span>
+    <span class="kw">elif</span> resource_type == <span class="str">'AccessKey'</span>:
+        access_key_id = resource[<span class="str">'accessKeyDetails'</span>][<span class="str">'accessKeyId'</span>]
+        username      = resource[<span class="str">'accessKeyDetails'</span>][<span class="str">'userName'</span>]
+        <span class="fn">disable_access_key</span>(username, access_key_id, severity)
+
+<span class="kw">def</span> <span class="fn">isolate_instance</span>(instance_id, finding_type, severity):
+    <span class="str">"""Move instance to quarantine SG — cuts off all normal network access"""</span>
+    <span class="kw">try</span>:
+        <span class="cm"># Get current security groups</span>
+        response = ec2.describe_instances(InstanceIds=[instance_id])
+        instance = response[<span class="str">'Reservations'</span>][0][<span class="str">'Instances'</span>][0]
+        current_sgs = [sg[<span class="str">'GroupId'</span>] for sg <span class="kw">in</span> instance[<span class="str">'SecurityGroups'</span>]]
+
+        <span class="cm"># Replace ALL security groups with quarantine SG only</span>
+        ec2.modify_instance_attribute(
+            InstanceId=instance_id,
+            Groups=[QUARANTINE_SG]
+        )
+
+        logger.info(f<span class="str">"ISOLATED instance {instance_id}. Was in SGs: {current_sgs}"</span>)
+
+        <span class="cm"># Add forensic tag</span>
+        ec2.create_tags(
+            Resources=[instance_id],
+            Tags=[
+                {<span class="str">'Key'</span>: <span class="str">'SecurityStatus'</span>,   <span class="str">'Value'</span>: <span class="str">'QUARANTINED'</span>},
+                {<span class="str">'Key'</span>: <span class="str">'SecurityFinding'</span>,   <span class="str">'Value'</span>: finding_type},
+                {<span class="str">'Key'</span>: <span class="str">'OriginalSGs'</span>,       <span class="str">'Value'</span>: <span class="str">','</span>.join(current_sgs)},
+            ]
+        )
+
+        sns.publish(
+            TopicArn=ALERT_TOPIC,
+            Subject=f<span class="str">"🚨 EC2 QUARANTINED: {instance_id}"</span>,
+            Message=f<span class="str">"Instance {instance_id} quarantined.\nFinding: {finding_type}\nSeverity: {severity}\nOriginal SGs: {current_sgs}"</span>
+        )
+
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        logger.error(f<span class="str">"Failed to isolate {instance_id}: {e}"</span>)
+        <span class="kw">raise</span>
+
+<span class="kw">def</span> <span class="fn">disable_access_key</span>(username, access_key_id, severity):
+    <span class="str">"""Disable compromised IAM access key"""</span>
+    iam = boto3.client(<span class="str">'iam'</span>)
+    <span class="kw">try</span>:
+        iam.update_access_key(
+            UserName=username,
+            AccessKeyId=access_key_id,
+            Status=<span class="str">'Inactive'</span>
+        )
+        logger.info(f<span class="str">"DISABLED access key {access_key_id} for user {username}"</span>)
+        sns.publish(
+            TopicArn=ALERT_TOPIC,
+            Subject=f<span class="str">"🚨 IAM KEY DISABLED: {username}"</span>,
+            Message=f<span class="str">"Access key {access_key_id} for {username} has been disabled.\nSeverity: {severity}"</span>
+        )
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        logger.error(f<span class="str">"Failed to disable key {access_key_id}: {e}"</span>)</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>AWS Config Rules via Terraform</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — config_rules.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Enable AWS Config recorder</span>
+resource <span class="str">"aws_config_configuration_recorder"</span> <span class="str">"main"</span> {
+  name     = <span class="str">"main"</span>
+  role_arn = aws_iam_role.config.arn
+
+  recording_group {
+    all_supported                 = <span class="kw">true</span>
+    include_global_resource_types = <span class="kw">true</span>
+  }
+}
+
+resource <span class="str">"aws_config_configuration_recorder_status"</span> <span class="str">"main"</span> {
+  name       = aws_config_configuration_recorder.main.name
+  is_enabled = <span class="kw">true</span>
+  depends_on = [aws_config_delivery_channel.main]
+}
+
+<span class="cm"># Managed Config Rules — AWS built-ins</span>
+locals {
+  config_rules = {
+    <span class="str">"s3-bucket-server-side-encryption-enabled"</span> = {}
+    <span class="str">"s3-bucket-public-read-prohibited"</span>         = {}
+    <span class="str">"s3-bucket-public-write-prohibited"</span>        = {}
+    <span class="str">"s3-bucket-versioning-enabled"</span>             = {}
+    <span class="str">"ec2-imdsv2-check"</span>                         = {}
+    <span class="str">"ec2-instance-no-public-ip"</span>                = {}
+    <span class="str">"rds-instance-public-access-check"</span>         = {}
+    <span class="str">"rds-storage-encrypted"</span>                    = {}
+    <span class="str">"iam-root-access-key-check"</span>                = {}
+    <span class="str">"iam-user-mfa-enabled"</span>                     = {}
+    <span class="str">"cloudtrail-enabled"</span>                       = {}
+    <span class="str">"vpc-flow-logs-enabled"</span>                    = {}
+    <span class="str">"guardduty-enabled-centralized"</span>            = {}
+  }
+}
+
+resource <span class="str">"aws_config_config_rule"</span> <span class="str">"managed"</span> {
+  for_each = local.config_rules
+
+  name        = each.key
+  source {
+    owner             = <span class="str">"AWS"</span>
+    source_identifier = upper(replace(each.key, <span class="str">"-"</span>, <span class="str">"_"</span>))
+  }
+  depends_on = [aws_config_configuration_recorder.main]
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P7 -->
+
+  <!-- ════ PROJECT 8 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum t">P-08</div>
+      <div class="pmeta">
+        <h3>AWS Security Hub — Centralized CSPM Dashboard</h3>
+        <p>Enable Security Hub via Terraform, aggregate findings from GuardDuty, Inspector, Config, and Macie. Build automated compliance reporting against CIS AWS Benchmark, PCI-DSS, and NIST 800-53.</p>
+        <div class="ptags">
+          <span class="ptag t">Security Hub</span>
+          <span class="ptag a">Macie</span>
+          <span class="ptag o">Inspector v2</span>
+          <span class="ptag g">CIS Benchmark</span>
+          <span class="ptag b">NIST 800-53</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff hard">▲ ADVANCED</span>
+          <span class="ptime">⏱ 6–8 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Enable All AWS Security Services via Terraform</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — security_hub.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># ═══ SECURITY HUB ════════════════════════════════════════</span>
+resource <span class="str">"aws_securityhub_account"</span> <span class="str">"main"</span> {
+  auto_enable_controls  = <span class="kw">true</span>
+  control_finding_generator = <span class="str">"SECURITY_CONTROL"</span>
+}
+
+<span class="cm"># Enable CIS AWS Foundations Benchmark standard</span>
+resource <span class="str">"aws_securityhub_standards_subscription"</span> <span class="str">"cis"</span> {
+  standards_arn = <span class="str">"arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.4.0"</span>
+  depends_on    = [aws_securityhub_account.main]
+}
+
+<span class="cm"># Enable AWS Foundational Security Best Practices</span>
+resource <span class="str">"aws_securityhub_standards_subscription"</span> <span class="str">"aws_best_practices"</span> {
+  standards_arn = <span class="str">"arn:aws:securityhub:${var.region}::standards/aws-foundational-security-best-practices/v/1.0.0"</span>
+  depends_on    = [aws_securityhub_account.main]
+}
+
+<span class="cm"># Enable NIST 800-53</span>
+resource <span class="str">"aws_securityhub_standards_subscription"</span> <span class="str">"nist"</span> {
+  standards_arn = <span class="str">"arn:aws:securityhub:${var.region}::standards/nist-800-53/v/5.0.0"</span>
+  depends_on    = [aws_securityhub_account.main]
+}
+
+<span class="cm"># ═══ MACIE — Find sensitive data in S3 ══════════════════</span>
+resource <span class="str">"aws_macie2_account"</span> <span class="str">"main"</span> {
+  finding_publishing_frequency = <span class="str">"FIFTEEN_MINUTES"</span>
+  status                       = <span class="str">"ENABLED"</span>
+}
+
+<span class="cm"># Enable Macie for all S3 buckets</span>
+resource <span class="str">"aws_macie2_classification_job"</span> <span class="str">"all_buckets"</span> {
+  job_type = <span class="str">"SCHEDULED"</span>
+  name     = <span class="str">"sensitive-data-discovery"</span>
+
+  schedule_frequency { weekly_schedule = <span class="str">"MONDAY"</span> }
+
+  s3_job_definition {
+    bucket_criteria {
+      includes {
+        and {
+          simple_criterion {
+            comparator = <span class="str">"EQ"</span>
+            key        = <span class="str">"S3_BUCKET_SHARED_WITH_AWS_ACCOUNT"</span>
+            values     = []
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [aws_macie2_account.main]
+}
+
+<span class="cm"># ═══ INSPECTOR v2 — EC2 & ECR vulnerability scanning ════</span>
+resource <span class="str">"aws_inspector2_enabler"</span> <span class="str">"main"</span> {
+  account_ids    = [<span class="kw">var</span>.account_id]
+  resource_types = [<span class="str">"EC2"</span>, <span class="str">"ECR"</span>, <span class="str">"LAMBDA"</span>]
+}
+
+<span class="cm"># ═══ CLOUDTRAIL — Audit all API calls ════════════════════</span>
+resource <span class="str">"aws_cloudtrail"</span> <span class="str">"main"</span> {
+  name                          = <span class="str">"${var.name}-audit-trail"</span>
+  s3_bucket_name                = aws_s3_bucket.cloudtrail.id
+  include_global_service_events = <span class="kw">true</span>
+  is_multi_region_trail         = <span class="kw">true</span>
+  enable_log_file_validation    = <span class="kw">true</span>   <span class="cm"># Detects tampering</span>
+  kms_key_id                    = aws_kms_key.cloudtrail.arn
+
+  event_selector {
+    read_write_type           = <span class="str">"All"</span>
+    include_management_events = <span class="kw">true</span>
+
+    <span class="cm"># Log all S3 data events (GetObject, PutObject)</span>
+    data_resource {
+      type   = <span class="str">"AWS::S3::Object"</span>
+      values = [<span class="str">"arn:aws:s3:::"</span>]
+    }
+  }
+
+  tags = { Name = <span class="str">"${var.name}-cloudtrail"</span> }
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>Security Hub Custom Insights & Automation</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — security_hub_insights.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># Custom insight: Critical unresolved findings</span>
+resource <span class="str">"aws_securityhub_insight"</span> <span class="str">"critical_findings"</span> {
+  name = <span class="str">"Critical Unresolved Findings"</span>
+
+  filters {
+    severity_label {
+      comparison = <span class="str">"EQUALS"</span>
+      value      = <span class="str">"CRITICAL"</span>
+    }
+    record_state {
+      comparison = <span class="str">"EQUALS"</span>
+      value      = <span class="str">"ACTIVE"</span>
+    }
+    workflow_status {
+      comparison = <span class="str">"NOT_EQUALS"</span>
+      value      = <span class="str">"SUPPRESSED"</span>
+    }
+  }
+
+  group_by_attribute = <span class="str">"ResourceType"</span>
+}
+
+<span class="cm"># Automated response: Create Jira ticket for CRITICAL findings</span>
+resource <span class="str">"aws_securityhub_automation_rule"</span> <span class="str">"critical_to_jira"</span> {
+  rule_name    = <span class="str">"CriticalFindingsToJira"</span>
+  rule_order   = 1
+  is_terminal  = <span class="kw">false</span>
+  description  = <span class="str">"Update severity label for critical findings"</span>
+
+  criteria {
+    severity_label {
+      comparison = <span class="str">"EQUALS"</span>
+      value      = <span class="str">"CRITICAL"</span>
+    }
+  }
+
+  actions {
+    type = <span class="str">"FINDING_FIELDS_UPDATE"</span>
+    finding_fields_update {
+      note {
+        text       = <span class="str">"Auto-escalated: CRITICAL finding requires immediate attention"</span>
+        updated_by = <span class="str">"SecurityHubAutomation"</span>
+      }
+      severity { label = <span class="str">"CRITICAL"</span> }
+      workflow { status = <span class="str">"NEW"</span> }
+    }
+  }
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P8 -->
+
+  <!-- ════ PROJECT 9 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum r">P-09</div>
+      <div class="pmeta">
+        <h3>Terraform Secure Modules Library</h3>
+        <p>Build a reusable internal module library where security is baked in by default. Teams consume your modules and get CIS-compliant, encrypted, tagged infrastructure automatically — without knowing the security details.</p>
+        <div class="ptags">
+          <span class="ptag r">Modules</span>
+          <span class="ptag a">Reusable</span>
+          <span class="ptag t">Secure by Default</span>
+          <span class="ptag g">Module Registry</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff hard">▲ EXPERT</span>
+          <span class="ptime">⏱ 8–10 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Module Structure and Philosophy</h4>
+            <p><strong>The goal:</strong> A developer who writes <code>module "my_bucket" { source = "git::https://gitlab.myorg.com/infra/modules//s3" }</code> automatically gets: KMS encryption, access logging, versioning, public access blocked, proper tags, and CIS compliance. They don't need to know any of this — it's just how your buckets work.</p>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">bash — Module library structure</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>terraform-modules/
+├── modules/
+│   ├── s3-secure/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   ├── README.md
+│   │   └── examples/
+│   │       ├── basic/main.tf
+│   │       └── with-replication/main.tf
+│   ├── ec2-secure/
+│   │   ├── main.tf         <span class="cm"># IMDSv2, encrypted EBS, SSM agent, no key pair</span>
+│   │   └── ...
+│   ├── rds-secure/
+│   │   ├── main.tf         <span class="cm"># Encrypted, multi-AZ, no public, deletion protection</span>
+│   │   └── ...
+│   ├── vpc/
+│   │   └── ...             <span class="cm"># From Project 1</span>
+│   └── iam-role/
+│       ├── main.tf         <span class="cm"># With MFA condition, description requirement</span>
+│       └── ...
+└── tests/
+    ├── s3_test.go          <span class="cm"># Terratest integration tests</span>
+    └── ec2_test.go</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">2</div>
+          <div class="sbody">
+            <h4>Secure EC2 Module — IMDSv2, SSM, No Key Pair</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">hcl — modules/ec2-secure/main.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="cm"># ═══ SECURE EC2 MODULE ═══════════════════════════════════
+# Security enforced:
+# - IMDSv2 required (prevents SSRF credential theft)
+# - Encrypted root and data volumes
+# - SSM Session Manager instead of SSH
+# - No key pair (reduces attack surface)
+# - Detailed monitoring enabled
+# - User data validation</span>
+
+resource <span class="str">"aws_instance"</span> <span class="str">"main"</span> {
+  ami                    = <span class="kw">var</span>.ami_id
+  instance_type          = <span class="kw">var</span>.instance_type
+  subnet_id              = <span class="kw">var</span>.subnet_id
+  vpc_security_group_ids = <span class="kw">var</span>.security_group_ids
+  iam_instance_profile   = aws_iam_instance_profile.main.name
+
+  <span class="cm"># ✅ NO key_name — forces use of SSM Session Manager</span>
+
+  <span class="cm"># ✅ IMDSv2 required — prevents credential theft via SSRF</span>
+  metadata_options {
+    http_endpoint               = <span class="str">"enabled"</span>
+    http_tokens                 = <span class="str">"required"</span>   <span class="cm"># IMDSv2</span>
+    http_put_response_hop_limit = 1              <span class="cm"># Container protection</span>
+    instance_metadata_tags      = <span class="str">"enabled"</span>
+  }
+
+  <span class="cm"># ✅ Encrypted root volume</span>
+  root_block_device {
+    volume_type           = <span class="str">"gp3"</span>
+    volume_size           = <span class="kw">var</span>.root_volume_size
+    encrypted             = <span class="kw">true</span>
+    kms_key_id            = <span class="kw">var</span>.kms_key_arn
+    delete_on_termination = <span class="kw">true</span>
+  }
+
+  <span class="cm"># ✅ Detailed monitoring (1-minute intervals)</span>
+  monitoring = <span class="kw">true</span>
+
+  <span class="cm"># ✅ Disable source/destination check only for NAT instances</span>
+  source_dest_check = <span class="kw">true</span>
+
+  user_data = base64encode(templatefile(<span class="str">"${path.module}/userdata.sh"</span>, {
+    region = <span class="kw">var</span>.aws_region
+  }))
+
+  lifecycle {
+    create_before_destroy = <span class="kw">true</span>
+    ignore_changes        = [ami]  <span class="cm"># Don't reprovision on AMI update</span>
+  }
+
+  tags = merge(<span class="kw">var</span>.tags, {
+    Name          = <span class="kw">var</span>.name
+    PatchGroup    = <span class="kw">var</span>.patch_group
+  })
+}
+
+<span class="cm"># IAM role with SSM permissions (minimum required)</span>
+resource <span class="str">"aws_iam_role"</span> <span class="str">"main"</span> {
+  name               = <span class="str">"${var.name}-ec2-role"</span>
+  assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
+}
+
+data <span class="str">"aws_iam_policy_document"</span> <span class="str">"ec2_assume"</span> {
+  statement {
+    actions = [<span class="str">"sts:AssumeRole"</span>]
+    principals {
+      type        = <span class="str">"Service"</span>
+      identifiers = [<span class="str">"ec2.amazonaws.com"</span>]
+    }
+  }
+}
+
+<span class="cm"># SSM managed policy — enables Session Manager (replaces SSH)</span>
+resource <span class="str">"aws_iam_role_policy_attachment"</span> <span class="str">"ssm"</span> {
+  role       = aws_iam_role.main.name
+  policy_arn = <span class="str">"arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"</span>
+}
+
+resource <span class="str">"aws_iam_instance_profile"</span> <span class="str">"main"</span> {
+  name = <span class="str">"${var.name}-profile"</span>
+  role = aws_iam_role.main.name
+}</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="snum">3</div>
+          <div class="sbody">
+            <h4>Terratest Integration Tests (Go)</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">go — tests/s3_test.go</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre><span class="kw">package</span> test
+
+<span class="kw">import</span> (
+    <span class="str">"testing"</span>
+    <span class="str">"github.com/gruntwork-io/terratest/modules/terraform"</span>
+    <span class="str">"github.com/gruntwork-io/terratest/modules/aws"</span>
+    <span class="str">"github.com/stretchr/testify/assert"</span>
+)
+
+<span class="kw">func</span> <span class="fn">TestS3ModuleEncryption</span>(t *testing.T) {
+    t.Parallel()
+
+    terraformOptions := &terraform.Options{
+        TerraformDir: <span class="str">"../modules/s3-secure/examples/basic"</span>,
+        Vars: map[string]interface{}{
+            <span class="str">"bucket_name"</span>: <span class="str">"test-bucket-12345"</span>,
+            <span class="str">"environment"</span>: <span class="str">"test"</span>,
+        },
+    }
+
+    <span class="kw">defer</span> terraform.Destroy(t, terraformOptions)
+    terraform.InitAndApply(t, terraformOptions)
+
+    bucketName := terraform.Output(t, terraformOptions, <span class="str">"bucket_name"</span>)
+
+    <span class="cm">// Assert encryption is enabled</span>
+    encryption := aws.GetS3BucketEncryption(t, <span class="str">"us-east-1"</span>, bucketName)
+    assert.Equal(t, <span class="str">"aws:kms"</span>, encryption)
+
+    <span class="cm">// Assert versioning is enabled</span>
+    versioning := aws.GetS3BucketVersioning(t, <span class="str">"us-east-1"</span>, bucketName)
+    assert.Equal(t, <span class="str">"Enabled"</span>, versioning)
+
+    <span class="cm">// Assert public access is blocked</span>
+    publicAccess := aws.GetS3BucketPublicAccessBlock(t, <span class="str">"us-east-1"</span>, bucketName)
+    assert.True(t, publicAccess.BlockPublicAcls)
+    assert.True(t, publicAccess.BlockPublicPolicy)
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /P9 -->
+
+  <!-- ════ PROJECT 10 ════ -->
+  <div class="proj-card" onclick="toggleP(this)">
+    <div class="proj-head">
+      <div class="pnum g">P-10</div>
+      <div class="pmeta">
+        <h3>Full GitOps IaC Pipeline — The Capstone</h3>
+        <p>Combine everything: GitLab CI/CD + Terraform + Checkov + tfsec + compliance testing + AWS deployment. Full infrastructure GitOps pipeline with automatic security gates, plan review, and deployment to AWS.</p>
+        <div class="ptags">
+          <span class="ptag g">GitOps</span>
+          <span class="ptag a">Full Pipeline</span>
+          <span class="ptag t">AWS Deploy</span>
+          <span class="ptag b">All Tools</span>
+          <span class="ptag o">Production Ready</span>
+        </div>
+        <div class="pmeta-footer">
+          <span class="diff hard">▲ EXPERT</span>
+          <span class="ptime">⏱ 10–14 hours</span>
+        </div>
+      </div>
+      <div class="toggle">▼</div>
+    </div>
+    <div class="proj-body">
+      <div class="steps">
+        <div class="step">
+          <div class="snum">1</div>
+          <div class="sbody">
+            <h4>Complete GitOps IaC Pipeline</h4>
+            <div class="cb">
+              <div class="cb-head"><span class="cb-lang">yaml — .gitlab-ci.yml (complete IaC GitOps pipeline)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+              <pre>stages:
+  - validate      <span class="cm"># Syntax + format</span>
+  - security      <span class="cm"># All IaC scanning (parallel)</span>
+  - plan          <span class="cm"># Terraform plan</span>
+  - review        <span class="cm"># Manual approval for prod</span>
+  - apply         <span class="cm"># Deploy to AWS</span>
+  - verify        <span class="cm"># Post-deploy verification</span>
+
+variables:
+  TF_VERSION:  <span class="str">"1.6.0"</span>
+  TF_ROOT:     <span class="str">"${CI_PROJECT_DIR}/environments/${ENV}"</span>
+  AWS_REGION:  <span class="str">"us-east-1"</span>
+
+<span class="cm"># ── Stage 1: Validate ─────────────────────────────────</span>
+tf-validate:
+  stage: validate
+  image: hashicorp/terraform:${TF_VERSION}
+  script:
+    - cd $TF_ROOT
+    - terraform init -backend=false
+    - terraform validate
+    - terraform fmt -check -recursive    <span class="cm"># Fail if not formatted</span>
+  rules:
+    - changes: ["**/*.tf", "**/*.tfvars"]
+
+<span class="cm"># ── Stage 2: Security (All Parallel) ──────────────────</span>
+.scan-template: &scan
+  stage: security
+  needs: [tf-validate]
+  rules:
+    - changes: ["**/*.tf"]
+
+checkov:
+  <<: *scan
+  image: bridgecrew/checkov:latest
+  script:
+    - checkov -d $TF_ROOT
+              --framework terraform
+              --external-checks-dir ./custom_checks
+              --output json --output-file-path ./results/
+              --soft-fail
+  artifacts: { paths: [results/], when: always }
+
+tfsec:
+  <<: *scan
+  image: aquasec/tfsec:latest
+  script:
+    - tfsec $TF_ROOT --format json --minimum-severity MEDIUM
+              --out results/tfsec.json --soft-fail || true
+  artifacts: { paths: [results/tfsec.json], when: always }
+
+terraform-compliance:
+  <<: *scan
+  image: python:3.11-slim
+  script:
+    - pip install terraform-compliance -q
+    - cd $TF_ROOT && terraform init -backend=false
+    - terraform plan -out=tfplan.binary -input=false
+    - terraform show -json tfplan.binary > tfplan.json
+    - terraform-compliance -f ${CI_PROJECT_DIR}/compliance/ -p tfplan.json
+  artifacts: { paths: [$TF_ROOT/tfplan.json], when: always }
+
+security-gate:
+  stage: security
+  image: python:3.11-slim
+  needs: [checkov, tfsec, terraform-compliance]
+  script: |
+    python3 &lt;&lt;'EOF'
+    import json, sys, glob
+
+    critical = []
+
+    # Check tfsec
+    try:
+        with open("results/tfsec.json") as f:
+            data = json.load(f)
+        for r in data.get("results", []):
+            if r.get("severity") == "CRITICAL":
+                critical.append(f"tfsec: {r['description']}")
+    except: pass
+
+    # Check checkov
+    try:
+        files = glob.glob("results/*_json.json")
+        if files:
+            with open(files[0]) as f: data = json.load(f)
+            critical_ids = ["CKV_AWS_20","CKV_AWS_79","CKV_AWS_17","CKV_AWS_24"]
+            failed = [r["check_id"] for r in data.get("results",{}).get("failed_checks",[])]
+            for cid in critical_ids:
+                if cid in failed: critical.append(f"checkov: {cid}")
+    except: pass
+
+    if critical:
+        print(f"\n🚫 SECURITY GATE FAILED: {len(critical)} critical findings")
+        [print(f"  • {c}") for c in critical]
+        sys.exit(1)
+    print("✅ Security gate passed!")
+    EOF
+
+<span class="cm"># ── Stage 3: Plan ─────────────────────────────────────</span>
+tf-plan-dev:
+  stage: plan
+  image: hashicorp/terraform:${TF_VERSION}
+  needs: [security-gate]
+  environment: name=dev/plan
+  variables: { ENV: dev }
+  script:
+    - cd $TF_ROOT
+    - terraform init
+    - terraform plan -out=tfplan.binary
+                    -input=false
+                    -detailed-exitcode
+              || ([ $? -eq 2 ] && echo "Changes detected")
+    - terraform show -no-color tfplan.binary > plan.txt
+  artifacts: { paths: [$TF_ROOT/tfplan.binary, $TF_ROOT/plan.txt] }
+
+<span class="cm"># ── Stage 4: Manual Review for Prod ───────────────────</span>
+review-prod:
+  stage: review
+  image: alpine:latest
+  script: echo "Review plan output before approving"
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  environment: name=production/review
+
+<span class="cm"># ── Stage 5: Apply ────────────────────────────────────</span>
+tf-apply-dev:
+  stage: apply
+  image: hashicorp/terraform:${TF_VERSION}
+  needs: [tf-plan-dev]
+  variables: { ENV: dev }
+  environment:
+    name: dev
+    url: https://console.aws.amazon.com
+  script:
+    - cd $TF_ROOT
+    - terraform init
+    - terraform apply -auto-approve -input=false tfplan.binary
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+
+tf-apply-prod:
+  stage: apply
+  image: hashicorp/terraform:${TF_VERSION}
+  needs: [review-prod, tf-plan-dev]
+  variables: { ENV: prod }
+  environment: name=production
+  script:
+    - cd $TF_ROOT
+    - terraform init
+    - terraform plan -out=tfplan.binary -input=false
+    - terraform apply -auto-approve -input=false tfplan.binary
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual   <span class="cm"># Production requires manual trigger</span>
+
+<span class="cm"># ── Stage 6: Post-Deploy Verification ─────────────────</span>
+verify-aws:
+  stage: verify
+  image: amazon/aws-cli:latest
+  needs: [tf-apply-dev]
+  script:
+    <span class="cm"># Verify GuardDuty is enabled</span>
+    - aws guardduty list-detectors --region $AWS_REGION
+    <span class="cm"># Verify Security Hub is enabled</span>
+    - aws securityhub describe-hub --region $AWS_REGION
+    <span class="cm"># Verify CloudTrail is logging</span>
+    - aws cloudtrail get-trail-status --name main-audit-trail --region $AWS_REGION
+    <span class="cm"># Verify no public S3 buckets</span>
+    - |
+      PUBLIC=$(aws s3api list-buckets --query 'Buckets[].Name' --output text | \
+        xargs -I {} aws s3api get-bucket-policy-status \
+          --bucket {} --query 'PolicyStatus.IsPublic' 2>/dev/null | \
+          grep true | wc -l)
+      [ "$PUBLIC" -eq "0" ] || (echo "PUBLIC BUCKETS FOUND!" && exit 1)
+    - echo "✅ Post-deploy verification passed"</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note ok"><div class="note-ico">✅</div><p><strong>Phase 2 Complete.</strong> You now have: Terraform-managed AWS infrastructure (VPC, IAM, S3, EC2), full IaC scanning pipeline (Checkov + tfsec + terraform-compliance), AWS native security services (GuardDuty + Config + Security Hub + Macie + Inspector) all deployed as code, auto-remediation Lambda functions, and a complete GitOps deployment pipeline. This is senior DevSecOps / Cloud Security Engineer territory.</p></div>
+    </div>
+  </div><!-- /P10 -->
+
+</div><!-- /proj-list -->
+</div><!-- /tab-all -->
+
+<!-- ══════════════════════════ TERRAFORM FOUNDATIONS ══════════════════════════ -->
+<div id="tab-terraform" class="tab-pane">
+  <div class="sec-title">Terraform Foundations for Security Engineers</div>
+  <p class="sec-sub">The concepts you must internalize before writing production Terraform</p>
+
+  <div class="concept">
+    <h2>🧠 How Terraform Works (Mental Model)</h2>
+    <p>Terraform has 3 core phases: <strong>Write</strong> (HCL code → describes desired state), <strong>Plan</strong> (<code>terraform plan</code> → compares desired vs actual, shows diff), <strong>Apply</strong> (<code>terraform apply</code> → makes AWS match desired state).</p>
+    <p>The <strong>state file</strong> (<code>terraform.tfstate</code>) is Terraform's memory — it tracks everything it has created. If you delete a resource from the state without deleting it from AWS, Terraform loses track. <strong>Never manually edit state.</strong></p>
+    <p><strong>Security implication:</strong> State files can contain secrets (RDS passwords, API keys). Always store in encrypted S3 with DynamoDB locking. Never commit to git.</p>
+  </div>
+
+  <table class="tools-table">
+    <tr><th>Command</th><th>What It Does</th><th>When to Use</th></tr>
+    <tr><td>terraform init</td><td>Downloads providers, initializes backend</td><td>First time, after adding providers</td></tr>
+    <tr><td>terraform validate</td><td>Checks HCL syntax</td><td>Before every commit (add to pre-commit)</td></tr>
+    <tr><td>terraform fmt</td><td>Auto-formats HCL files</td><td>Before every commit</td></tr>
+    <tr><td>terraform plan</td><td>Shows what will change — NO changes made</td><td>Before every apply — always review</td></tr>
+    <tr><td>terraform apply</td><td>Makes changes to AWS</td><td>After reviewing plan carefully</td></tr>
+    <tr><td>terraform destroy</td><td>Destroys all managed resources</td><td>Lab cleanup — NEVER in prod without review</td></tr>
+    <tr><td>terraform state list</td><td>Lists all tracked resources</td><td>Debugging, understanding state</td></tr>
+    <tr><td>terraform import</td><td>Imports existing resources into state</td><td>Adopting existing infrastructure</td></tr>
+    <tr><td>terraform taint</td><td>Marks resource for recreation</td><td>When resource is broken</td></tr>
+    <tr><td>terraform output</td><td>Shows output values</td><td>Getting IDs, ARNs for downstream use</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════ IaC SCANNING ══════════════════════════ -->
+<div id="tab-scanning" class="tab-pane">
+  <div class="sec-title">IaC Scanning Tools — Comparison & Selection Guide</div>
+  <p class="sec-sub">Use multiple tools — each has different coverage. They complement each other.</p>
+
+  <table class="tools-table">
+    <tr><th>Tool</th><th>Approach</th><th>Best For</th><th>Speed</th></tr>
+    <tr><td>Checkov</td><td>500+ pre-built rules, Python custom checks, multi-framework</td><td>Broadest coverage, CI/CD</td><td>Fast</td></tr>
+    <tr><td>tfsec</td><td>Deep Terraform HCL understanding, Rego custom rules</td><td>Terraform-specific, config context</td><td>Very Fast</td></tr>
+    <tr><td>Terrascan</td><td>OPA-based, multi-cloud (AWS, Azure, GCP, k8s)</td><td>Multi-cloud environments</td><td>Medium</td></tr>
+    <tr><td>terraform-compliance</td><td>BDD Gherkin tests against plan output</td><td>Business-readable compliance tests</td><td>Medium</td></tr>
+    <tr><td>Snyk IaC</td><td>SaaS with PR comments, fix suggestions</td><td>Developer-friendly, PR feedback</td><td>Fast</td></tr>
+    <tr><td>KICS</td><td>Checkmarx's open-source, 2000+ checks</td><td>Maximum coverage breadth</td><td>Medium</td></tr>
+    <tr><td>Infracost</td><td>Cost estimation from Terraform plans</td><td>Security budget planning</td><td>Fast</td></tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════ AWS SECURITY SERVICES ══════════════════════════ -->
+<div id="tab-aws-security" class="tab-pane">
+  <div class="sec-title">AWS Native Security Services — Master Reference</div>
+  <p class="sec-sub">These are the services you manage via Terraform in Projects 7–8. Know each one deeply.</p>
+
+  <div class="aws-grid">
+    <div class="aws-card">
+      <div class="aws-name">🕵️ GuardDuty</div>
+      <p>ML-based threat detection. Analyzes CloudTrail, VPC flow logs, DNS. Detects: crypto mining, credential compromise, unusual API calls, Tor traffic.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🌐 Security Hub</div>
+      <p>Aggregates findings from all security services. Provides CIS, PCI-DSS, NIST compliance scores. Central security dashboard.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">⚙️ AWS Config</div>
+      <p>Tracks resource configuration history. Fires rules when resources become non-compliant. Enables compliance-over-time reporting.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🔍 Inspector v2</div>
+      <p>Automated vulnerability scanning for EC2, ECR images, and Lambda. Integrates with Security Hub. Continuously monitors for new CVEs.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🕵️‍♀️ Macie</div>
+      <p>ML-powered sensitive data discovery in S3. Finds PII (SSNs, credit cards), credentials, private keys. Essential for data compliance.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">📜 CloudTrail</div>
+      <p>Audit log of every AWS API call. Who did what, when, from where. Foundation of all incident investigation and compliance reporting.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🔑 AWS KMS</div>
+      <p>Managed encryption key service. Used for S3, EBS, RDS, CloudWatch, and secrets encryption. Enable key rotation and audit key usage.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🔒 Secrets Manager</div>
+      <p>Store, rotate, and retrieve secrets. Auto-rotates RDS passwords, API keys. Applications retrieve secrets at runtime — no env vars with plaintext credentials.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🛡️ WAF</div>
+      <p>Web Application Firewall for ALB, CloudFront, API Gateway. Blocks SQLi, XSS, rate limiting, IP blocking, geo-restriction.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🌊 Shield</div>
+      <p>DDoS protection. Standard (free, automatic). Advanced (paid, 24/7 DRT team, financial protection).</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">🔐 IAM Access Analyzer</div>
+      <p>Finds resources shared with external entities: S3 buckets, IAM roles, KMS keys, Lambda. Identifies unintended public access.</p>
+    </div>
+    <div class="aws-card">
+      <div class="aws-name">📡 VPC Flow Logs</div>
+      <p>Network traffic metadata for every ENI. Used for intrusion detection, network forensics, security group validation, and compliance.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════ COMPLIANCE ══════════════════════════ -->
+<div id="tab-compliance" class="tab-pane">
+  <div class="sec-title">Compliance Frameworks — What They Require on AWS</div>
+  <p class="sec-sub">Know which controls map to which Terraform resources and AWS services.</p>
+
+  <table class="tools-table">
+    <tr><th>Framework</th><th>Key AWS Controls Required</th><th>Relevant Terraform Resources</th></tr>
+    <tr>
+      <td>CIS AWS Foundations v1.4</td>
+      <td>MFA on root, no root access keys, CloudTrail in all regions, flow logs, no overly permissive security groups, S3 encrypted</td>
+      <td>aws_cloudtrail, aws_flow_log, aws_security_group, aws_s3_bucket_server_side_encryption_configuration</td>
+    </tr>
+    <tr>
+      <td>SOC 2 Type II</td>
+      <td>Access controls, encryption at rest and in transit, audit logging, change management, incident response</td>
+      <td>aws_kms_key, aws_cloudtrail, aws_config_*, aws_iam_*, aws_guardduty_detector</td>
+    </tr>
+    <tr>
+      <td>PCI-DSS</td>
+      <td>Network segmentation, encryption of card data, access control, vulnerability scanning, MFA, audit logs</td>
+      <td>aws_vpc, aws_subnet, aws_wafv2_*, aws_inspector2_enabler, aws_securityhub_standards_subscription</td>
+    </tr>
+    <tr>
+      <td>HIPAA</td>
+      <td>PHI encryption at rest + in transit, access controls, audit logging, BAA with AWS, breach notification</td>
+      <td>aws_kms_key, aws_s3_bucket_server_side_encryption_configuration, aws_cloudtrail, aws_macie2_account</td>
+    </tr>
+    <tr>
+      <td>NIST 800-53</td>
+      <td>Access control, audit, configuration management, incident response, media protection, risk assessment, system protection</td>
+      <td>All of the above — most comprehensive framework</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════ ADVANCED ══════════════════════════ -->
+<div id="tab-advanced" class="tab-pane">
+  <div class="sec-title">Advanced Concepts to Master After These Projects</div>
+
+  <div class="concept">
+    <h2>🚀 What's Next After Phase 2</h2>
+    <p>Once you've completed all 10 projects, these are the advanced areas that differentiate senior from expert-level DevSecOps engineers:</p>
+  </div>
+
+  <ul class="checklist">
+    <li><div class="chk">→</div><strong>Terragrunt</strong> — DRY wrapper for Terraform. Manages multi-environment, multi-region deployments without code duplication. Essential for org-scale IaC.</li>
+    <li><div class="chk">→</div><strong>AWS Control Tower + Landing Zone</strong> — Multi-account architecture with automated guardrails. Understand how enterprises structure dozens of AWS accounts securely.</li>
+    <li><div class="chk">→</div><strong>Sentinel (HashiCorp)</strong> — Policy-as-code framework for Terraform Cloud/Enterprise. More powerful than OPA for Terraform governance.</li>
+    <li><div class="chk">→</div><strong>AWS Organizations + SCPs</strong> — Preventive controls at the organization level. Guarantees no account can disable security services, leave approved regions, or create unencrypted resources.</li>
+    <li><div class="chk">→</div><strong>Drift Detection</strong> — Detect when someone manually changed AWS resources outside Terraform. Use AWS Config + Driftctl to find and remediate drift.</li>
+    <li><div class="chk">→</div><strong>Zero Trust Networking</strong> — Replace VPN with AWS Verified Access. Service mesh security with mutual TLS. PrivateLink for service isolation.</li>
+    <li><div class="chk">→</div><strong>Supply Chain Security</strong> — Terraform provider pinning, checksum verification, module signing. Prevent malicious module substitution.</li>
+    <li><div class="chk">→</div><strong>Cost Security</strong> — Unusual spend as security signal (crypto mining, data exfiltration). AWS Budgets + anomaly detection via Terraform.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════ CHEAT SHEET ══════════════════════════ -->
+<div id="tab-cheatsheet" class="tab-pane">
+  <div class="sec-title">Terraform + AWS Security Cheat Sheet</div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-lang">bash — Daily Terraform Commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+    <pre><span class="cm"># ═══ DEVELOPMENT WORKFLOW ════════════════════════════════</span>
+terraform init                         <span class="cm"># Initialize</span>
+terraform fmt -recursive               <span class="cm"># Format all files</span>
+terraform validate                     <span class="cm"># Validate syntax</span>
+checkov -d . --framework terraform     <span class="cm"># Security scan</span>
+tfsec . --minimum-severity MEDIUM      <span class="cm"># Security scan 2</span>
+terraform plan -out=plan.tfplan        <span class="cm"># Plan changes</span>
+terraform show -json plan.tfplan       <span class="cm"># Inspect plan JSON</span>
+terraform apply plan.tfplan            <span class="cm"># Apply changes</span>
+
+<span class="cm"># ═══ STATE MANAGEMENT ════════════════════════════════════</span>
+terraform state list                   <span class="cm"># List all resources</span>
+terraform state show aws_instance.web  <span class="cm"># Show resource details</span>
+terraform state mv old_name new_name   <span class="cm"># Rename resource in state</span>
+terraform state rm aws_instance.old    <span class="cm"># Remove from state (resource stays)</span>
+terraform import aws_instance.new i-xxx <span class="cm"># Import existing resource</span>
+terraform refresh                      <span class="cm"># Sync state with actual AWS</span>
+
+<span class="cm"># ═══ DEBUGGING ═══════════════════════════════════════════</span>
+TF_LOG=DEBUG terraform plan 2>&1 | grep -i error
+terraform console                      <span class="cm"># Interactive expression evaluator</span>
+> cidrsubnet("10.0.0.0/16", 8, 5)     <span class="cm"># Test CIDR functions</span>
+
+<span class="cm"># ═══ SECURITY CHECKS ═════════════════════════════════════</span>
+<span class="cm"># Check for public S3 buckets in your account</span>
+aws s3api list-buckets | jq -r '.Buckets[].Name' | \
+  xargs -I{} aws s3api get-bucket-policy-status --bucket {} 2>/dev/null
+
+<span class="cm"># Check security groups with unrestricted access</span>
+aws ec2 describe-security-groups \
+  --filters Name=ip-permission.cidr,Values='0.0.0.0/0' \
+  --query 'SecurityGroups[*].{ID:GroupId,Name:GroupName}'
+
+<span class="cm"># Check for EC2 instances with IMDSv1</span>
+aws ec2 describe-instances \
+  --query 'Reservations[*].Instances[?MetadataOptions.HttpTokens!=`required`].[InstanceId,MetadataOptions.HttpTokens]' \
+  --output table
+
+<span class="cm"># Check for unencrypted EBS volumes</span>
+aws ec2 describe-volumes \
+  --query 'Volumes[?Encrypted==`false`].[VolumeId,State]' \
+  --output table
+
+<span class="cm"># Check GuardDuty status</span>
+aws guardduty list-detectors
+aws guardduty get-findings-statistics \
+  --detector-id <DETECTOR_ID> \
+  --finding-criteria '{"Criterion":{"severity":{"Gte":7}}}'
+
+<span class="cm"># Check Security Hub compliance score</span>
+aws securityhub get-insights \
+  --insight-arns arn:aws:securityhub:::insight/securityhub/default/1</pre>
+  </div>
+
+  <div class="cb">
+    <div class="cb-head"><span class="cb-lang">hcl — Security Quick Wins — Copy/Paste Snippets</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+    <pre><span class="cm"># ✅ Always use these blocks in every resource</span>
+
+<span class="cm"># 1. Lifecycle block to prevent accidental deletion</span>
+lifecycle {
+  prevent_destroy = <span class="kw">true</span>   <span class="cm"># Prod databases, S3 buckets with data</span>
+}
+
+<span class="cm"># 2. Default encryption for EBS volumes (account-wide)</span>
+resource <span class="str">"aws_ebs_encryption_by_default"</span> <span class="str">"main"</span> {
+  enabled = <span class="kw">true</span>
+}
+
+<span class="cm"># 3. IMDSv2 requirement (account-wide default)</span>
+resource <span class="str">"aws_ec2_instance_metadata_defaults"</span> <span class="str">"main"</span> {
+  http_tokens = <span class="str">"required"</span>
+}
+
+<span class="cm"># 4. S3 public access block (account-wide)</span>
+resource <span class="str">"aws_s3_account_public_access_block"</span> <span class="str">"main"</span> {
+  block_public_acls       = <span class="kw">true</span>
+  block_public_policy     = <span class="kw">true</span>
+  ignore_public_acls      = <span class="kw">true</span>
+  restrict_public_buckets = <span class="kw">true</span>
+}
+
+<span class="cm"># 5. Password policy for IAM users</span>
+resource <span class="str">"aws_iam_account_password_policy"</span> <span class="str">"main"</span> {
+  minimum_password_length        = 16
+  require_lowercase_characters   = <span class="kw">true</span>
+  require_numbers                = <span class="kw">true</span>
+  require_uppercase_characters   = <span class="kw">true</span>
+  require_symbols                = <span class="kw">true</span>
+  allow_users_to_change_password = <span class="kw">true</span>
+  max_password_age               = 90
+  password_reuse_prevention      = 12
+  hard_expiry                    = <span class="kw">false</span>
+}</pre>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /wrap -->
+
+<footer>
+  <div class="wrap">
+    DevSecOps Mastery · <span>Phase 2 of 4</span> · Infrastructure as Code Security · Terraform · AWS · 10 Projects
+  </div>
+</footer>
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function toggleP(card) {
+  const isOpen = card.classList.contains('open');
+  document.querySelectorAll('.proj-card').forEach(c => c.classList.remove('open'));
+  if (!isOpen) {
+    card.classList.add('open');
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function cp(btn) {
+  const text = btn.closest('.cb').querySelector('pre').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+
+// Open first project by default
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('#tab-all .proj-card');
+  if (first) first.classList.add('open');
+});
+</script>
+</body>
+</html>
