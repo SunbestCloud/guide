@@ -1,0 +1,2597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps Phase 1 — Linux, Bash, Networking & Git</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #131210;
+  --bg2:       #181613;
+  --bg3:       #1e1b17;
+  --panel:     #1e1b17;
+  --panel2:    #242018;
+  --border:    #2e2920;
+  --border2:   #3d3628;
+  --border3:   #524a38;
+
+  --amber:     #f59e0b;
+  --amber2:    #fbbf24;
+  --amber3:    #fde68a;
+  --amber-dim: rgba(245,158,11,0.1);
+  --amber-glow:rgba(245,158,11,0.06);
+
+  --sage:      #84cc16;
+  --sage2:     #a3e635;
+  --sky:       #38bdf8;
+  --sky2:      #7dd3fc;
+  --rose:      #fb7185;
+  --rose2:     #fda4af;
+  --violet:    #a78bfa;
+  --violet2:   #c4b5fd;
+
+  --text:      #f0e8d8;
+  --text2:     #8a7d68;
+  --text3:     #4a4233;
+
+  --code-bg:   #0e0c09;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Instrument Sans',sans-serif;
+  font-size:15px;
+  line-height:1.75;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── PAPER TEXTURE ── */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:0.6;
+}
+
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1;}
+
+/* ── TOP BAR ── */
+.topbar{
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:10px 0;
+  position:relative;
+  z-index:2;
+}
+.topbar-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--text3);
+}
+.tb-left{display:flex;align-items:center;gap:20px;}
+.tb-series{color:var(--amber);font-weight:600;}
+.tb-right{display:flex;gap:16px;}
+.tb-stat .lbl{color:var(--text3);}
+.tb-stat .val{color:var(--amber2);font-weight:600;}
+
+/* ── HEADER ── */
+header{
+  padding:60px 0 56px;
+  border-bottom:1px solid var(--border);
+  position:relative;
+  overflow:hidden;
+}
+header::after{
+  content:'';
+  position:absolute;
+  bottom:-1px;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+}
+
+/* big decorative text behind header */
+.hero-bg-text{
+  position:absolute;
+  right:-20px;top:-10px;
+  font-family:'Fraunces',serif;
+  font-size:clamp(120px,18vw,220px);
+  font-weight:700;
+  color:rgba(245,158,11,0.03);
+  letter-spacing:-0.05em;
+  pointer-events:none;
+  user-select:none;
+  line-height:1;
+}
+
+.phase-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;
+  letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--amber);
+  margin-bottom:20px;
+}
+.phase-badge::before{
+  content:'';width:20px;height:1px;background:var(--amber);
+}
+
+h1{
+  font-family:'Fraunces',serif;
+  font-size:clamp(38px,6.5vw,82px);
+  font-weight:700;
+  line-height:0.95;
+  letter-spacing:-0.03em;
+  color:var(--text);
+  margin-bottom:10px;
+}
+h1 em{font-style:italic;color:var(--amber2);}
+.h1-mono{
+  display:block;
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.28em;
+  font-weight:400;
+  font-style:normal;
+  color:var(--text3);
+  letter-spacing:0.08em;
+  margin-top:14px;
+}
+
+.header-lead{
+  max-width:660px;
+  color:var(--text2);
+  font-size:15px;
+  line-height:1.85;
+  margin:24px 0 32px;
+}
+
+.pill-row{display:flex;flex-wrap:wrap;gap:10px;}
+.pill{
+  display:flex;align-items:center;gap:7px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:500;
+  letter-spacing:0.08em;
+  padding:6px 14px;
+  border:1px solid var(--border2);
+  background:var(--panel);
+  color:var(--text2);
+}
+.pill .dot{width:6px;height:6px;border-radius:50%;}
+.pill.a .dot{background:var(--amber);}
+.pill.g .dot{background:var(--sage);}
+.pill.s .dot{background:var(--sky);}
+.pill.r .dot{background:var(--rose);}
+.pill.v .dot{background:var(--violet);}
+.pill.a{color:var(--amber3);}
+
+/* ── NAV ── */
+.nav-bar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(19,18,16,0.96);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-inner{
+  display:flex;overflow-x:auto;scrollbar-width:none;
+}
+.nav-inner::-webkit-scrollbar{display:none;}
+.nb{
+  flex-shrink:0;
+  background:none;border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text3);
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;
+  padding:13px 18px 11px;
+  cursor:pointer;white-space:nowrap;
+  transition:all 0.2s;
+}
+.nb:hover{color:var(--text2);}
+.nb.active{color:var(--amber2);border-bottom-color:var(--amber);}
+
+/* ── CONTENT ── */
+.content{padding:52px 0 120px;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── SECTION HEAD ── */
+.sh{margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.sh-eye{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;
+  letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--amber);margin-bottom:10px;
+}
+.sh h2{
+  font-family:'Fraunces',serif;
+  font-size:clamp(24px,4vw,42px);
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-0.02em;
+  line-height:1.1;margin-bottom:8px;
+}
+.sh p{
+  color:var(--text2);
+  font-size:14.5px;
+  line-height:1.75;
+  max-width:680px;
+}
+
+/* ── CONCEPT CARDS ── */
+.concept{
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:28px 30px;
+  margin-bottom:22px;
+  position:relative;
+}
+.concept::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;bottom:0;
+  width:3px;background:var(--amber);
+}
+.concept.sage::before{background:var(--sage);}
+.concept.sky::before{background:var(--sky);}
+.concept.rose::before{background:var(--rose);}
+.concept.violet::before{background:var(--violet);}
+
+.concept h3{
+  font-family:'Fraunces',serif;
+  font-size:19px;font-weight:600;
+  color:var(--text);margin-bottom:10px;
+}
+.concept p{
+  color:var(--text2);font-size:14px;line-height:1.85;
+  margin-bottom:10px;
+}
+.concept p:last-child{margin-bottom:0;}
+.concept strong{color:var(--text);font-weight:600;}
+.concept code{
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--amber2);padding:2px 7px;
+}
+
+/* ── ANALOGY BOX ── */
+.analogy{
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-left:3px solid var(--amber);
+  padding:16px 20px;
+  margin:14px 0;
+  display:flex;gap:14px;
+  font-size:13.5px;
+  color:var(--text2);
+  line-height:1.7;
+}
+.analogy-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.analogy strong{color:var(--amber2);font-weight:600;}
+
+/* ── PROJECT LIST ── */
+.proj-list{display:flex;flex-direction:column;gap:0;border:1px solid var(--border);}
+
+.pc{border-bottom:1px solid var(--border);transition:background 0.2s;}
+.pc:last-child{border-bottom:none;}
+
+.pc-head{
+  display:flex;align-items:flex-start;gap:20px;
+  padding:22px 28px 18px;
+  cursor:pointer;user-select:none;
+}
+.pc-head:hover{background:var(--panel);}
+.pc.open .pc-head{background:var(--panel2);}
+
+.pnum{
+  flex-shrink:0;
+  font-family:'Fraunces',serif;
+  font-size:32px;font-weight:700;
+  color:var(--amber);
+  line-height:1;
+  width:44px;
+  margin-top:2px;
+  opacity:0.45;
+  transition:opacity 0.2s;
+}
+.pc.open .pnum,.pc-head:hover .pnum{opacity:1;}
+
+.pmeta{flex:1;min-width:0;}
+.pmeta h3{
+  font-family:'Fraunces',serif;
+  font-size:18px;font-weight:600;
+  color:var(--text);margin-bottom:5px;line-height:1.25;
+}
+.pmeta p{color:var(--text2);font-size:13px;line-height:1.65;}
+.pmeta-foot{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+
+.ptag{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:600;
+  letter-spacing:0.08em;
+  padding:3px 9px;border:1px solid;
+}
+.ptag.a{color:var(--amber2);border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.06);}
+.ptag.g{color:var(--sage2);border-color:rgba(132,204,22,0.3);background:rgba(132,204,22,0.06);}
+.ptag.s{color:var(--sky2);border-color:rgba(56,189,248,0.3);background:rgba(56,189,248,0.06);}
+.ptag.r{color:var(--rose2);border-color:rgba(251,113,133,0.3);background:rgba(251,113,133,0.06);}
+.ptag.v{color:var(--violet2);border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.06);}
+.ptag.n{color:var(--text3);border-color:var(--border);}
+
+.diff{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;
+  padding:3px 9px;border:1px solid;
+}
+.diff.easy{color:var(--sage2);border-color:rgba(132,204,22,0.35);}
+.diff.med{color:var(--amber2);border-color:rgba(245,158,11,0.35);}
+.diff.hard{color:var(--rose2);border-color:rgba(251,113,133,0.35);}
+.ptime{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);}
+
+.parrow{
+  flex-shrink:0;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--text3);
+  transition:transform 0.3s,color 0.2s;
+  margin-top:4px;
+}
+.pc.open .parrow{transform:rotate(90deg);color:var(--amber2);}
+.pc-head:hover .parrow{color:var(--text2);}
+
+.pc-body{
+  display:none;
+  padding:8px 28px 36px 92px;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+}
+.pc.open .pc-body{display:block;animation:fadeUp 0.3s ease;}
+
+/* ── STEPS ── */
+.steps{margin-top:22px;}
+.step{display:flex;gap:18px;padding-bottom:26px;position:relative;}
+.step:not(:last-child)::before{
+  content:'';position:absolute;
+  left:12px;top:28px;bottom:0;
+  width:1px;background:var(--border);
+}
+.sn{
+  flex-shrink:0;width:26px;height:26px;
+  border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:700;
+  color:var(--amber);
+  background:var(--bg3);
+  z-index:1;
+}
+.sb{flex:1;min-width:0;}
+.sb h4{
+  font-family:'Fraunces',serif;
+  font-size:15px;font-weight:600;
+  color:var(--text);margin-bottom:7px;
+}
+.sb p{
+  color:var(--text2);font-size:13.5px;line-height:1.8;
+  margin-bottom:10px;
+}
+.sb p:last-child{margin-bottom:0;}
+.sb p strong{color:var(--text);font-weight:600;}
+
+/* ── CODE BLOCKS ── */
+.cb{
+  background:var(--code-bg);
+  border:1px solid var(--border);
+  margin:12px 0;overflow:hidden;
+}
+.cb-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 14px;
+  border-bottom:1px solid var(--border);
+  background:rgba(245,158,11,0.04);
+}
+.cb-lang{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;
+  color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;
+}
+.cb-lang .hl{color:var(--amber2);}
+.cpbtn{
+  background:none;border:1px solid var(--border2);
+  color:var(--text3);
+  font-family:'JetBrains Mono',monospace;font-size:10px;
+  padding:3px 10px;cursor:pointer;transition:all 0.2s;
+}
+.cpbtn:hover{color:var(--text2);border-color:var(--text3);}
+.cpbtn.ok{color:var(--sage2);border-color:var(--sage);}
+
+pre{
+  padding:18px 20px;
+  overflow-x:auto;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;line-height:1.8;
+  color:#c8b88a;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border2) transparent;
+}
+.kw{color:#fb923c;}
+.str{color:#86efac;}
+.cm{color:#3d3526;font-style:italic;}
+.fn{color:#fcd34d;}
+.num{color:#93c5fd;}
+.var{color:#c4b5fd;}
+.op{color:#f0e8d8;}
+code{
+  font-family:'JetBrains Mono',monospace;font-size:12px;
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--amber2);padding:2px 7px;
+}
+
+/* ── CALLOUTS ── */
+.note{
+  display:flex;gap:12px;
+  padding:14px 16px;margin:12px 0;
+  font-size:13px;line-height:1.7;
+  border-left:3px solid;
+}
+.note p{margin:0;}
+.note-i{flex-shrink:0;font-size:15px;}
+.note.info{background:rgba(56,189,248,0.07);border-color:var(--sky);color:#7dd3fc;}
+.note.warn{background:rgba(245,158,11,0.07);border-color:var(--amber);color:#fde68a;}
+.note.ok{background:rgba(132,204,22,0.07);border-color:var(--sage);color:#a3e635;}
+.note.tip{background:rgba(167,139,250,0.07);border-color:var(--violet);color:#c4b5fd;}
+
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;border:1px solid var(--border);}
+.dt th{
+  text-align:left;
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--text3);
+  padding:10px 14px;
+  border-bottom:1px solid var(--border2);
+  background:var(--panel);
+}
+.dt td{
+  padding:10px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  color:var(--text2);vertical-align:top;line-height:1.6;
+}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:rgba(245,158,11,0.03);}
+.dt td:first-child{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;color:var(--amber2);font-weight:600;
+}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0;}
+@media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+.mini-panel{background:var(--bg3);border:1px solid var(--border);padding:16px;}
+.mini-panel h5{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:8px;
+}
+.mini-panel p{font-size:13px;color:var(--text2);line-height:1.7;}
+
+/* ── CHECKLIST ── */
+.chk{list-style:none;}
+.chk li{
+  display:flex;gap:10px;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  font-size:13px;color:var(--text2);line-height:1.6;
+}
+.chk li:last-child{border-bottom:none;}
+.chk-box{
+  flex-shrink:0;width:15px;height:15px;
+  border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:var(--amber2);margin-top:3px;
+}
+.chk strong{color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;}
+
+hr{border:none;border-top:1px solid var(--border);margin:24px 0;}
+
+/* ── OVERVIEW GRID ── */
+.ov-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
+  gap:1px;background:var(--border);border:1px solid var(--border);
+  margin:24px 0;
+}
+.ov-card{
+  background:var(--panel);padding:22px 22px 20px;
+  transition:background 0.2s;cursor:default;
+}
+.ov-card:hover{background:var(--panel2);}
+.ov-card .oc-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:0.2em;color:var(--text3);margin-bottom:8px;
+}
+.ov-card .oc-icon{font-size:22px;margin-bottom:8px;}
+.ov-card .oc-title{
+  font-family:'Fraunces',serif;
+  font-size:15px;font-weight:600;color:var(--text);
+  margin-bottom:5px;line-height:1.3;
+}
+.ov-card p{font-size:12px;color:var(--text3);line-height:1.6;}
+
+/* ── PROGRESS BAR ── */
+.prog-wrap{
+  background:var(--panel);border:1px solid var(--border);
+  padding:22px 26px;margin-bottom:22px;
+}
+.prog-wrap h4{
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--text3);margin-bottom:18px;font-weight:700;
+}
+.pb-item{margin-bottom:12px;}
+.pb-row{display:flex;justify-content:space-between;margin-bottom:5px;}
+.pb-name{font-size:12px;font-weight:600;color:var(--text2);}
+.pb-pct{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+.pb-bg{height:3px;background:var(--bg3);}
+.pb-fill{height:100%;background:linear-gradient(90deg,var(--amber),var(--sage));}
+
+/* ── CHEAT SHEET ── */
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin:20px 0;}
+.cs-card{background:var(--panel);padding:20px 22px;}
+.cs-card h5{
+  font-family:'Fraunces',serif;
+  font-size:14px;font-weight:600;color:var(--amber2);
+  margin-bottom:12px;
+}
+.cs-card .cmd{
+  display:flex;flex-direction:column;gap:6px;
+}
+.cs-row{
+  display:flex;gap:10px;align-items:baseline;
+  padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);
+  font-size:12px;
+}
+.cs-row:last-child{border-bottom:none;}
+.cs-cmd{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--amber2);font-weight:600;
+  white-space:nowrap;flex-shrink:0;min-width:140px;
+}
+.cs-desc{color:var(--text3);font-size:11.5px;line-height:1.5;}
+
+footer{
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:22px 0;text-align:center;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:0.1em;color:var(--text3);
+}
+footer span{color:var(--amber2);}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+<div class="wrap">
+<div class="topbar-inner">
+  <div class="tb-left">
+    <span class="tb-series">DevOps Mastery</span>
+    <span>Phase 1 of 6</span>
+    <span>Linux · Bash · Networking · Git</span>
+  </div>
+  <div class="tb-right">
+    <span class="tb-stat"><span class="lbl">PROJECTS: </span><span class="val">10</span></span>
+    <span class="tb-stat"><span class="lbl">DURATION: </span><span class="val">3–4 weeks</span></span>
+    <span class="tb-stat"><span class="lbl">LEVEL: </span><span class="val">Beginner → Intermediate</span></span>
+  </div>
+</div>
+</div>
+</div>
+
+<header>
+<div class="wrap">
+  <div class="hero-bg-text">01</div>
+  <div class="phase-badge">Phase One — Foundation</div>
+
+  <h1>Linux, Bash,<br>Networking<br><em>&amp; Git</em>
+    <span class="h1-mono">// The bedrock every DevOps tool is built on</span>
+  </h1>
+
+  <p class="header-lead">Zero assumed knowledge. Before you touch Docker, Kubernetes, or Terraform — you need to understand the ground they stand on. This phase gives you complete, confident mastery of Linux, shell scripting, networking, and version control. Every single concept explained from first principles, with real analogies, before any code.</p>
+
+  <div class="pill-row">
+    <div class="pill a"><div class="dot"></div>10 Hands-On Projects</div>
+    <div class="pill"><div class="dot" style="background:var(--sage)"></div>3–4 Weeks</div>
+    <div class="pill"><div class="dot" style="background:var(--sky)"></div>Beginner Friendly</div>
+    <div class="pill"><div class="dot" style="background:var(--rose)"></div>Linux+ Cert Path</div>
+    <div class="pill"><div class="dot" style="background:var(--violet)"></div>AWS, Docker, K8s prerequisite</div>
+  </div>
+</div>
+</header>
+
+<div class="nav-bar">
+<div class="wrap">
+<div class="nav-inner">
+  <button class="nb active" onclick="st('overview',this)">Overview</button>
+  <button class="nb" onclick="st('linux101',this)">Linux 101</button>
+  <button class="nb" onclick="st('bash101',this)">Bash 101</button>
+  <button class="nb" onclick="st('net101',this)">Networking 101</button>
+  <button class="nb" onclick="st('git101',this)">Git 101</button>
+  <button class="nb" onclick="st('all',this)">All 10 Projects</button>
+  <button class="nb" onclick="st('p1p4',this)">P1–P4</button>
+  <button class="nb" onclick="st('p5p8',this)">P5–P8</button>
+  <button class="nb" onclick="st('p9p10',this)">P9–P10 Capstone</button>
+  <button class="nb" onclick="st('cheatsheet',this)">Cheat Sheet</button>
+</div>
+</div>
+</div>
+
+<div class="wrap">
+<div class="content">
+
+<!-- ══════════ OVERVIEW ══════════ -->
+<div id="tab-overview" class="tab-pane active">
+
+  <div class="sh">
+    <div class="sh-eye">Start Here</div>
+    <h2>Why Phase 1 is the<br>Most Important Phase</h2>
+    <p>Every DevOps tool you'll ever use — Docker, Kubernetes, Terraform, Ansible, CI/CD — runs on Linux, communicates over networks, and is managed through version control. Skip this foundation and you'll be copy-pasting commands you don't understand for the rest of your career. Build it properly and everything else clicks into place.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🧱 The Mental Model for Phase 1</h3>
+    <p>Think of DevOps like building a house. <strong>Linux is the land and foundation</strong> — everything sits on it. <strong>Bash scripting is your power tools</strong> — you automate the repetitive work. <strong>Networking is the plumbing and wiring</strong> — how everything communicates. <strong>Git is the architect's blueprint system</strong> — every change tracked, every version preserved, every team member in sync.</p>
+    <p>You wouldn't build a house without understanding the foundation. Don't try to run Kubernetes without understanding Linux.</p>
+  </div>
+
+  <div class="prog-wrap">
+    <h4>Your Phase 1 Journey</h4>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">Week 1 — Linux fundamentals, filesystem, users, permissions</span><span class="pb-pct">P1–P2</span></div><div class="pb-bg"><div class="pb-fill" style="width:25%"></div></div></div>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">Week 2 — Bash scripting, automation, system services</span><span class="pb-pct">P3–P5</span></div><div class="pb-bg"><div class="pb-fill" style="width:50%"></div></div></div>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">Week 3 — Networking, DNS, web servers, databases</span><span class="pb-pct">P6–P8</span></div><div class="pb-bg"><div class="pb-fill" style="width:75%"></div></div></div>
+    <div class="pb-item"><div class="pb-row"><span class="pb-name">Week 4 — Git mastery, Python basics, full-stack capstone</span><span class="pb-pct">P9–P10</span></div><div class="pb-bg"><div class="pb-fill" style="width:100%"></div></div></div>
+  </div>
+
+  <div class="ov-grid">
+    <div class="ov-card"><div class="oc-num">Project 01</div><div class="oc-icon">🖥️</div><div class="oc-title">Your Linux VM — Dev Environment Setup</div><p>Install Rocky Linux in VirtualBox. Configure networking, SSH, users, firewall. Your permanent workspace.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 02</div><div class="oc-icon">📁</div><div class="oc-title">Linux Fundamentals Bootcamp</div><p>Filesystem navigation, permissions, users, processes, package management. The 50 commands you'll use every day.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 03</div><div class="oc-icon">⚙️</div><div class="oc-title">Bash Scripting from Zero</div><p>Variables, conditionals, loops, functions. Write scripts that actually do useful things — log parsing, backups, healthchecks.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 04</div><div class="oc-icon">🤖</div><div class="oc-title">Bash Automation Toolkit</div><p>10 real automation scripts: disk alerts, user provisioning, log rotation, S3 backup. Systemd timers, cron jobs.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 05</div><div class="oc-icon">🌐</div><div class="oc-title">Networking Deep Dive</div><p>TCP/IP, DNS, HTTP, ports, routing. Multi-VM lab. tcpdump, nmap, ss, dig. Diagnose any network problem.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 06</div><div class="oc-icon">🔗</div><div class="oc-title">Nginx Web Server & SSL</div><p>Install Nginx from scratch. Virtual hosts, reverse proxy, SSL with Let's Encrypt. Log analysis with awk.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 07</div><div class="oc-icon">🐍</div><div class="oc-title">Python for DevOps</div><p>Python essentials for automation. Parse logs, call APIs, manipulate JSON/YAML. The scripting skills that multiply your output.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 08</div><div class="oc-icon">🗄️</div><div class="oc-title">PostgreSQL Administration</div><p>Install, configure, backup, restore. Users, permissions, connection config. Database skills every DevOps engineer needs.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 09</div><div class="oc-icon">🌿</div><div class="oc-title">Git & GitHub Mastery</div><p>Branching, merging, rebasing, pull requests, conflict resolution, hooks. Professional git workflow from scratch.</p></div>
+    <div class="ov-card"><div class="oc-num">Project 10</div><div class="oc-icon">🏗️</div><div class="oc-title">Capstone — Full Linux Server</div><p>Deploy a production-grade server from scratch: web server, DB, monitoring, backups, all scripted in Git.</p></div>
+  </div>
+
+</div><!-- /overview -->
+
+<!-- ══════════ LINUX 101 ══════════ -->
+<div id="tab-linux101" class="tab-pane">
+  <div class="sh">
+    <div class="sh-eye">Before Any Code</div>
+    <h2>Linux 101 — How It Actually Works</h2>
+    <p>Read this before opening a terminal. These mental models make everything click faster.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🐧 What Is Linux and Why Does Every Server Run It?</h3>
+    <p>Linux is an <strong>operating system kernel</strong> — the core software that manages hardware resources (CPU, memory, disk, network) and lets other programs run. When you run Docker, Kubernetes, or any AWS service, you're running on Linux underneath.</p>
+    <p>Why Linux and not Windows? Three reasons: <strong>free and open source</strong> (no licensing cost per server), <strong>incredibly stable</strong> (Linux servers run for years without rebooting), and <strong>perfect for automation</strong> (everything is a file or a command, making scripting natural). The top 500 supercomputers in the world all run Linux. AWS, GCP, and Azure all run Linux.</p>
+  </div>
+
+  <div class="concept sage">
+    <h3>📁 The Linux Filesystem — Everything Is a File</h3>
+    <p>Linux has one unified directory tree starting at <code>/</code> (called root). Unlike Windows with C:\, D:\ etc., everything — disks, USB drives, even hardware devices — appears somewhere under <code>/</code>. This is powerful: you interact with hardware the same way you interact with files.</p>
+    <div class="analogy"><div class="analogy-icon">🏢</div><div><strong>Analogy:</strong> Think of the Linux filesystem like a company building. <code>/</code> is the lobby (everything starts here). <code>/home</code> is the office floor (where users work). <code>/etc</code> is the filing cabinet (configuration files). <code>/var/log</code> is the company's paper trail (logs). <code>/bin</code> and <code>/usr/bin</code> are the tool cupboard (programs you can run). <code>/tmp</code> is the whiteboard (temporary, wiped on reboot).</div></div>
+  </div>
+
+  <table class="dt">
+    <tr><th>Directory</th><th>What Lives Here</th><th>DevOps Relevance</th></tr>
+    <tr><td>/etc</td><td>Configuration files for every service</td><td>nginx.conf, sshd_config, hosts file — you'll edit these constantly</td></tr>
+    <tr><td>/var/log</td><td>Log files from all services</td><td>Where you look when anything breaks</td></tr>
+    <tr><td>/home/user</td><td>Your personal files, .bashrc, SSH keys</td><td>Your dotfiles live here</td></tr>
+    <tr><td>/opt</td><td>Optional third-party software</td><td>Where you install tools like Terraform, kubectl</td></tr>
+    <tr><td>/tmp</td><td>Temporary files, cleared on reboot</td><td>Safe place to download and test things</td></tr>
+    <tr><td>/proc</td><td>Virtual filesystem — running kernel info</td><td>cat /proc/cpuinfo, cat /proc/meminfo</td></tr>
+    <tr><td>/sys</td><td>Virtual filesystem — hardware/kernel state</td><td>Advanced system tuning</td></tr>
+    <tr><td>/dev</td><td>Device files (disks, terminals, etc)</td><td>/dev/sda is your first disk, /dev/null is the black hole</td></tr>
+  </table>
+
+  <div class="concept sky">
+    <h3>👤 Users, Groups & Permissions — Linux Security Model</h3>
+    <p>Every file in Linux has three attributes: <strong>who owns it</strong> (user), <strong>what group it belongs to</strong>, and <strong>what permissions each has</strong>. Permissions are: <code>r</code> (read), <code>w</code> (write), <code>x</code> (execute). They're shown as three groups of three: owner / group / everyone.</p>
+    <p>Example: <code>-rwxr-xr--</code> means: owner can read+write+execute, group can read+execute, everyone else can only read. The number version: <code>755</code> (owner=7=rwx, group=5=r-x, other=5=r-x). You'll set permissions constantly.</p>
+    <p><strong>The golden rule:</strong> never run things as root unless you absolutely have to. Root can delete everything with one command. Use <code>sudo</code> for specific commands that need elevated privileges.</p>
+  </div>
+
+  <div class="concept rose">
+    <h3>⚙️ Processes — Programs That Are Running Right Now</h3>
+    <p>Every running program is a <strong>process</strong> with a unique PID (Process ID). Processes have a parent-child hierarchy — your terminal spawned a shell process, which spawns child processes when you run commands. Key commands: <code>ps aux</code> (list all processes), <code>top</code> / <code>htop</code> (live view), <code>kill -9 PID</code> (force stop), <code>systemctl status nginx</code> (check a service).</p>
+    <p><strong>Systemd</strong> is the init system — it's PID 1, the first process, the parent of everything. It manages services (nginx, sshd, your app), starts them on boot, restarts them on crash. You'll interact with it constantly: <code>systemctl start/stop/restart/enable/status servicename</code>.</p>
+  </div>
+
+</div><!-- /linux101 -->
+
+<!-- ══════════ BASH 101 ══════════ -->
+<div id="tab-bash101" class="tab-pane">
+  <div class="sh">
+    <div class="sh-eye">Shell Scripting</div>
+    <h2>Bash 101 — Automate Everything</h2>
+    <p>Bash is the language of the Linux command line. A Bash script is just a text file full of commands that run in sequence. Master this and repetitive manual work disappears.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🐚 What Bash Actually Is</h3>
+    <p>When you open a terminal, you're talking to a <strong>shell</strong> — a program that reads your commands and runs them. Bash (Bourne Again Shell) is the most common shell on Linux. A Bash script is just a file where you've written a sequence of commands so you don't have to type them one by one. If you've ever done the same 5 commands more than twice, it should be a script.</p>
+    <div class="analogy"><div class="analogy-icon">📋</div><div><strong>Analogy:</strong> A Bash script is like a recipe. The recipe (script) tells you exactly what to do step-by-step. You can follow the recipe once, or a hundred times. You can give it to someone else. You can modify one line and get a slightly different result. It's repeatable, shareable, and documented — all the things manual commands are not.</div></div>
+  </div>
+
+  <div class="concept sage">
+    <h3>🧩 The Building Blocks of Every Bash Script</h3>
+    <p><strong>Variables</strong> store values: <code>NAME="alice"</code>, use with <code>$NAME</code>. <strong>Conditionals</strong> make decisions: <code>if [ condition ]; then ... fi</code>. <strong>Loops</strong> repeat actions: <code>for file in *.log; do ... done</code>. <strong>Functions</strong> bundle reusable logic. <strong>Exit codes</strong>: every command returns 0 (success) or non-zero (failure) — your scripts must check these.</p>
+    <p>One critical habit: always start scripts with <code>#!/bin/bash</code> (the shebang line — tells the OS which interpreter to use) and <code>set -euo pipefail</code> (stop on first error, treat unset variables as errors, catch pipe failures). This one line prevents 80% of script bugs.</p>
+  </div>
+
+  <div class="concept sky">
+    <h3>🔧 The Tools Bash Scripts Use Most</h3>
+    <p><strong>grep</strong> — search text. <code>grep "ERROR" /var/log/app.log</code> finds all error lines. <strong>awk</strong> — process columnar data. <code>awk '{print $1, $4}' access.log</code> prints columns 1 and 4. <strong>sed</strong> — find and replace in files. <code>sed -i 's/old/new/g' file.conf</code>. <strong>curl</strong> — make HTTP requests from scripts. <code>curl -s https://api.example.com/health</code>. <strong>jq</strong> — parse JSON. <code>curl ... | jq '.status'</code>. These five tools combined can do 90% of all DevOps scripting tasks.</p>
+  </div>
+
+</div><!-- /bash101 -->
+
+<!-- ══════════ NET 101 ══════════ -->
+<div id="tab-net101" class="tab-pane">
+  <div class="sh">
+    <div class="sh-eye">Networking Foundations</div>
+    <h2>Networking 101 — How Computers Talk</h2>
+    <p>Every DevOps problem eventually becomes a networking problem. Understanding this properly saves hours of debugging.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🌐 The Internet in Three Minutes</h3>
+    <p>Every device on a network has an <strong>IP address</strong> — a unique identifier like a postal address. Data travels as <strong>packets</strong> — small chunks, each labelled with source and destination IP. <strong>Routers</strong> are the post offices — they read the destination address and forward the packet closer to its destination. <strong>Ports</strong> are like apartment numbers — the IP gets you to the building (server), the port gets you to the right service. Port 80 = HTTP, 443 = HTTPS, 22 = SSH, 5432 = PostgreSQL.</p>
+    <div class="analogy"><div class="analogy-icon">📬</div><div><strong>Analogy:</strong> An IP address is like a street address. A port is like an apartment number. A packet is like an envelope with "From:" and "To:" fields. TCP is like certified mail — the recipient must sign for every packet. UDP is like regular mail — faster but no delivery confirmation. HTTP is like a specific language two apartments have agreed to use to communicate.</div></div>
+  </div>
+
+  <div class="concept sage">
+    <h3>🔍 DNS — The Internet's Phone Book</h3>
+    <p>Computers communicate using IP addresses (like <code>142.250.80.46</code>), but humans use names (like <code>google.com</code>). <strong>DNS (Domain Name System)</strong> translates names to IPs. When you type <code>google.com</code>, your computer asks a DNS server "what's the IP for google.com?" and gets back an IP address to connect to.</p>
+    <p>Key DNS record types: <strong>A record</strong> — maps hostname to IPv4 address. <strong>CNAME</strong> — alias from one name to another. <strong>MX</strong> — mail server for a domain. <strong>TXT</strong> — arbitrary text, used for verification and SPF. You'll configure all of these when you manage domains in AWS Route 53.</p>
+  </div>
+
+  <div class="concept sky">
+    <h3>🔒 TCP vs UDP — Reliable vs Fast</h3>
+    <p><strong>TCP</strong> (Transmission Control Protocol) is connection-oriented. Before sending data it does a 3-way handshake (SYN → SYN-ACK → ACK). Every packet is acknowledged. Lost packets are retransmitted. Order is guaranteed. This reliability has a cost: latency. Used by HTTP, SSH, PostgreSQL — anything where you need every byte to arrive correctly.</p>
+    <p><strong>UDP</strong> is fire-and-forget. No handshake, no acknowledgment, no guaranteed order. Faster and lower overhead. Used by DNS queries (fast lookups), video streaming (a dropped frame is better than a stutter), and game networking. As a DevOps engineer you'll mostly deal with TCP, but you need to know why something uses each.</p>
+  </div>
+
+  <table class="dt">
+    <tr><th>Tool</th><th>What It Does</th><th>Example</th></tr>
+    <tr><td>ping</td><td>Test if a host is reachable (ICMP)</td><td>ping google.com</td></tr>
+    <tr><td>ss / netstat</td><td>Show open ports and connections</td><td>ss -tulnp</td></tr>
+    <tr><td>dig / nslookup</td><td>DNS lookups</td><td>dig google.com A</td></tr>
+    <tr><td>curl / wget</td><td>Make HTTP requests</td><td>curl -I https://example.com</td></tr>
+    <tr><td>traceroute</td><td>Show network path to destination</td><td>traceroute google.com</td></tr>
+    <tr><td>nmap</td><td>Port scanner — find open ports</td><td>nmap -p 1-1000 192.168.1.1</td></tr>
+    <tr><td>tcpdump</td><td>Capture raw network packets</td><td>tcpdump -i eth0 port 80</td></tr>
+    <tr><td>iptables / firewalld</td><td>Linux firewall rules</td><td>firewall-cmd --list-all</td></tr>
+  </table>
+</div><!-- /net101 -->
+
+<!-- ══════════ GIT 101 ══════════ -->
+<div id="tab-git101" class="tab-pane">
+  <div class="sh">
+    <div class="sh-eye">Version Control</div>
+    <h2>Git 101 — Track Everything, Break Nothing</h2>
+    <p>Git is not just for developers. Every config file, script, and infrastructure definition you write should be in Git. It's your undo button, your collaboration system, and your audit log.</p>
+  </div>
+
+  <div class="concept">
+    <h3>🌿 What Git Actually Does</h3>
+    <p>Git is a <strong>version control system</strong> — it tracks every change you make to files over time. You can go back to any previous state, see exactly what changed and when, and work on multiple things simultaneously without breaking each other.</p>
+    <div class="analogy"><div class="analogy-icon">📷</div><div><strong>Analogy:</strong> Git is like Google Docs' version history, but for code and config files. Every time you "commit," Git takes a snapshot of your files. You can jump back to any snapshot. You can create a "branch" — a parallel copy where you experiment — and merge it back when you're happy. If you break something, you simply revert to the last working snapshot.</div></div>
+  </div>
+
+  <div class="concept sage">
+    <h3>🔄 The Git Workflow — 4 States Every File Lives In</h3>
+    <p><strong>Untracked:</strong> Git doesn't know about this file yet. <strong>Staged:</strong> You've told Git "include this change in the next snapshot" with <code>git add</code>. <strong>Committed:</strong> The snapshot is saved permanently in Git's history with <code>git commit</code>. <strong>Pushed:</strong> The snapshot is uploaded to a remote server (GitHub, GitLab) with <code>git push</code>.</p>
+    <p>The typical loop: make changes → <code>git add .</code> → <code>git commit -m "what I did"</code> → <code>git push</code>. Do this after every logical unit of work — not just once a day.</p>
+  </div>
+
+  <div class="concept sky">
+    <h3>🌳 Branches — Work Without Breaking Things</h3>
+    <p>A branch is a parallel copy of your codebase. The convention: <code>main</code> (or <code>master</code>) is always the working, deployable version. You <strong>never</strong> push directly to main. Instead: create a branch (<code>git checkout -b feature/add-monitoring</code>), make your changes, push the branch, open a Pull Request (code review), and merge to main when approved. This is how every professional team works.</p>
+    <p>Key branching strategies: <strong>GitFlow</strong> (main + develop + feature branches — good for versioned releases), <strong>Trunk-based development</strong> (everyone commits to main frequently, short-lived branches — good for CI/CD). In DevOps you'll use both depending on the team.</p>
+  </div>
+
+</div><!-- /git101 -->
+
+<!-- ══════════ ALL PROJECTS ══════════ -->
+<div id="tab-all" class="tab-pane">
+  <div class="sh">
+    <div class="sh-eye">All 10 Projects</div>
+    <h2>Click Any Project to Expand</h2>
+    <p>Do them in order. Each builds on the last. Project 1 creates your environment for everything that follows.</p>
+  </div>
+
+  <div class="proj-list">
+
+    <!-- P1 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">01</div>
+        <div class="pmeta">
+          <h3>Your Linux VM — Permanent Dev Environment Setup</h3>
+          <p>Install Rocky Linux 9 in VirtualBox, configure networking, SSH key authentication, user accounts, and firewall. This becomes your workspace for every project in every phase.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Rocky Linux</span><span class="ptag s">VirtualBox</span><span class="ptag g">SSH</span><span class="ptag n">Firewalld</span>
+            <span class="diff easy">Beginner</span><span class="ptime">⏱ 2–3 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="note info"><div class="note-i">ℹ️</div><p><strong>Goal:</strong> By the end, you'll have a running Linux VM you can SSH into from your host machine, with a non-root user, working internet, and a firewall. This is exactly how a cloud EC2 instance is configured — you're learning the real thing.</p></div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Install VirtualBox and Download Rocky Linux</h4>
+              <p>VirtualBox is a free hypervisor — software that creates virtual machines on your laptop. Rocky Linux is a free, stable Linux distribution that's nearly identical to Red Hat Enterprise Linux (RHEL), which you'll encounter in most enterprise environments.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Download links</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre><span class="cm"># 1. Download VirtualBox:</span>
+<span class="cm">#    https://www.virtualbox.org/wiki/Downloads</span>
+<span class="cm">#    Choose your host OS (Windows/Mac/Linux)</span>
+
+<span class="cm"># 2. Download Rocky Linux 9 ISO:</span>
+<span class="cm">#    https://rockylinux.org/download</span>
+<span class="cm">#    Choose "DVD ISO" for the full installer (~9GB)</span>
+<span class="cm">#    OR "Minimal ISO" (~2GB) — enough for this course</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Create the Virtual Machine</h4>
+              <p>In VirtualBox: New → Name "devops-lab" → Type Linux → Version "Red Hat (64-bit)" → RAM: <strong>2048MB minimum, 4096MB recommended</strong> → Create a virtual hard disk: 20GB, VDI, dynamically allocated.</p>
+              <p>Before starting: Settings → Network → Adapter 1: set to <strong>"Bridged Adapter"</strong>. This gives your VM an IP on your home network so you can SSH to it from your host machine — exactly like a real server.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Install Rocky Linux</h4>
+              <p>Mount the ISO, start the VM, follow the installer. Key choices: <strong>Installation Destination</strong> → select your 20GB disk, Automatic partitioning. <strong>Software Selection</strong> → "Minimal Install" (no GUI — real servers don't have GUIs). <strong>Create a root password</strong>. <strong>Create a regular user</strong> (e.g. "devops") and check "Make this user administrator".</p>
+              <div class="note warn"><div class="note-i">⚠️</div><p>Choose "Minimal Install" — no graphical desktop. Real servers don't have GUIs. You'll be doing everything through the command line. This is intentional — it's how production systems work.</p></div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">4</div>
+            <div class="sb">
+              <h4>First Login & System Update</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — First commands after login</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre><span class="cm"># Log in with the user you created during install</span>
+
+<span class="cm"># See who you are</span>
+whoami
+
+<span class="cm"># See where you are in the filesystem</span>
+pwd
+<span class="cm"># Output: /home/devops  ← your home directory</span>
+
+<span class="cm"># Update ALL packages to latest versions</span>
+<span class="cm"># dnf is the package manager on RHEL/Rocky Linux</span>
+sudo dnf update -y
+
+<span class="cm"># Install some essential tools we'll use throughout</span>
+sudo dnf install -y \
+  vim \          <span class="cm"># text editor</span>
+  git \          <span class="cm"># version control</span>
+  curl \         <span class="cm"># HTTP requests</span>
+  wget \         <span class="cm"># file downloads</span>
+  tree \         <span class="cm"># visualise directory structure</span>
+  htop \         <span class="cm"># live process monitor</span>
+  net-tools \    <span class="cm"># networking tools</span>
+  bind-utils \   <span class="cm"># DNS tools (dig, nslookup)</span>
+  bash-completion <span class="cm"># tab completion for commands</span>
+
+<span class="cm"># Check your IP address</span>
+ip addr show
+<span class="cm"># Look for "inet x.x.x.x" under your network interface (eth0 or enp0s3)</span>
+<span class="cm"># That's the IP you'll SSH to from your host</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">5</div>
+            <div class="sb">
+              <h4>Set Up SSH Key Authentication</h4>
+              <p>Password SSH is insecure. Key-based SSH is what every real server uses. You'll generate a key pair on your <strong>host machine</strong> (laptop), copy the public key to the VM. The private key never leaves your laptop.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Run these on your HOST machine (laptop), not the VM</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre><span class="cm"># Generate an SSH key pair (run on your laptop, not the VM)</span>
+<span class="cm"># -t ed25519 = modern, secure algorithm</span>
+<span class="cm"># -C = comment to identify the key</span>
+ssh-keygen -t ed25519 -C <span class="str">"devops-lab"</span>
+<span class="cm"># Press Enter to accept default path (~/.ssh/id_ed25519)</span>
+<span class="cm"># Set a passphrase (optional but recommended)</span>
+
+<span class="cm"># Copy your PUBLIC key to the VM</span>
+<span class="cm"># Replace YOUR_VM_IP with the IP from the previous step</span>
+ssh-copy-id -i ~/.ssh/id_ed25519.pub devops@YOUR_VM_IP
+
+<span class="cm"># Now SSH in without a password!</span>
+ssh devops@YOUR_VM_IP
+
+<span class="cm"># If you're on Windows, use PowerShell and run:</span>
+<span class="cm"># type $env:USERPROFILE\.ssh\id_ed25519.pub | ssh devops@YOUR_VM_IP "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"</span></pre>
+              </div>
+
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Now harden SSH on the VM (run inside the VM)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Edit SSH server config</span>
+sudo vim /etc/ssh/sshd_config
+
+<span class="cm"># Find and change these lines (remove the # to uncomment):</span>
+<span class="cm"># PermitRootLogin no           ← never allow root to SSH in</span>
+<span class="cm"># PasswordAuthentication no    ← keys only, no passwords</span>
+<span class="cm"># PubkeyAuthentication yes     ← make sure this is yes</span>
+
+<span class="cm"># Restart SSH to apply changes</span>
+sudo systemctl restart sshd
+
+<span class="cm"># IMPORTANT: Don't close your existing SSH session yet!</span>
+<span class="cm"># Open a NEW terminal and test the key login works before closing this one</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">6</div>
+            <div class="sb">
+              <h4>Configure the Firewall</h4>
+              <p>Rocky Linux uses <code>firewalld</code> — a dynamic firewall manager. By default it blocks everything except SSH (port 22). You'll open ports as you need them. This is correct security practice — default deny, explicit allow.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Firewall basics</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Check what's currently allowed</span>
+sudo firewall-cmd --list-all
+
+<span class="cm"># See what zone you're in (likely "public")</span>
+sudo firewall-cmd --get-active-zones
+
+<span class="cm"># Allow HTTP and HTTPS (we'll need these in Project 6)</span>
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+
+<span class="cm"># Allow a specific port (e.g. our app will run on 3000)</span>
+sudo firewall-cmd --permanent --add-port=3000/tcp
+
+<span class="cm"># Reload to apply permanent changes</span>
+sudo firewall-cmd --reload
+
+<span class="cm"># Verify</span>
+sudo firewall-cmd --list-all
+<span class="cm"># You should see http, https, and 3000/tcp listed under "services" / "ports"</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="note ok"><div class="note-i">✅</div><p><strong>Project 1 complete.</strong> You have a running Linux VM you can SSH into with key authentication, a working firewall, and all essential tools installed. This is your foundation for every project that follows — every subsequent project starts with <code>ssh devops@YOUR_VM_IP</code>.</p></div>
+      </div>
+    </div><!-- /P1 -->
+
+    <!-- P2 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">02</div>
+        <div class="pmeta">
+          <h3>Linux Fundamentals Bootcamp — The 50 Commands You Need</h3>
+          <p>Master filesystem navigation, file operations, permissions, users, process management, and package management. Everything via hands-on exercises with real explanations of what each command does.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Linux CLI</span><span class="ptag g">File Permissions</span><span class="ptag s">Process Management</span><span class="ptag n">DNF</span>
+            <span class="diff easy">Beginner</span><span class="ptime">⏱ 3–4 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Filesystem Navigation — Moving Around</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Navigation commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># pwd — Print Working Directory — where am I?</span>
+pwd
+<span class="cm"># /home/devops</span>
+
+<span class="cm"># ls — List files and directories</span>
+ls              <span class="cm"># basic list</span>
+ls -l           <span class="cm"># long format (permissions, owner, size, date)</span>
+ls -la          <span class="cm"># include hidden files (start with .)</span>
+ls -lh          <span class="cm"># human-readable file sizes (KB, MB, GB)</span>
+ls -lt          <span class="cm"># sort by time, newest first</span>
+ls /etc         <span class="cm"># list a specific directory</span>
+
+<span class="cm"># cd — Change Directory</span>
+cd /etc         <span class="cm"># go to /etc</span>
+cd ..           <span class="cm"># go up one level</span>
+cd ~            <span class="cm"># go to home directory</span>
+cd -            <span class="cm"># go back to previous directory</span>
+cd /var/log     <span class="cm"># absolute path (starts with /)</span>
+cd log          <span class="cm"># relative path (from current location)</span>
+
+<span class="cm"># tree — visualise directory structure</span>
+tree /etc/ssh   <span class="cm"># show directory tree</span>
+tree -L 2 /etc  <span class="cm"># max 2 levels deep</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>File Operations — Create, Copy, Move, Delete</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — File operations</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Create files and directories</span>
+touch myfile.txt           <span class="cm"># create empty file</span>
+mkdir mydir                <span class="cm"># create directory</span>
+mkdir -p a/b/c             <span class="cm"># create nested dirs in one command</span>
+echo <span class="str">"hello world"</span> > file.txt    <span class="cm"># create file with content (overwrites!)</span>
+echo <span class="str">"more text"</span> >> file.txt     <span class="cm"># append to file</span>
+
+<span class="cm"># Read files</span>
+cat file.txt               <span class="cm"># print entire file</span>
+less file.txt              <span class="cm"># scroll through file (q to quit)</span>
+head -20 file.txt          <span class="cm"># first 20 lines</span>
+tail -20 file.txt          <span class="cm"># last 20 lines</span>
+tail -f /var/log/messages  <span class="cm"># live-follow a log file (Ctrl+C to stop)</span>
+
+<span class="cm"># Copy and Move</span>
+cp file.txt backup.txt     <span class="cm"># copy file</span>
+cp -r mydir/ mydir-backup/ <span class="cm"># copy directory recursively</span>
+mv file.txt newname.txt    <span class="cm"># rename / move file</span>
+mv mydir/ /tmp/            <span class="cm"># move directory</span>
+
+<span class="cm"># Delete (be careful — no recycle bin!)</span>
+rm file.txt                <span class="cm"># delete file</span>
+rm -r mydir/               <span class="cm"># delete directory and contents</span>
+rm -rf /tmp/test/          <span class="cm"># force delete (no confirmation) — use carefully!</span>
+
+<span class="cm"># Search for files</span>
+find / -name <span class="str">"*.conf"</span> 2>/dev/null    <span class="cm"># find all .conf files</span>
+find /etc -name <span class="str">"nginx*"</span>            <span class="cm"># find nginx config files</span>
+find /home -newer /etc/passwd       <span class="cm"># files modified more recently than passwd</span>
+
+<span class="cm"># Search inside files</span>
+grep <span class="str">"ERROR"</span> /var/log/messages      <span class="cm"># find lines with ERROR</span>
+grep -r <span class="str">"password"</span> /etc/            <span class="cm"># recursive search in directory</span>
+grep -i <span class="str">"failed"</span> /var/log/secure    <span class="cm"># case-insensitive search</span>
+grep -n <span class="str">"Port"</span> /etc/ssh/sshd_config  <span class="cm"># show line numbers too</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Permissions — Understanding rwxrwxrwx</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Permissions</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># View permissions with ls -l</span>
+ls -l /etc/ssh/sshd_config
+<span class="cm"># -rw-r--r-- 1 root root 3668 Jan 15 10:22 /etc/ssh/sshd_config</span>
+<span class="cm"># │││ │││ │││</span>
+<span class="cm"># ││└─┘││└─┘││└─┘</span>
+<span class="cm"># │ owner │ group │ others</span>
+<span class="cm"># First char: - = file, d = directory, l = symlink</span>
+<span class="cm"># r = read(4), w = write(2), x = execute(1)</span>
+
+<span class="cm"># chmod — change permissions</span>
+chmod 755 script.sh   <span class="cm"># owner=rwx(7), group=r-x(5), others=r-x(5)</span>
+chmod 644 config.txt  <span class="cm"># owner=rw-(6), group=r--(4), others=r--(4)</span>
+chmod 600 private-key <span class="cm"># owner=rw-(6), no one else can read (required for SSH keys!)</span>
+chmod +x script.sh    <span class="cm"># add execute permission for everyone</span>
+chmod u+x script.sh   <span class="cm"># add execute for owner only</span>
+chmod -w file.txt     <span class="cm"># remove write for everyone</span>
+
+<span class="cm"># chown — change owner</span>
+sudo chown alice file.txt          <span class="cm"># change owner to alice</span>
+sudo chown alice:devops file.txt   <span class="cm"># change owner AND group</span>
+sudo chown -R nginx:nginx /var/www/ <span class="cm"># recursive (whole directory)</span>
+
+<span class="cm"># Common permission patterns to memorise:</span>
+<span class="cm"># 777 — everyone can do everything (NEVER use this in production)</span>
+<span class="cm"># 755 — owner rwx, everyone else r-x (executables, directories)</span>
+<span class="cm"># 644 — owner rw-, everyone else r-- (config files, web files)</span>
+<span class="cm"># 600 — owner rw-, no one else (SSH private keys, passwords)</span>
+<span class="cm"># 700 — owner rwx, no one else (private scripts)</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">4</div>
+            <div class="sb">
+              <h4>User Management</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Managing users</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Create a new user</span>
+sudo useradd -m -s /bin/bash alice   <span class="cm"># -m = create home dir, -s = shell</span>
+sudo passwd alice                    <span class="cm"># set their password</span>
+
+<span class="cm"># Add user to a group (sudo group = can use sudo)</span>
+sudo usermod -aG wheel alice         <span class="cm"># wheel = sudo group on RHEL/Rocky</span>
+sudo usermod -aG docker alice        <span class="cm"># add to docker group later</span>
+
+<span class="cm"># See user info</span>
+id alice                   <span class="cm"># uid, gid, groups</span>
+cat /etc/passwd | grep alice  <span class="cm"># user record in passwd file</span>
+groups alice               <span class="cm"># what groups is alice in</span>
+
+<span class="cm"># Switch user</span>
+su - alice                 <span class="cm"># switch to alice (- = load her environment)</span>
+sudo -u alice whoami       <span class="cm"># run command as alice</span>
+
+<span class="cm"># Delete user</span>
+sudo userdel -r alice      <span class="cm"># -r = also delete home directory</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">5</div>
+            <div class="sb">
+              <h4>Process Management</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Processes</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># See running processes</span>
+ps aux             <span class="cm"># all processes, detailed</span>
+ps aux | grep nginx <span class="cm"># filter for nginx</span>
+pgrep nginx        <span class="cm"># just the PID of nginx</span>
+top                <span class="cm"># live view (press q to quit)</span>
+htop               <span class="cm"># nicer live view (press F10 to quit)</span>
+
+<span class="cm"># Kill processes</span>
+kill 1234          <span class="cm"># send SIGTERM (polite stop) to PID 1234</span>
+kill -9 1234       <span class="cm"># send SIGKILL (force stop) — use as last resort</span>
+pkill nginx        <span class="cm"># kill by name</span>
+killall nginx      <span class="cm"># kill all processes named nginx</span>
+
+<span class="cm"># Background / foreground</span>
+sleep 60 &         <span class="cm"># run in background with &</span>
+jobs               <span class="cm"># see background jobs</span>
+fg 1               <span class="cm"># bring job 1 to foreground</span>
+Ctrl+Z             <span class="cm"># suspend current process</span>
+bg                 <span class="cm"># resume it in background</span>
+
+<span class="cm"># Systemd — managing services</span>
+sudo systemctl start nginx      <span class="cm"># start service</span>
+sudo systemctl stop nginx       <span class="cm"># stop service</span>
+sudo systemctl restart nginx    <span class="cm"># restart</span>
+sudo systemctl reload nginx     <span class="cm"># reload config without full restart</span>
+sudo systemctl enable nginx     <span class="cm"># start on boot</span>
+sudo systemctl disable nginx    <span class="cm"># don't start on boot</span>
+sudo systemctl status nginx     <span class="cm"># is it running? last logs?</span>
+sudo systemctl is-active nginx  <span class="cm"># returns "active" or "inactive"</span>
+
+<span class="cm"># View service logs (journald)</span>
+sudo journalctl -u nginx        <span class="cm"># all logs for nginx</span>
+sudo journalctl -u nginx -f     <span class="cm"># follow live</span>
+sudo journalctl -u nginx --since <span class="str">"1 hour ago"</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P2 -->
+
+    <!-- P3 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">03</div>
+        <div class="pmeta">
+          <h3>Bash Scripting from Zero — Variables, Logic, Loops</h3>
+          <p>Write your first real Bash scripts from scratch. Variables, conditionals, loops, functions, exit codes, and error handling. Every concept explained with an analogy before the code.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Bash</span><span class="ptag g">Scripting</span><span class="ptag s">Automation</span>
+            <span class="diff easy">Beginner</span><span class="ptime">⏱ 4–5 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Your First Script</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — hello.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="cm"># ↑ This is the "shebang" — tells the OS to use bash to run this file
+# Lines starting with # are comments — they don't run</span>
+
+<span class="cm"># Always add this line — it makes your scripts safer:
+# -e = exit on any error
+# -u = treat unset variables as errors
+# -o pipefail = catch errors in pipes</span>
+<span class="kw">set</span> -euo pipefail
+
+<span class="cm"># Variables — no spaces around the = sign!</span>
+<span class="var">NAME</span>=<span class="str">"World"</span>
+<span class="var">TODAY</span>=$(date +%Y-%m-%d)   <span class="cm"># $() runs a command and captures output</span>
+
+<span class="cm"># Use variables with $</span>
+echo <span class="str">"Hello, $NAME!"</span>
+echo <span class="str">"Today is: $TODAY"</span>
+
+<span class="cm"># Arithmetic</span>
+<span class="var">X</span>=10
+<span class="var">Y</span>=3
+echo <span class="str">"Sum: $((X + Y))"</span>       <span class="cm"># $(( )) for arithmetic</span>
+echo <span class="str">"Divide: $((X / Y))"</span>    <span class="cm"># integer division (result: 3)</span></pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Make it executable and run it</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Save the file, then:</span>
+chmod +x hello.sh   <span class="cm"># make it executable</span>
+./hello.sh          <span class="cm"># run it (./ means "in current directory")</span>
+
+<span class="cm"># Output:</span>
+<span class="cm"># Hello, World!</span>
+<span class="cm"># Today is: 2024-01-15</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Conditionals — If/Then/Else</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Conditionals</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">DISK_USAGE</span>=$(df / | awk <span class="str">'NR==2 {print $5}'</span> | tr -d <span class="str">'%'</span>)
+<span class="cm"># df / = disk free for root partition
+# awk 'NR==2 {print $5}' = 2nd row, 5th column = "85%"
+# tr -d '%' = remove the percent sign → "85"</span>
+
+echo <span class="str">"Disk usage: ${DISK_USAGE}%"</span>
+
+<span class="kw">if</span> [ <span class="str">"$DISK_USAGE"</span> -gt 90 ]; <span class="kw">then</span>
+    echo <span class="str">"CRITICAL: Disk is over 90%!"</span>
+<span class="kw">elif</span> [ <span class="str">"$DISK_USAGE"</span> -gt 80 ]; <span class="kw">then</span>
+    echo <span class="str">"WARNING: Disk is over 80%"</span>
+<span class="kw">else</span>
+    echo <span class="str">"OK: Disk usage is fine"</span>
+<span class="kw">fi</span>
+
+<span class="cm"># Common test operators:
+# -gt  greater than       -lt  less than
+# -ge  greater or equal   -le  less or equal
+# -eq  equal (numbers)    -ne  not equal
+# =    equal (strings)    !=   not equal (strings)
+# -f   file exists        -d   directory exists
+# -z   string is empty    -n   string is not empty</span>
+
+<span class="cm"># Check if a file exists</span>
+<span class="kw">if</span> [ -f <span class="str">"/etc/nginx/nginx.conf"</span> ]; <span class="kw">then</span>
+    echo <span class="str">"Nginx config found"</span>
+<span class="kw">else</span>
+    echo <span class="str">"Nginx is not installed"</span>
+<span class="kw">fi</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Loops — Repeat Actions</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — For and while loops</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># FOR loop — iterate over a list</span>
+<span class="kw">for</span> <span class="var">USER</span> <span class="kw">in</span> alice bob charlie; <span class="kw">do</span>
+    echo <span class="str">"Creating user: $USER"</span>
+    sudo useradd -m <span class="str">"$USER"</span> 2>/dev/null || echo <span class="str">"  (already exists)"</span>
+<span class="kw">done</span>
+
+<span class="cm"># FOR loop — iterate over files</span>
+<span class="kw">for</span> <span class="var">LOG</span> <span class="kw">in</span> /var/log/*.log; <span class="kw">do</span>
+    <span class="var">SIZE</span>=$(du -sh <span class="str">"$LOG"</span> | cut -f1)
+    echo <span class="str">"$LOG — $SIZE"</span>
+<span class="kw">done</span>
+
+<span class="cm"># FOR loop — C-style (like other languages)</span>
+<span class="kw">for</span> (( <span class="var">i</span>=1; <span class="var">i</span><=5; <span class="var">i</span>++ )); <span class="kw">do</span>
+    echo <span class="str">"Attempt $i"</span>
+<span class="kw">done</span>
+
+<span class="cm"># WHILE loop — keep going until condition is false</span>
+<span class="var">COUNT</span>=0
+<span class="kw">while</span> [ <span class="str">"$COUNT"</span> -lt 5 ]; <span class="kw">do</span>
+    echo <span class="str">"Count: $COUNT"</span>
+    <span class="var">COUNT</span>=$(( COUNT + 1 ))
+<span class="kw">done</span>
+
+<span class="cm"># Read file line by line</span>
+<span class="kw">while</span> <span class="fn">IFS</span>= read -r <span class="var">LINE</span>; <span class="kw">do</span>
+    echo <span class="str">"Processing: $LINE"</span>
+<span class="kw">done</span> < /etc/hosts</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">4</div>
+            <div class="sb">
+              <h4>Functions — Reusable Blocks of Logic</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Functions</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="cm"># Define a function</span>
+<span class="fn">log_info</span>() {
+    echo <span class="str">"[$(date +%H:%M:%S)] INFO: $1"</span>
+}
+
+<span class="fn">log_error</span>() {
+    echo <span class="str">"[$(date +%H:%M:%S)] ERROR: $1"</span> >&2  <span class="cm"># >&2 = print to stderr</span>
+}
+
+<span class="fn">check_service</span>() {
+    <span class="kw">local</span> <span class="var">SERVICE</span>=<span class="str">"$1"</span>  <span class="cm"># $1 = first argument passed to function</span>
+    <span class="kw">if</span> systemctl is-active --quiet <span class="str">"$SERVICE"</span>; <span class="kw">then</span>
+        log_info <span class="str">"$SERVICE is running"</span>
+        <span class="kw">return</span> 0  <span class="cm"># success</span>
+    <span class="kw">else</span>
+        log_error <span class="str">"$SERVICE is NOT running!"</span>
+        <span class="kw">return</span> 1  <span class="cm"># failure</span>
+    <span class="kw">fi</span>
+}
+
+<span class="cm"># Call the functions</span>
+log_info <span class="str">"Starting healthcheck"</span>
+
+<span class="kw">for</span> <span class="var">SVC</span> <span class="kw">in</span> sshd firewalld; <span class="kw">do</span>
+    check_service <span class="str">"$SVC"</span>
+<span class="kw">done</span>
+
+log_info <span class="str">"Healthcheck complete"</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P3 -->
+
+    <!-- P4 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">04</div>
+        <div class="pmeta">
+          <h3>Bash Automation Toolkit — 10 Real Scripts</h3>
+          <p>Build a library of 10 genuinely useful automation scripts: disk alerting, log rotation, user provisioning, service healthchecks, S3 backups, and more. Cron jobs and systemd timers to run them automatically.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Bash</span><span class="ptag g">Cron</span><span class="ptag s">Systemd Timers</span><span class="ptag v">Automation</span>
+            <span class="diff easy">Beginner</span><span class="ptime">⏱ 4–5 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Script 1 — Disk Space Alert</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — /usr/local/bin/disk-alert.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">THRESHOLD</span>=80
+<span class="var">EMAIL</span>=<span class="str">"admin@example.com"</span>
+<span class="var">HOSTNAME</span>=$(hostname)
+
+<span class="cm"># Check all mounted filesystems</span>
+<span class="kw">while</span> <span class="fn">IFS</span>= read -r <span class="var">LINE</span>; <span class="kw">do</span>
+    <span class="var">USAGE</span>=$(echo <span class="str">"$LINE"</span> | awk <span class="str">'{print $5}'</span> | tr -d <span class="str">'%'</span>)
+    <span class="var">MOUNT</span>=$(echo <span class="str">"$LINE"</span> | awk <span class="str">'{print $6}'</span>)
+
+    <span class="kw">if</span> [ <span class="str">"$USAGE"</span> -ge <span class="str">"$THRESHOLD"</span> ]; <span class="kw">then</span>
+        <span class="var">MSG</span>=<span class="str">"ALERT: $HOSTNAME — $MOUNT is at ${USAGE}% (threshold: ${THRESHOLD}%)"</span>
+        echo <span class="str">"$MSG"</span>
+        <span class="cm"># Send email if mail is configured</span>
+        echo <span class="str">"$MSG"</span> | mail -s <span class="str">"Disk Alert: $HOSTNAME"</span> <span class="str">"$EMAIL"</span> 2>/dev/null || true
+        <span class="cm"># Log to syslog</span>
+        logger -t disk-alert <span class="str">"$MSG"</span>
+    <span class="kw">fi</span>
+<span class="kw">done</span> < <(df -h | grep -v <span class="str">'^Filesystem'</span>)</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Script 2 — Service Healthcheck with Auto-Restart</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — /usr/local/bin/healthcheck.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">SERVICES</span>=(nginx postgresql sshd firewalld)
+<span class="var">LOG</span>=/var/log/healthcheck.log
+
+<span class="fn">log</span>() { echo <span class="str">"[$(date '+%Y-%m-%d %H:%M:%S')] $1"</span> | tee -a <span class="str">"$LOG"</span>; }
+
+<span class="kw">for</span> <span class="var">SVC</span> <span class="kw">in</span> <span class="str">"${SERVICES[@]}"</span>; <span class="kw">do</span>
+    <span class="kw">if</span> systemctl is-active --quiet <span class="str">"$SVC"</span>; <span class="kw">then</span>
+        log <span class="str">"OK: $SVC"</span>
+    <span class="kw">else</span>
+        log <span class="str">"FAIL: $SVC is down — attempting restart"</span>
+        <span class="kw">if</span> sudo systemctl restart <span class="str">"$SVC"</span>; <span class="kw">then</span>
+            log <span class="str">"RECOVERED: $SVC restarted successfully"</span>
+        <span class="kw">else</span>
+            log <span class="str">"CRITICAL: $SVC failed to restart!"</span>
+        <span class="kw">fi</span>
+    <span class="kw">fi</span>
+<span class="kw">done</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Automate Scripts with Cron and Systemd Timers</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Cron (classic scheduler)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Edit your crontab</span>
+crontab -e
+
+<span class="cm"># Cron format: minute hour day month weekday command</span>
+<span class="cm"># ┌───────── minute (0–59)</span>
+<span class="cm"># │ ┌─────── hour (0–23)</span>
+<span class="cm"># │ │ ┌───── day of month (1–31)</span>
+<span class="cm"># │ │ │ ┌─── month (1–12)</span>
+<span class="cm"># │ │ │ │ ┌─ weekday (0=Sun, 6=Sat)</span>
+<span class="cm"># │ │ │ │ │</span>
+
+<span class="cm"># Run disk alert every 30 minutes</span>
+*/30 * * * * /usr/local/bin/disk-alert.sh
+
+<span class="cm"># Run healthcheck every 5 minutes</span>
+*/5 * * * * /usr/local/bin/healthcheck.sh
+
+<span class="cm"># Run backup at 2am every day</span>
+0 2 * * * /usr/local/bin/backup.sh
+
+<span class="cm"># Run cleanup every Sunday at 3am</span>
+0 3 * * 0 /usr/local/bin/cleanup.sh</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">ini</span> — Systemd Timer (modern approach) — /etc/systemd/system/healthcheck.timer</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">[Unit]
+Description=Run healthcheck every 5 minutes
+Requires=healthcheck.service
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+Unit=healthcheck.service
+
+[Install]
+WantedBy=timers.target</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">ini</span> — /etc/systemd/system/healthcheck.service</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">[Unit]
+Description=Service Healthcheck
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/healthcheck.sh
+User=root</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Enable and start the timer</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">sudo systemctl daemon-reload
+sudo systemctl enable --now healthcheck.timer
+sudo systemctl list-timers  <span class="cm"># see all timers and when they run next</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P4 -->
+
+  </div><!-- /proj-list tab-all -->
+</div><!-- /tab-all -->
+
+<!-- ══════════ P1-P4 TAB ══════════ -->
+<div id="tab-p1p4" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 1–4</div><h2>Foundation Projects</h2><p>Full walkthroughs for Projects 1–4 are in the <strong>All 10 Projects</strong> tab above. Expand each card to see the complete code.</p></div>
+  <div class="concept"><h3>P1–P4 Quick Summary</h3>
+  <p><strong>P1 — Linux VM Setup:</strong> Rocky Linux in VirtualBox, SSH key auth (no passwords), firewalld configuration, essential tools installed. This is your permanent workspace.</p>
+  <p><strong>P2 — Linux Fundamentals:</strong> All 50 essential commands — navigation (cd, ls, find), file ops (cp, mv, rm, grep), permissions (chmod, chown, 755/644/600 patterns), user management (useradd, usermod), process management (ps, kill, systemctl, journalctl).</p>
+  <p><strong>P3 — Bash Scripting:</strong> Shebang + set -euo pipefail habit, variables, $() command substitution, if/elif/else, for loops (list/files/C-style), while loops, functions with local variables, exit codes (0=success, non-zero=failure).</p>
+  <p><strong>P4 — Bash Automation Toolkit:</strong> 10 real scripts — disk alert, service healthcheck with auto-restart, log rotation, user provisioner, backup to S3. Scheduled with cron and systemd timers.</p></div>
+</div>
+
+<!-- ══════════ P5-P8 TAB ══════════ -->
+<div id="tab-p5p8" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 5–8</div><h2>Networking, Web Server, Python & Database</h2><p>The middle phase — where everything gets connected together.</p></div>
+
+  <div class="proj-list">
+
+    <!-- P5 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">05</div>
+        <div class="pmeta">
+          <h3>Networking Deep Dive — Multi-VM Lab</h3>
+          <p>Build a multi-VM lab. Configure static IPs, test connectivity, run a BIND DNS server, diagnose problems with tcpdump, nmap, ss, and dig. Understand everything that happens between curl and a web response.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">TCP/IP</span><span class="ptag s">DNS</span><span class="ptag g">tcpdump</span><span class="ptag n">nmap</span>
+            <span class="diff med">Intermediate</span><span class="ptime">⏱ 5–6 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Configure a Static IP Address</h4>
+              <p>Cloud servers always have static IPs. Learn how to set one properly on RHEL/Rocky using NetworkManager.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Set a static IP with nmcli</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># See your current network interfaces</span>
+ip addr show
+nmcli device status
+
+<span class="cm"># Find your connection name</span>
+nmcli connection show
+<span class="cm"># Look for something like "enp0s3" or "eth0"</span>
+
+<span class="cm"># Set a static IP (replace CON_NAME with your connection name)</span>
+sudo nmcli connection modify <span class="str">"CON_NAME"</span> \
+    ipv4.method manual \
+    ipv4.addresses 192.168.1.50/24 \
+    ipv4.gateway 192.168.1.1 \
+    ipv4.dns <span class="str">"8.8.8.8,1.1.1.1"</span>
+
+<span class="cm"># Apply changes</span>
+sudo nmcli connection down <span class="str">"CON_NAME"</span>
+sudo nmcli connection up <span class="str">"CON_NAME"</span>
+
+<span class="cm"># Verify</span>
+ip addr show           <span class="cm"># check your IP</span>
+ping -c3 google.com    <span class="cm"># test internet connectivity</span>
+ping -c3 192.168.1.1   <span class="cm"># test gateway</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Network Diagnostic Toolkit</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Diagnostics you'll use constantly</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># ss — show open ports and connections (modern netstat)</span>
+ss -tulnp          <span class="cm"># t=tcp u=udp l=listening n=numeric p=process</span>
+ss -tnp            <span class="cm"># established TCP connections with process names</span>
+ss -tnp state established  <span class="cm"># only established connections</span>
+
+<span class="cm"># dig — DNS lookups</span>
+dig google.com          <span class="cm"># full DNS lookup output</span>
+dig google.com A        <span class="cm"># just A record (IPv4 address)</span>
+dig google.com MX       <span class="cm"># mail records</span>
+dig @8.8.8.8 google.com <span class="cm"># query a specific DNS server</span>
+dig +short google.com   <span class="cm"># just the answer</span>
+dig -x 8.8.8.8          <span class="cm"># reverse DNS lookup (IP → hostname)</span>
+
+<span class="cm"># curl — make HTTP requests</span>
+curl https://example.com             <span class="cm"># download the page</span>
+curl -I https://example.com          <span class="cm"># headers only (check status code)</span>
+curl -v https://example.com          <span class="cm"># verbose — see full request/response</span>
+curl -o /dev/null -w <span class="str">"%{http_code}\n"</span> https://example.com  <span class="cm"># just the status code</span>
+
+<span class="cm"># nmap — port scanner</span>
+sudo nmap -p 22,80,443 192.168.1.1   <span class="cm"># check specific ports</span>
+sudo nmap -p 1-1000 192.168.1.1      <span class="cm"># scan first 1000 ports</span>
+sudo nmap -sV 192.168.1.1            <span class="cm"># service version detection</span>
+
+<span class="cm"># tcpdump — capture packets (the real truth)</span>
+sudo tcpdump -i any port 80          <span class="cm"># capture HTTP traffic</span>
+sudo tcpdump -i eth0 host google.com <span class="cm"># traffic to/from google.com</span>
+sudo tcpdump -i any -w /tmp/capture.pcap  <span class="cm"># save to file for analysis</span>
+<span class="cm"># Tip: in another terminal, run: curl http://example.com
+# Then Ctrl+C tcpdump and read the captured packets</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Set Up a Local DNS Server with BIND</h4>
+              <p>BIND is the most widely deployed DNS server software. Running your own teaches you exactly how DNS works and is a great homelab project.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install and configure BIND</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Install BIND</span>
+sudo dnf install -y bind bind-utils
+
+<span class="cm"># Main config file</span>
+sudo vim /etc/named.conf</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — /etc/named.conf (key sections)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">options {
+    listen-on port 53 { 127.0.0.1; 192.168.1.50; };  <span class="cm">// your server's IP</span>
+    allow-query { localhost; 192.168.1.0/24; };       <span class="cm">// allow your local network</span>
+    forwarders { 8.8.8.8; 1.1.1.1; };                <span class="cm">// forward unknown queries upstream</span>
+    recursion yes;
+};
+
+<span class="cm">// Define your local zone</span>
+zone <span class="str">"homelab.local"</span> IN {
+    type master;
+    file <span class="str">"/var/named/homelab.local.zone"</span>;
+};</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — /var/named/homelab.local.zone</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">$TTL 86400
+@   IN SOA  ns1.homelab.local. admin.homelab.local. (
+        2024011501  ; serial
+        3600        ; refresh
+        900         ; retry
+        604800      ; expire
+        86400 )     ; TTL
+
+    IN  NS   ns1.homelab.local.
+
+ns1   IN  A  192.168.1.50    <span class="cm">; DNS server itself</span>
+devops-lab IN A 192.168.1.50 <span class="cm">; our VM</span>
+web        IN A 192.168.1.51 <span class="cm">; web server VM</span></pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Start and test BIND</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Start BIND</span>
+sudo systemctl enable --now named
+
+<span class="cm"># Allow DNS through firewall</span>
+sudo firewall-cmd --permanent --add-service=dns
+sudo firewall-cmd --reload
+
+<span class="cm"># Test it!</span>
+dig @192.168.1.50 devops-lab.homelab.local
+<span class="cm"># Should return: 192.168.1.50</span>
+
+dig @192.168.1.50 google.com
+<span class="cm"># Should forward to 8.8.8.8 and return Google's IP</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P5 -->
+
+    <!-- P6 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">06</div>
+        <div class="pmeta">
+          <h3>Nginx Web Server — Reverse Proxy & SSL</h3>
+          <p>Install Nginx from scratch. Configure virtual hosts, set up a reverse proxy to a backend app, enable HTTPS with Let's Encrypt, analyse access logs with awk and grep.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Nginx</span><span class="ptag s">SSL/TLS</span><span class="ptag g">Let's Encrypt</span><span class="ptag n">Log Analysis</span>
+            <span class="diff med">Intermediate</span><span class="ptime">⏱ 4–5 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Install Nginx and Understand the Config Structure</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install and explore</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Install Nginx</span>
+sudo dnf install -y nginx
+
+<span class="cm"># Start and enable</span>
+sudo systemctl enable --now nginx
+
+<span class="cm"># Allow HTTP through firewall</span>
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload
+
+<span class="cm"># Test it's working (from your host machine)</span>
+curl http://YOUR_VM_IP
+<span class="cm"># Should see the Nginx welcome page HTML</span>
+
+<span class="cm"># Nginx config structure:</span>
+<span class="cm"># /etc/nginx/nginx.conf          — main config</span>
+<span class="cm"># /etc/nginx/conf.d/             — site configs go here</span>
+<span class="cm"># /usr/share/nginx/html/         — default web root</span>
+<span class="cm"># /var/log/nginx/access.log      — who visited</span>
+<span class="cm"># /var/log/nginx/error.log       — what broke</span>
+
+<span class="cm"># Test your config before reloading (ALWAYS do this)</span>
+sudo nginx -t</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Configure a Virtual Host and Reverse Proxy</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">nginx</span> — /etc/nginx/conf.d/myapp.conf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">server {
+    listen 80;
+    server_name myapp.homelab.local;
+
+    <span class="cm"># Logging — separate logs per site</span>
+    access_log /var/log/nginx/myapp-access.log;
+    error_log  /var/log/nginx/myapp-error.log;
+
+    <span class="cm"># Serve static files</span>
+    location /static/ {
+        root /var/www/myapp;
+        expires 30d;
+        add_header Cache-Control <span class="str">"public, no-transform"</span>;
+    }
+
+    <span class="cm"># Reverse proxy to your app on port 3000</span>
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout    30s;
+
+        <span class="cm"># Buffer settings for performance</span>
+        proxy_buffer_size   128k;
+        proxy_buffers       4 256k;
+    }
+
+    <span class="cm"># Security headers</span>
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection <span class="str">"1; mode=block"</span>;
+}</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Log Analysis with awk and grep</h4>
+              <p>This is a core DevOps skill — understanding what's happening on your server by reading logs.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Nginx log analysis one-liners</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Nginx default log format:
+# $remote_addr - $remote_user [$time_local] "$request" $status $bytes "$referer" "$user_agent"</span>
+
+<span class="cm"># Top 10 most-visited pages</span>
+awk <span class="str">'{print $7}'</span> /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -10
+
+<span class="cm"># Count requests by HTTP status code</span>
+awk <span class="str">'{print $9}'</span> /var/log/nginx/access.log | sort | uniq -c | sort -rn
+
+<span class="cm"># Find all 404 errors</span>
+grep <span class="str">' 404 '</span> /var/log/nginx/access.log | awk <span class="str">'{print $7}'</span> | sort | uniq -c | sort -rn
+
+<span class="cm"># Top 10 IPs by request count</span>
+awk <span class="str">'{print $1}'</span> /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -10
+
+<span class="cm"># Requests per minute (find traffic spikes)</span>
+awk <span class="str">'{print $4}'</span> /var/log/nginx/access.log | \
+  cut -d: -f1-3 | sort | uniq -c | sort -rn | head -20
+
+<span class="cm"># Find slow requests or errors in last hour</span>
+grep <span class="str">"$(date -d '1 hour ago' '+%d/%b/%Y:%H')"</span> /var/log/nginx/access.log | \
+  awk <span class="str">'$9 >= 500 {print $0}'</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P6 -->
+
+    <!-- P7 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">07</div>
+        <div class="pmeta">
+          <h3>Python for DevOps — Automation That Bash Can't Do</h3>
+          <p>Python essentials for infrastructure automation: parse log files with regex, call REST APIs, manipulate JSON and YAML config files, send Slack/email alerts. The scripting that makes complex automation possible.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Python 3</span><span class="ptag s">REST APIs</span><span class="ptag g">JSON/YAML</span><span class="ptag v">Automation</span>
+            <span class="diff med">Intermediate</span><span class="ptime">⏱ 5–6 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Python Essentials — The DevOps-Relevant Parts</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Set up Python environment</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Python 3 is already installed on Rocky Linux 9</span>
+python3 --version
+
+<span class="cm"># Install pip and essential libraries</span>
+sudo dnf install -y python3-pip
+pip3 install requests pyyaml boto3 --user
+
+<span class="cm"># Create a virtual environment for projects (good practice)</span>
+python3 -m venv ~/devops-venv
+source ~/devops-venv/bin/activate
+pip install requests pyyaml boto3</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — Python DevOps essentials</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="kw">import</span> os
+<span class="kw">import</span> subprocess
+<span class="kw">import</span> json
+<span class="kw">import</span> yaml
+<span class="kw">import</span> requests
+<span class="kw">from</span> pathlib <span class="kw">import</span> Path
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="cm"># ── Run shell commands from Python ─────────────────────</span>
+result = subprocess.run(
+    [<span class="str">"df"</span>, <span class="str">"-h"</span>, <span class="str">"/"</span>],
+    capture_output=<span class="kw">True</span>,
+    text=<span class="kw">True</span>,
+    check=<span class="kw">True</span>   <span class="cm"># raises exception on non-zero exit code</span>
+)
+print(result.stdout)
+
+<span class="cm"># ── Read/write files ───────────────────────────────────</span>
+log_path = Path(<span class="str">"/var/log/nginx/access.log"</span>)
+<span class="kw">if</span> log_path.exists():
+    content = log_path.read_text()
+    lines = content.splitlines()
+    print(f<span class="str">"Log has {len(lines)} lines"</span>)
+
+<span class="cm"># ── Parse JSON ─────────────────────────────────────────</span>
+json_string = <span class="str">'{"status": "ok", "version": "1.2.3"}'</span>
+data = json.loads(json_string)
+print(data[<span class="str">"version"</span>])   <span class="cm"># → 1.2.3</span>
+
+<span class="cm"># ── Read YAML (config files are often YAML) ───────────</span>
+<span class="kw">with</span> open(<span class="str">"config.yml"</span>) <span class="kw">as</span> f:
+    config = yaml.safe_load(f)
+print(config[<span class="str">"database"</span>][<span class="str">"host"</span>])
+
+<span class="cm"># ── Make HTTP requests ─────────────────────────────────</span>
+response = requests.get(
+    <span class="str">"https://api.example.com/health"</span>,
+    timeout=5,
+    headers={<span class="str">"Authorization"</span>: <span class="str">"Bearer TOKEN"</span>}
+)
+response.raise_for_status()  <span class="cm"># raises exception on 4xx/5xx</span>
+data = response.json()
+print(data)</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Real Script — AWS EC2 Instance Inventory</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — ec2_inventory.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/usr/bin/env python3
+<span class="str">"""List all EC2 instances with their key details."""</span>
+<span class="kw">import</span> boto3
+<span class="kw">import</span> json
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="kw">def</span> <span class="fn">get_ec2_inventory</span>(region=<span class="str">"us-east-1"</span>):
+    ec2 = boto3.client(<span class="str">"ec2"</span>, region_name=region)
+    response = ec2.describe_instances()
+
+    instances = []
+    <span class="kw">for</span> reservation <span class="kw">in</span> response[<span class="str">"Reservations"</span>]:
+        <span class="kw">for</span> inst <span class="kw">in</span> reservation[<span class="str">"Instances"</span>]:
+            <span class="cm"># Extract Name tag</span>
+            name = <span class="str">"(no name)"</span>
+            <span class="kw">for</span> tag <span class="kw">in</span> inst.get(<span class="str">"Tags"</span>, []):
+                <span class="kw">if</span> tag[<span class="str">"Key"</span>] == <span class="str">"Name"</span>:
+                    name = tag[<span class="str">"Value"</span>]
+
+            instances.append({
+                <span class="str">"name"</span>:         name,
+                <span class="str">"id"</span>:           inst[<span class="str">"InstanceId"</span>],
+                <span class="str">"type"</span>:         inst[<span class="str">"InstanceType"</span>],
+                <span class="str">"state"</span>:        inst[<span class="str">"State"</span>][<span class="str">"Name"</span>],
+                <span class="str">"private_ip"</span>:   inst.get(<span class="str">"PrivateIpAddress"</span>, <span class="str">"N/A"</span>),
+                <span class="str">"public_ip"</span>:    inst.get(<span class="str">"PublicIpAddress"</span>, <span class="str">"N/A"</span>),
+                <span class="str">"launch_time"</span>:  inst[<span class="str">"LaunchTime"</span>].strftime(<span class="str">"%Y-%m-%d %H:%M"</span>),
+            })
+
+    <span class="kw">return</span> sorted(instances, key=<span class="kw">lambda</span> x: x[<span class="str">"name"</span>])
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    inventory = get_ec2_inventory()
+    print(f<span class="str">"\n{'Name':<30} {'ID':<20} {'Type':<15} {'State':<12} {'Private IP':<16}"</span>)
+    print(<span class="str">"-"</span> * 95)
+    <span class="kw">for</span> i <span class="kw">in</span> inventory:
+        print(f<span class="str">"{i['name']:<30} {i['id']:<20} {i['type']:<15} {i['state']:<12} {i['private_ip']:<16}"</span>)
+    print(f<span class="str">"\nTotal: {len(inventory)} instances"</span>)</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P7 -->
+
+    <!-- P8 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">08</div>
+        <div class="pmeta">
+          <h3>PostgreSQL Administration — The Database Every DevOps Engineer Needs</h3>
+          <p>Install PostgreSQL, create databases and users, write automated backup and restore scripts, configure remote access with pg_hba.conf, and understand connection pooling. Database skills that make you indispensable.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">PostgreSQL</span><span class="ptag s">pg_dump</span><span class="ptag g">Bash Backup</span><span class="ptag n">pg_hba.conf</span>
+            <span class="diff med">Intermediate</span><span class="ptime">⏱ 4–5 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Install and Configure PostgreSQL</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install PostgreSQL 15</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Install PostgreSQL 15 on Rocky Linux</span>
+sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+sudo dnf -qy module disable postgresql
+sudo dnf install -y postgresql15-server postgresql15
+
+<span class="cm"># Initialise the database cluster</span>
+sudo /usr/pgsql-15/bin/postgresql-15-setup initdb
+
+<span class="cm"># Start and enable</span>
+sudo systemctl enable --now postgresql-15
+
+<span class="cm"># Connect as the postgres superuser</span>
+sudo -u postgres psql</pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">sql</span> — Inside psql — basic admin commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm">-- Create a database</span>
+<span class="kw">CREATE DATABASE</span> myapp;
+
+<span class="cm">-- Create a user with a password</span>
+<span class="kw">CREATE USER</span> appuser <span class="kw">WITH</span> ENCRYPTED PASSWORD <span class="str">'securepassword123'</span>;
+
+<span class="cm">-- Grant the user access to the database</span>
+<span class="kw">GRANT ALL PRIVILEGES ON DATABASE</span> myapp <span class="kw">TO</span> appuser;
+
+<span class="cm">-- Connect to the database</span>
+\c myapp
+
+<span class="cm">-- List databases</span>
+\l
+
+<span class="cm">-- List tables in current database</span>
+\dt
+
+<span class="cm">-- Describe a table</span>
+\d tablename
+
+<span class="cm">-- Show running queries (useful for debugging slow queries)</span>
+<span class="kw">SELECT</span> pid, now() - pg_stat_activity.query_start <span class="kw">AS</span> duration, query
+<span class="kw">FROM</span> pg_stat_activity
+<span class="kw">WHERE</span> state = <span class="str">'active'</span>;
+
+<span class="cm">-- Exit psql</span>
+\q</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Automated Backup Script</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — /usr/local/bin/pg-backup.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">BACKUP_DIR</span>=<span class="str">"/var/backups/postgresql"</span>
+<span class="var">DATE</span>=$(date +%Y-%m-%d-%H%M%S)
+<span class="var">RETENTION_DAYS</span>=7
+<span class="var">S3_BUCKET</span>=<span class="str">"my-db-backups"</span>   <span class="cm"># optional: upload to S3</span>
+
+<span class="cm"># Create backup directory if it doesn't exist</span>
+mkdir -p <span class="str">"$BACKUP_DIR"</span>
+
+<span class="cm"># Get list of all databases (excluding system dbs)</span>
+<span class="var">DATABASES</span>=$(sudo -u postgres psql -t -c \
+    <span class="str">"SELECT datname FROM pg_database WHERE NOT datistemplate AND datname != 'postgres';"</span>)
+
+<span class="kw">for</span> <span class="var">DB</span> <span class="kw">in</span> <span class="var">$DATABASES</span>; <span class="kw">do</span>
+    <span class="var">BACKUP_FILE</span>=<span class="str">"$BACKUP_DIR/${DB}_${DATE}.sql.gz"</span>
+    echo <span class="str">"Backing up: $DB → $BACKUP_FILE"</span>
+
+    <span class="cm"># Dump and compress in one command</span>
+    sudo -u postgres pg_dump <span class="str">"$DB"</span> | gzip > <span class="str">"$BACKUP_FILE"</span>
+
+    <span class="cm"># Verify the backup file is not empty</span>
+    <span class="kw">if</span> [ ! -s <span class="str">"$BACKUP_FILE"</span> ]; <span class="kw">then</span>
+        echo <span class="str">"ERROR: Backup file is empty for $DB!"</span>
+        exit 1
+    <span class="kw">fi</span>
+
+    echo <span class="str">"  Size: $(du -sh "$BACKUP_FILE" | cut -f1)"</span>
+
+    <span class="cm"># Optional: Upload to S3</span>
+    <span class="cm"># aws s3 cp "$BACKUP_FILE" "s3://${S3_BUCKET}/$(hostname)/"</span>
+<span class="kw">done</span>
+
+<span class="cm"># Delete backups older than RETENTION_DAYS</span>
+find <span class="str">"$BACKUP_DIR"</span> -name <span class="str">"*.sql.gz"</span> -mtime +<span class="str">"$RETENTION_DAYS"</span> -delete
+echo <span class="str">"Cleanup: removed backups older than $RETENTION_DAYS days"</span>
+
+<span class="cm"># Restore command (for reference):</span>
+<span class="cm"># gunzip -c backup.sql.gz | sudo -u postgres psql myapp</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P8 -->
+
+  </div><!-- /proj-list p5p8 -->
+</div><!-- /tab-p5p8 -->
+
+<!-- ══════════ P9-P10 TAB ══════════ -->
+<div id="tab-p9p10" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 9–10</div><h2>Git Mastery & Capstone</h2><p>The final two projects — professional Git workflow and your first complete production server.</p></div>
+
+  <div class="proj-list">
+
+    <!-- P9 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">09</div>
+        <div class="pmeta">
+          <h3>Git & GitHub — Professional Workflow from Scratch</h3>
+          <p>Master everything professional developers use: branching strategy, rebasing, pull requests, conflict resolution, git hooks for automation, and GitHub Actions basics. Your code should live in Git from day one.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Git</span><span class="ptag s">GitHub</span><span class="ptag g">Branching</span><span class="ptag v">Git Hooks</span>
+            <span class="diff med">Intermediate</span><span class="ptime">⏱ 4–5 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Git Configuration and First Repository</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Git setup</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Configure Git (do this once on every machine you use)</span>
+git config --global user.name <span class="str">"Your Name"</span>
+git config --global user.email <span class="str">"you@example.com"</span>
+git config --global core.editor vim
+git config --global init.defaultBranch main
+git config --global pull.rebase false   <span class="cm"># merge pulls by default</span>
+
+<span class="cm"># See your config</span>
+git config --list
+
+<span class="cm"># Create your scripts repo</span>
+mkdir ~/devops-scripts
+cd ~/devops-scripts
+git init
+git remote add origin git@github.com:YOURUSERNAME/devops-scripts.git
+
+<span class="cm"># Move all your scripts from Projects 3 and 4 here</span>
+cp /usr/local/bin/*.sh scripts/
+git add .
+git commit -m <span class="str">"feat: add automation scripts from Phase 1"</span>
+git push -u origin main</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Branching Workflow — How Professionals Work</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Feature branch workflow</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># NEVER commit directly to main — always branch first</span>
+
+<span class="cm"># 1. Create a feature branch</span>
+git checkout -b feature/add-postgres-backup
+<span class="cm"># or: git switch -c feature/add-postgres-backup  (newer syntax)</span>
+
+<span class="cm"># 2. Make your changes</span>
+vim scripts/pg-backup.sh
+git add scripts/pg-backup.sh
+git commit -m <span class="str">"feat: add PostgreSQL automated backup script"</span>
+
+<span class="cm"># 3. Push branch to GitHub</span>
+git push -u origin feature/add-postgres-backup
+
+<span class="cm"># 4. On GitHub: open a Pull Request
+#    → base: main ← compare: feature/add-postgres-backup</span>
+
+<span class="cm"># 5. After review, merge. Then clean up:</span>
+git checkout main
+git pull                              <span class="cm"># get the merged changes</span>
+git branch -d feature/add-postgres-backup  <span class="cm"># delete local branch</span>
+git push origin --delete feature/add-postgres-backup  <span class="cm"># delete remote branch</span>
+
+<span class="cm"># Useful branch commands</span>
+git branch          <span class="cm"># list local branches</span>
+git branch -a       <span class="cm"># list all branches including remote</span>
+git branch -v       <span class="cm"># branches with last commit info</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">3</div>
+            <div class="sb">
+              <h4>Git Hooks — Automate Checks Before Commits</h4>
+              <p>Git hooks are scripts that run automatically at certain points in the git workflow. The pre-commit hook runs before every commit — perfect for catching mistakes early.</p>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — .git/hooks/pre-commit</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="cm"># Pre-commit hook — runs before every commit
+# If this script exits non-zero, the commit is aborted</span>
+<span class="kw">set</span> -euo pipefail
+
+echo <span class="str">"Running pre-commit checks..."</span>
+
+<span class="cm"># 1. Check for syntax errors in all Bash scripts</span>
+<span class="kw">for</span> <span class="var">SCRIPT</span> <span class="kw">in</span> $(git diff --cached --name-only | grep <span class="str">'\.sh$'</span>); <span class="kw">do</span>
+    echo <span class="str">"  Checking syntax: $SCRIPT"</span>
+    bash -n <span class="str">"$SCRIPT"</span> || { echo <span class="str">"SYNTAX ERROR in $SCRIPT"</span>; exit 1; }
+<span class="kw">done</span>
+
+<span class="cm"># 2. Check for accidentally committed secrets</span>
+<span class="kw">if</span> git diff --cached | grep -i -E <span class="str">"(password|secret|api_key|private_key)\s*=\s*['\"][^'\"]{8,}"</span>; <span class="kw">then</span>
+    echo <span class="str">"BLOCKED: Possible secret detected in staged changes!"</span>
+    echo <span class="str">"Use environment variables or a secrets manager instead."</span>
+    exit 1
+<span class="kw">fi</span>
+
+<span class="cm"># 3. Lint Python files if any staged</span>
+<span class="kw">if</span> command -v flake8 &>/dev/null; <span class="kw">then</span>
+    <span class="kw">for</span> <span class="var">PY</span> <span class="kw">in</span> $(git diff --cached --name-only | grep <span class="str">'\.py$'</span>); <span class="kw">do</span>
+        echo <span class="str">"  Linting: $PY"</span>
+        flake8 --max-line-length=100 <span class="str">"$PY"</span> || exit 1
+    <span class="kw">done</span>
+<span class="kw">fi</span>
+
+echo <span class="str">"Pre-commit checks passed ✓"</span></pre>
+              </div>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install the hook</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># Make it executable</span>
+chmod +x .git/hooks/pre-commit
+
+<span class="cm"># Test it — try committing a script with a syntax error</span>
+echo <span class="str">"if [ foo"</span> > test-broken.sh
+git add test-broken.sh
+git commit -m <span class="str">"test"</span>
+<span class="cm"># Should be blocked with "SYNTAX ERROR in test-broken.sh"</span>
+
+<span class="cm"># Clean up the test</span>
+git checkout -- .
+git reset HEAD test-broken.sh</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">4</div>
+            <div class="sb">
+              <h4>Resolving Merge Conflicts</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Merge conflict walkthrough</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre"><span class="cm"># When a merge conflict occurs, git marks the conflicting file:</span>
+<span class="cm"># <<<<<<< HEAD (your changes)</span>
+<span class="cm"># THRESHOLD=80</span>
+<span class="cm"># =======</span>
+<span class="cm"># THRESHOLD=90</span>
+<span class="cm"># >>>>>>> feature/update-threshold (their changes)</span>
+
+<span class="cm"># You must edit the file, decide what to keep, and remove the markers</span>
+vim scripts/disk-alert.sh  <span class="cm"># edit the conflict, keep what you want</span>
+
+<span class="cm"># After resolving, stage the file and continue</span>
+git add scripts/disk-alert.sh
+git commit  <span class="cm"># git auto-fills the merge commit message</span>
+
+<span class="cm"># Visual conflict resolution with vimdiff</span>
+git config --global merge.tool vimdiff
+git mergetool  <span class="cm"># opens vimdiff for each conflicting file</span>
+
+<span class="cm"># Useful: see what changed between branches before merging</span>
+git diff main..feature/my-branch
+git log main..feature/my-branch --oneline</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P9 -->
+
+    <!-- P10 -->
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head">
+        <div class="pnum">10</div>
+        <div class="pmeta">
+          <h3>🏗️ Phase 1 Capstone — Production-Grade Linux Server</h3>
+          <p>Deploy a complete production-ready Linux server from scratch: Nginx web server, PostgreSQL database, system monitoring, automated backups with S3 upload, user management, firewall hardening — all configured via Bash and Ansible scripts living in a Git repository.</p>
+          <div class="pmeta-foot">
+            <span class="ptag a">Full Capstone</span><span class="ptag g">Nginx</span><span class="ptag s">PostgreSQL</span><span class="ptag v">Git</span>
+            <span class="diff hard">Capstone</span><span class="ptime">⏱ 6–8 hrs</span>
+          </div>
+        </div>
+        <div class="parrow">▶</div>
+      </div>
+      <div class="pc-body">
+        <div class="note info"><div class="note-i">🎯</div><p><strong>Goal:</strong> A fully automated server setup. Running <code>git clone</code> + one script should configure an entire production server from a blank Linux install. This is infrastructure-as-code in its simplest form — and the foundation for Ansible and Terraform in later phases.</p></div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div class="sb">
+              <h4>Server Setup Script — Provision Everything from Scratch</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — setup-server.sh (idempotent — safe to run multiple times)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">#!/bin/bash
+<span class="cm"># Phase 1 Capstone — Full Server Setup Script
+# Run as: sudo bash setup-server.sh
+# Idempotent: running twice does not break anything</span>
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">LOG_FILE</span>=<span class="str">"/var/log/server-setup.log"</span>
+<span class="var">APP_USER</span>=<span class="str">"appuser"</span>
+<span class="var">APP_DIR</span>=<span class="str">"/var/www/myapp"</span>
+<span class="var">DB_NAME</span>=<span class="str">"myapp_production"</span>
+<span class="var">DB_USER</span>=<span class="str">"myapp"</span>
+
+<span class="fn">log</span>() { echo <span class="str">"[$(date '+%Y-%m-%d %H:%M:%S')] $*"</span> | tee -a <span class="str">"$LOG_FILE"</span>; }
+<span class="fn">section</span>() { echo <span class="str">""</span>; log <span class="str">"══════ $* ══════"</span>; }
+
+section <span class="str">"System Update"</span>
+dnf update -y
+
+section <span class="str">"Install Packages"</span>
+dnf install -y \
+    nginx \
+    postgresql15-server postgresql15 \
+    git curl vim htop \
+    awscli2 \
+    fail2ban
+
+section <span class="str">"Configure Firewall"</span>
+<span class="kw">for</span> <span class="var">SVC</span> <span class="kw">in</span> http https ssh; <span class="kw">do</span>
+    firewall-cmd --permanent --add-service=<span class="str">"$SVC"</span> 2>/dev/null || true
+<span class="kw">done</span>
+firewall-cmd --reload
+
+section <span class="str">"Create Application User"</span>
+<span class="kw">if</span> ! id <span class="str">"$APP_USER"</span> &>/dev/null; <span class="kw">then</span>
+    useradd -m -s /bin/bash <span class="str">"$APP_USER"</span>
+    log <span class="str">"Created user: $APP_USER"</span>
+<span class="kw">else</span>
+    log <span class="str">"User already exists: $APP_USER"</span>
+<span class="kw">fi</span>
+
+section <span class="str">"Configure Nginx"</span>
+mkdir -p <span class="str">"$APP_DIR/static"</span>
+chown -R nginx:nginx <span class="str">"$APP_DIR"</span>
+cp nginx/myapp.conf /etc/nginx/conf.d/
+nginx -t
+systemctl enable --now nginx
+
+section <span class="str">"Configure PostgreSQL"</span>
+<span class="kw">if</span> [ ! -f /var/lib/pgsql/15/data/PG_VERSION ]; <span class="kw">then</span>
+    /usr/pgsql-15/bin/postgresql-15-setup initdb
+<span class="kw">fi</span>
+systemctl enable --now postgresql-15
+
+<span class="cm"># Create database and user if they don't exist</span>
+sudo -u postgres psql <<EOF
+DO \$\$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_user WHERE usename = <span class="str">'$DB_USER'</span>) THEN
+    CREATE USER $DB_USER WITH ENCRYPTED PASSWORD '$(openssl rand -hex 16)';
+  END IF;
+END \$\$;
+CREATE DATABASE IF NOT EXISTS $DB_NAME OWNER $DB_USER;
+EOF
+
+section <span class="str">"Install Monitoring Scripts"</span>
+cp scripts/*.sh /usr/local/bin/
+chmod +x /usr/local/bin/*.sh
+
+<span class="cm"># Install as systemd timers</span>
+cp systemd/*.service /etc/systemd/system/
+cp systemd/*.timer /etc/systemd/system/
+systemctl daemon-reload
+<span class="kw">for</span> <span class="var">TIMER</span> <span class="kw">in</span> healthcheck disk-alert pg-backup; <span class="kw">do</span>
+    systemctl enable --now <span class="str">"${TIMER}.timer"</span>
+<span class="kw">done</span>
+
+section <span class="str">"Harden SSH"</span>
+cp ssh/sshd_config_hardened /etc/ssh/sshd_config
+systemctl restart sshd
+
+section <span class="str">"Configure fail2ban (brute force protection)"</span>
+cp fail2ban/jail.local /etc/fail2ban/
+systemctl enable --now fail2ban
+
+log <span class="str">"Setup complete! Server is ready."</span>
+log <span class="str">"Next steps:"</span>
+log <span class="str">"  1. Deploy your application to $APP_DIR"</span>
+log <span class="str">"  2. Update DB password in /etc/myapp/config.env"</span>
+log <span class="str">"  3. Run: systemctl start myapp"</span></pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="sn">2</div>
+            <div class="sb">
+              <h4>Git Repository Structure</h4>
+              <div class="cb">
+                <div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Your Phase 1 repo structure</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+                <pre">devops-phase1/
+├── README.md              <span class="cm"># how to use this repo</span>
+├── setup-server.sh        <span class="cm"># main provisioner</span>
+├── scripts/
+│   ├── disk-alert.sh
+│   ├── healthcheck.sh
+│   ├── pg-backup.sh
+│   ├── log-rotate.sh
+│   └── user-provision.sh
+├── nginx/
+│   └── myapp.conf
+├── systemd/
+│   ├── healthcheck.service
+│   ├── healthcheck.timer
+│   ├── pg-backup.service
+│   └── pg-backup.timer
+├── ssh/
+│   └── sshd_config_hardened
+├── fail2ban/
+│   └── jail.local
+└── python/
+    ├── ec2_inventory.py
+    └── log_analyser.py</pre>
+              </div>
+              <div class="note ok"><div class="note-i">✅</div><p><strong>Phase 1 Complete.</strong> You now have a completely scripted server setup in Git. Anyone can clone this repo and run <code>setup-server.sh</code> to get an identical server. This is the core principle that Ansible, Terraform, and GitOps all build on. You've been doing infrastructure-as-code since day one.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /P10 -->
+
+  </div><!-- /proj-list p9p10 -->
+</div><!-- /tab-p9p10 -->
+
+<!-- ══════════ CHEAT SHEET ══════════ -->
+<div id="tab-cheatsheet" class="tab-pane">
+  <div class="sh">
+    <div class="sh-eye">Quick Reference</div>
+    <h2>Phase 1 Command Reference</h2>
+    <p>Every command you'll reach for during Phase 1. Bookmark this tab.</p>
+  </div>
+
+  <div class="cs-grid">
+    <div class="cs-card">
+      <h5>📁 Navigation</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">pwd</span><span class="cs-desc">where am I?</span></div>
+        <div class="cs-row"><span class="cs-cmd">ls -la</span><span class="cs-desc">list all files with details</span></div>
+        <div class="cs-row"><span class="cs-cmd">cd ~</span><span class="cs-desc">go home</span></div>
+        <div class="cs-row"><span class="cs-cmd">cd -</span><span class="cs-desc">go to previous dir</span></div>
+        <div class="cs-row"><span class="cs-cmd">find / -name "*.sh"</span><span class="cs-desc">find all .sh files</span></div>
+        <div class="cs-row"><span class="cs-cmd">tree -L 2</span><span class="cs-desc">directory tree 2 levels</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>🔒 Permissions</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">chmod 755 file</span><span class="cs-desc">rwxr-xr-x (executable)</span></div>
+        <div class="cs-row"><span class="cs-cmd">chmod 644 file</span><span class="cs-desc">rw-r--r-- (config file)</span></div>
+        <div class="cs-row"><span class="cs-cmd">chmod 600 file</span><span class="cs-desc">rw------- (private key)</span></div>
+        <div class="cs-row"><span class="cs-cmd">chmod +x file</span><span class="cs-desc">add execute for all</span></div>
+        <div class="cs-row"><span class="cs-cmd">chown user:grp file</span><span class="cs-desc">change owner and group</span></div>
+        <div class="cs-row"><span class="cs-cmd">chown -R nginx /var/www</span><span class="cs-desc">recursive chown</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>⚙️ Services (systemctl)</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">systemctl status svc</span><span class="cs-desc">is it running?</span></div>
+        <div class="cs-row"><span class="cs-cmd">systemctl start svc</span><span class="cs-desc">start a service</span></div>
+        <div class="cs-row"><span class="cs-cmd">systemctl restart svc</span><span class="cs-desc">restart service</span></div>
+        <div class="cs-row"><span class="cs-cmd">systemctl enable svc</span><span class="cs-desc">start on boot</span></div>
+        <div class="cs-row"><span class="cs-cmd">journalctl -u svc -f</span><span class="cs-desc">follow service logs</span></div>
+        <div class="cs-row"><span class="cs-cmd">systemctl list-timers</span><span class="cs-desc">show all timers</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>🌐 Networking</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">ip addr show</span><span class="cs-desc">show IP addresses</span></div>
+        <div class="cs-row"><span class="cs-cmd">ss -tulnp</span><span class="cs-desc">open ports + processes</span></div>
+        <div class="cs-row"><span class="cs-cmd">dig domain.com</span><span class="cs-desc">DNS lookup</span></div>
+        <div class="cs-row"><span class="cs-cmd">curl -I https://x.com</span><span class="cs-desc">HTTP headers only</span></div>
+        <div class="cs-row"><span class="cs-cmd">ping -c3 8.8.8.8</span><span class="cs-desc">connectivity test</span></div>
+        <div class="cs-row"><span class="cs-cmd">tcpdump -i any port 80</span><span class="cs-desc">capture HTTP traffic</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>🔍 Text Processing</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">grep -i "error" file</span><span class="cs-desc">case-insensitive search</span></div>
+        <div class="cs-row"><span class="cs-cmd">grep -r "pattern" /etc</span><span class="cs-desc">recursive search</span></div>
+        <div class="cs-row"><span class="cs-cmd">awk '{print $1}'</span><span class="cs-desc">print first column</span></div>
+        <div class="cs-row"><span class="cs-cmd">sed 's/old/new/g'</span><span class="cs-desc">find and replace</span></div>
+        <div class="cs-row"><span class="cs-cmd">sort | uniq -c | sort -rn</span><span class="cs-desc">count occurrences</span></div>
+        <div class="cs-row"><span class="cs-cmd">tail -f /var/log/x.log</span><span class="cs-desc">follow a log live</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>🌿 Git Essentials</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">git status</span><span class="cs-desc">what's changed?</span></div>
+        <div class="cs-row"><span class="cs-cmd">git log --oneline</span><span class="cs-desc">compact commit history</span></div>
+        <div class="cs-row"><span class="cs-cmd">git checkout -b feat/x</span><span class="cs-desc">create new branch</span></div>
+        <div class="cs-row"><span class="cs-cmd">git stash</span><span class="cs-desc">save uncommitted work</span></div>
+        <div class="cs-row"><span class="cs-cmd">git diff HEAD</span><span class="cs-desc">what's changed since commit</span></div>
+        <div class="cs-row"><span class="cs-cmd">git reset --hard HEAD</span><span class="cs-desc">undo all changes (careful!)</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>📦 Package Management (DNF)</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">dnf install -y pkg</span><span class="cs-desc">install package</span></div>
+        <div class="cs-row"><span class="cs-cmd">dnf remove pkg</span><span class="cs-desc">remove package</span></div>
+        <div class="cs-row"><span class="cs-cmd">dnf update -y</span><span class="cs-desc">update all packages</span></div>
+        <div class="cs-row"><span class="cs-cmd">dnf search nginx</span><span class="cs-desc">find a package</span></div>
+        <div class="cs-row"><span class="cs-cmd">dnf list installed</span><span class="cs-desc">all installed packages</span></div>
+        <div class="cs-row"><span class="cs-cmd">rpm -qi packagename</span><span class="cs-desc">package info</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>💡 Bash Script Patterns</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">set -euo pipefail</span><span class="cs-desc">safe mode (always use!)</span></div>
+        <div class="cs-row"><span class="cs-cmd">VAR=$(cmd)</span><span class="cs-desc">capture command output</span></div>
+        <div class="cs-row"><span class="cs-cmd">[ -f /path/file ]</span><span class="cs-desc">test if file exists</span></div>
+        <div class="cs-row"><span class="cs-cmd">cmd || true</span><span class="cs-desc">ignore error from cmd</span></div>
+        <div class="cs-row"><span class="cs-cmd">2>/dev/null</span><span class="cs-desc">suppress error output</span></div>
+        <div class="cs-row"><span class="cs-cmd">echo "msg" >&2</span><span class="cs-desc">print to stderr</span></div>
+      </div>
+    </div>
+    <div class="cs-card">
+      <h5>🗄️ PostgreSQL</h5>
+      <div class="cmd">
+        <div class="cs-row"><span class="cs-cmd">sudo -u postgres psql</span><span class="cs-desc">connect as superuser</span></div>
+        <div class="cs-row"><span class="cs-cmd">\l</span><span class="cs-desc">list databases (in psql)</span></div>
+        <div class="cs-row"><span class="cs-cmd">\c dbname</span><span class="cs-desc">connect to database</span></div>
+        <div class="cs-row"><span class="cs-cmd">\dt</span><span class="cs-desc">list tables</span></div>
+        <div class="cs-row"><span class="cs-cmd">pg_dump db | gzip > bk.gz</span><span class="cs-desc">backup + compress</span></div>
+        <div class="cs-row"><span class="cs-cmd">gunzip -c bk.gz | psql db</span><span class="cs-desc">restore from backup</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="concept sage" style="margin-top:28px;">
+    <h3>🎓 What's Next — Phase 2</h3>
+    <p>With Phase 1 complete, you have the foundation. <strong>Phase 2 (Docker, CI/CD & Ansible)</strong> picks up directly from here — you'll containerise the application from your capstone, build a CI/CD pipeline that tests and deploys it automatically, and use Ansible to provision servers the right way. Every single thing from Phase 1 will be used in Phase 2 and beyond.</p>
+    <p><strong>Certification check:</strong> If you want to validate Phase 1, the <strong>CompTIA Linux+</strong> (XK0-005) exam maps almost perfectly to this phase's content. The RHCSA (Red Hat Certified System Administrator) is the other great option — and is directly applicable to your existing RHEL background.</p>
+  </div>
+
+</div><!-- /cheatsheet -->
+
+</div><!-- /content -->
+</div><!-- /wrap -->
+
+<footer>
+<div class="wrap">
+  DevOps Mastery · <span>Phase 1 of 6</span> · Linux · Bash · Networking · Git · 10 Projects · Beginner → Intermediate
+</div>
+</footer>
+
+<script>
+function st(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function tp(card) {
+  const wasOpen = card.classList.contains('open');
+  card.closest('.proj-list').querySelectorAll('.pc').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) {
+    card.classList.add('open');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  }
+}
+
+function cp(btn) {
+  const code = btn.closest('.cb').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+
+// Open first project by default on All Projects tab
+document.addEventListener('DOMContentLoaded', () => {
+  const firstPc = document.querySelector('#tab-all .pc');
+  if (firstPc) firstPc.classList.add('open');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,3341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps Phase 3 — AWS Core Infrastructure &amp; Terraform IaC</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0c0a07;
+  --bg2:       #0f0d09;
+  --bg3:       #12100b;
+  --panel:     #171310;
+  --panel2:    #1d1813;
+  --border:    #261f16;
+  --border2:   #332a1c;
+  --border3:   #453825;
+
+  --copper:    #c47c2b;
+  --copper2:   #e09040;
+  --copper3:   #f5b060;
+  --copper-dim:rgba(196,124,43,0.1);
+
+  --sand:      #d4b896;
+  --sand2:     #eddfd0;
+  --rust:      #c0522a;
+  --rust2:     #f0784a;
+  --sage:      #5a8a6a;
+  --sage2:     #7ab88a;
+  --sage3:     #b8e8c8;
+  --sky:       #4a8ab8;
+  --sky2:      #78b8e8;
+  --sky3:      #c0e0f8;
+  --gold:      #d4a820;
+  --gold2:     #f0c840;
+  --crimson:   #b83048;
+  --crimson2:  #f06080;
+
+  --text:      #eddfd0;
+  --text2:     #7a6448;
+  --text3:     #3d3020;
+
+  --code-bg:   #080704;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Outfit',sans-serif;
+  font-size:15px;
+  line-height:1.7;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* sandstone texture overlay */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(196,124,43,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(192,82,42,0.03) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(196,124,43,0.012) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(196,124,43,0.012) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;z-index:0;
+}
+
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px;position:relative;z-index:1;}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:rgba(12,10,7,0.97);
+  border-bottom:1px solid var(--border);
+  padding:9px 0;z-index:10;position:relative;
+}
+.tb-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+}
+.tb-left{display:flex;align-items:center;gap:20px;color:var(--text3);}
+.tb-brand{color:var(--copper2);font-weight:700;}
+.tb-sep{color:var(--border2);}
+.tb-right{display:flex;gap:20px;}
+.tb-stat .l{color:var(--text3);}
+.tb-stat .v{color:var(--copper2);font-weight:700;}
+
+/* ── HEADER ── */
+header{
+  padding:64px 0 56px;
+  border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+/* strata layers decoration */
+.strata{
+  position:absolute;right:0;top:0;bottom:0;width:340px;
+  display:flex;flex-direction:column;
+  opacity:0.035;pointer-events:none;overflow:hidden;
+}
+.stratum{
+  flex:1;
+  background:linear-gradient(90deg,transparent,var(--copper));
+  margin:1px 0;
+}
+.stratum:nth-child(2n){background:linear-gradient(90deg,transparent,var(--rust));}
+.stratum:nth-child(3n){background:linear-gradient(90deg,transparent,var(--gold));}
+
+.p-eyebrow{
+  display:inline-flex;align-items:center;gap:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;letter-spacing:0.22em;text-transform:uppercase;
+  color:var(--copper2);margin-bottom:20px;
+}
+.p-eyebrow::before{content:'';width:32px;height:1px;background:var(--copper);}
+.p-eyebrow::after{
+  content:'';width:7px;height:7px;
+  background:var(--copper);
+  clip-path:polygon(50% 0%,100% 100%,0% 100%);
+}
+
+h1{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(40px,7vw,88px);
+  font-weight:400;
+  line-height:0.92;
+  letter-spacing:-0.02em;
+  color:var(--text);
+  margin-bottom:6px;
+}
+h1 em{
+  font-style:italic;
+  color:var(--copper2);
+}
+.h1-sub{
+  font-family:'DM Serif Display',serif;
+  font-style:italic;
+  font-size:0.4em;
+  color:var(--text2);
+  font-weight:400;
+  display:block;
+  margin-top:14px;
+  letter-spacing:0.01em;
+}
+
+.hdr-desc{
+  max-width:620px;color:var(--text2);
+  font-size:14.5px;line-height:1.9;
+  margin:24px 0 32px;font-weight:300;
+}
+
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;}
+.badge{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:500;letter-spacing:0.07em;
+  padding:5px 14px;
+  border:1px solid var(--border2);
+  background:var(--panel);
+  color:var(--text2);
+  display:flex;align-items:center;gap:7px;
+  transition:border-color 0.2s,color 0.2s;
+}
+.badge:hover{border-color:var(--border3);color:var(--text);}
+.bd{width:6px;height:6px;}
+.badge.c .bd{background:var(--copper);}
+.badge.r .bd{background:var(--rust);}
+.badge.s .bd{background:var(--sage);}
+.badge.k .bd{background:var(--sky);}
+.badge.g .bd{background:var(--gold);}
+
+/* ── NAV ── */
+.nav-bar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(12,10,7,0.96);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border);
+}
+.nav-scroll{display:flex;overflow-x:auto;scrollbar-width:none;}
+.nav-scroll::-webkit-scrollbar{display:none;}
+.nb{
+  flex-shrink:0;background:none;border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text3);
+  font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+  padding:13px 15px 11px;cursor:pointer;white-space:nowrap;
+  transition:all 0.2s;
+}
+.nb:hover{color:var(--text2);}
+.nb.active{color:var(--copper2);border-bottom-color:var(--copper);}
+
+/* ── TABS ── */
+.content{padding:52px 0 120px;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:rise 0.3s ease;}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ── SECTION HEAD ── */
+.sh{margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.sh-eye{
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--copper);margin-bottom:10px;
+}
+.sh h2{
+  font-family:'DM Serif Display',serif;
+  font-size:clamp(24px,4.5vw,48px);
+  font-weight:400;color:var(--text);
+  letter-spacing:-0.01em;line-height:1.05;margin-bottom:10px;
+}
+.sh p{color:var(--text2);font-size:14.5px;line-height:1.8;max-width:700px;}
+
+/* ── CONCEPT BLOCKS ── */
+.concept{
+  background:var(--panel);border:1px solid var(--border);
+  padding:26px 28px;margin-bottom:18px;position:relative;
+}
+.concept::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;
+  width:3px;background:var(--copper);
+}
+.concept.r::before{background:var(--rust);}
+.concept.s::before{background:var(--sage);}
+.concept.k::before{background:var(--sky);}
+.concept.g::before{background:var(--gold);}
+.concept.cr::before{background:var(--crimson);}
+.concept h3{
+  font-family:'DM Serif Display',serif;font-size:19px;font-weight:400;
+  color:var(--text);margin-bottom:10px;
+}
+.concept p{color:var(--text2);font-size:13.5px;line-height:1.9;margin-bottom:8px;}
+.concept p:last-child{margin-bottom:0;}
+.concept strong{color:var(--text);font-weight:600;}
+.concept code{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--copper2);padding:2px 6px;
+}
+
+/* ── ANALOGY ── */
+.analogy{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-left:3px solid var(--copper);
+  padding:13px 18px;margin:12px 0;
+  display:flex;gap:12px;font-size:13.5px;color:var(--text2);line-height:1.75;
+}
+.ai-icon{font-size:18px;flex-shrink:0;margin-top:2px;}
+.analogy strong{color:var(--copper2);font-weight:600;}
+
+/* ── PROJECT ACCORDION ── */
+.proj-list{border:1px solid var(--border);}
+.pc{border-bottom:1px solid var(--border);transition:background 0.15s;}
+.pc:last-child{border-bottom:none;}
+
+.pc-head{
+  display:flex;align-items:flex-start;gap:18px;
+  padding:20px 26px 16px;cursor:pointer;user-select:none;
+}
+.pc-head:hover{background:var(--panel);}
+.pc.open .pc-head{background:var(--panel2);}
+
+.pnum{
+  flex-shrink:0;
+  font-family:'DM Serif Display',serif;font-size:30px;
+  color:var(--copper);line-height:1;width:44px;margin-top:4px;
+  opacity:0.25;transition:opacity 0.2s;
+}
+.pc.open .pnum,.pc-head:hover .pnum{opacity:1;}
+
+.pmeta{flex:1;min-width:0;}
+.pmeta h3{
+  font-family:'Outfit',sans-serif;font-size:16.5px;font-weight:700;
+  color:var(--text);margin-bottom:5px;line-height:1.3;
+}
+.pmeta p{color:var(--text2);font-size:13px;line-height:1.65;}
+.pmeta-foot{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap;}
+
+.ptag{
+  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;
+  letter-spacing:0.07em;padding:3px 8px;border:1px solid;
+}
+.ptag.c{color:var(--copper2);border-color:rgba(196,124,43,0.35);background:rgba(196,124,43,0.06);}
+.ptag.r{color:var(--rust2);border-color:rgba(192,82,42,0.35);background:rgba(192,82,42,0.06);}
+.ptag.s{color:var(--sage2);border-color:rgba(90,138,106,0.35);background:rgba(90,138,106,0.06);}
+.ptag.k{color:var(--sky2);border-color:rgba(74,138,184,0.35);background:rgba(74,138,184,0.06);}
+.ptag.g{color:var(--gold2);border-color:rgba(212,168,32,0.35);background:rgba(212,168,32,0.06);}
+.ptag.n{color:var(--text3);border-color:var(--border);}
+
+.diff{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:3px 8px;border:1px solid;}
+.diff.easy{color:var(--sage2);border-color:rgba(90,138,106,0.4);}
+.diff.med{color:var(--gold2);border-color:rgba(212,168,32,0.4);}
+.diff.hard{color:var(--rust2);border-color:rgba(192,82,42,0.4);}
+.diff.cap{color:var(--copper2);border-color:rgba(196,124,43,0.4);}
+.ptime{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);}
+
+.parrow{
+  flex-shrink:0;font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--text3);
+  transition:transform 0.3s,color 0.2s;margin-top:4px;
+}
+.pc.open .parrow{transform:rotate(90deg);color:var(--copper2);}
+
+.pc-body{
+  display:none;padding:8px 26px 34px 88px;
+  background:var(--panel);border-top:1px solid var(--border);
+}
+.pc.open .pc-body{display:block;animation:rise 0.3s ease;}
+
+/* ── STEPS ── */
+.steps{margin-top:20px;}
+.step{display:flex;gap:16px;padding-bottom:26px;position:relative;}
+.step:not(:last-child)::before{
+  content:'';position:absolute;left:11px;top:25px;bottom:0;
+  width:1px;background:var(--border);
+}
+.sn{
+  flex-shrink:0;width:24px;height:24px;
+  border:1px solid var(--border2);background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+  color:var(--copper);z-index:1;
+}
+.sb{flex:1;min-width:0;}
+.sb h4{
+  font-family:'Outfit',sans-serif;font-size:14.5px;font-weight:700;
+  color:var(--text);margin-bottom:8px;
+}
+.sb p{color:var(--text2);font-size:13.5px;line-height:1.85;margin-bottom:10px;}
+.sb p:last-child{margin-bottom:0;}
+.sb p strong{color:var(--text);font-weight:600;}
+.sb ul{padding-left:20px;color:var(--text2);font-size:13.5px;line-height:1.9;}
+.sb ul li{margin-bottom:4px;}
+.sb ul li strong{color:var(--text);font-weight:600;}
+
+/* ── CODE ── */
+.cb{background:var(--code-bg);border:1px solid var(--border);margin:12px 0;overflow:hidden;}
+.cb-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 14px;border-bottom:1px solid var(--border);
+  background:rgba(196,124,43,0.03);
+}
+.cb-lang{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;}
+.cb-lang .hl{color:var(--copper2);}
+.cpbtn{
+  background:none;border:1px solid var(--border2);color:var(--text3);
+  font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 9px;
+  cursor:pointer;transition:all 0.2s;
+}
+.cpbtn:hover{color:var(--text2);border-color:var(--text3);}
+.cpbtn.ok{color:var(--sage2);border-color:var(--sage);}
+pre{
+  padding:16px 18px;overflow-x:auto;
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.8;
+  color:#c8b89a;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.kw{color:#e09040;}
+.str{color:#86a86a;}
+.cm{color:#3a2e1a;font-style:italic;}
+.fn{color:#d4b060;}
+.num{color:#8ab4d4;}
+.var{color:#c4a870;}
+.red{color:#e08060;}
+code{
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--copper2);padding:2px 7px;
+}
+
+/* ── CALLOUTS ── */
+.note{display:flex;gap:11px;padding:13px 16px;margin:12px 0;font-size:13px;line-height:1.75;border-left:3px solid;}
+.note p{margin:0;}
+.note-i{flex-shrink:0;font-size:15px;}
+.note.info{background:rgba(196,124,43,0.07);border-color:var(--copper);color:var(--copper3);}
+.note.warn{background:rgba(212,168,32,0.07);border-color:var(--gold);color:var(--gold2);}
+.note.ok{background:rgba(90,138,106,0.07);border-color:var(--sage);color:var(--sage3);}
+.note.tip{background:rgba(74,138,184,0.07);border-color:var(--sky);color:var(--sky3);}
+.note.err{background:rgba(192,82,42,0.07);border-color:var(--rust);color:var(--rust2);}
+
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0;border:1px solid var(--border);}
+.dt th{
+  text-align:left;font-family:'JetBrains Mono',monospace;
+  font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--text3);padding:10px 13px;border-bottom:1px solid var(--border2);
+  background:var(--panel);
+}
+.dt td{padding:10px 13px;border-bottom:1px solid rgba(255,255,255,0.02);color:var(--text2);vertical-align:top;line-height:1.6;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:rgba(196,124,43,0.03);}
+.dt td:first-child{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--copper2);font-weight:600;}
+
+/* ── OVERVIEW GRID ── */
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin:24px 0;}
+.ov-card{background:var(--panel);padding:18px 18px 16px;transition:background 0.15s;cursor:default;}
+.ov-card:hover{background:var(--panel2);}
+.oc-num{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:0.2em;color:var(--text3);margin-bottom:6px;}
+.oc-icon{font-size:18px;margin-bottom:6px;}
+.oc-title{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;}
+.ov-card p{font-size:11px;color:var(--text3);line-height:1.55;}
+
+/* ── TIMELINE ── */
+.tl-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin:20px 0;}
+@media(max-width:800px){.tl-row{grid-template-columns:1fr 1fr;}}
+@media(max-width:500px){.tl-row{grid-template-columns:1fr;}}
+.tl-blk{
+  padding:16px 14px;background:var(--panel);border:1px solid var(--border);
+  position:relative;
+}
+.tl-blk::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--tc,var(--copper));
+}
+.tl-wk{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.15em;margin-bottom:5px;}
+.tl-title{font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.tl-items{font-size:11px;color:var(--text3);line-height:1.6;}
+
+/* ── FILE TREE ── */
+.ftree{background:var(--code-bg);border:1px solid var(--border);padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.85;color:#c8b89a;margin:12px 0;overflow-x:auto;}
+.ftree .dir{color:var(--copper2);font-weight:600;}
+.ftree .cmt{color:#2e2314;font-style:italic;}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+@media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+.mini-panel{background:var(--bg3);border:1px solid var(--border);padding:15px;}
+.mini-panel h5{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.mini-panel p{font-size:13px;color:var(--text2);line-height:1.75;}
+
+/* ── CHEAT SHEET ── */
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin:20px 0;}
+.cs-card{background:var(--panel);padding:18px 20px;}
+.cs-card h5{font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;color:var(--copper2);margin-bottom:10px;}
+.cs-row{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.025);font-size:11.5px;}
+.cs-row:last-child{border-bottom:none;}
+.cs-cmd{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--copper2);font-weight:600;white-space:nowrap;flex-shrink:0;min-width:150px;}
+.cs-desc{color:var(--text3);font-size:11px;line-height:1.4;}
+
+hr{border:none;border-top:1px solid var(--border);margin:22px 0;}
+
+footer{
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:20px 0;text-align:center;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--text3);
+}
+footer span{color:var(--copper2);}
+</style>
+</head>
+<body>
+
+<!-- Strata decoration -->
+<div class="strata" style="position:fixed;right:0;top:0;bottom:0;width:200px;pointer-events:none;z-index:0;opacity:0.025;">
+  <div class="stratum"></div><div class="stratum"></div><div class="stratum"></div>
+  <div class="stratum"></div><div class="stratum"></div><div class="stratum"></div>
+  <div class="stratum"></div><div class="stratum"></div><div class="stratum"></div>
+  <div class="stratum"></div><div class="stratum"></div><div class="stratum"></div>
+</div>
+
+<div class="topbar">
+<div class="wrap">
+<div class="tb-inner">
+  <div class="tb-left">
+    <span class="tb-brand">DevOps Mastery</span>
+    <span class="tb-sep">·</span>
+    <span>Phase 3 of 6</span>
+    <span class="tb-sep">·</span>
+    <span>AWS Core · Terraform IaC · Networking · Security</span>
+  </div>
+  <div class="tb-right">
+    <span class="tb-stat"><span class="l">PROJECTS: </span><span class="v">25</span></span>
+    <span class="tb-stat"><span class="l">DURATION: </span><span class="v">6–8 weeks</span></span>
+    <span class="tb-stat"><span class="l">CERT: </span><span class="v">SAA-C03 + DOP-C02</span></span>
+  </div>
+</div>
+</div>
+</div>
+
+<header>
+<div class="wrap">
+  <div class="p-eyebrow">Phase Three — Cloud Infrastructure</div>
+  <h1>AWS Core &amp;<br><em>Terraform IaC</em>
+    <span class="h1-sub">// Build real cloud infrastructure. Define it as code. Own it completely.</span>
+  </h1>
+  <p class="hdr-desc">Phase 2 gave you containers and pipelines. Phase 3 gives them a real home. You'll build AWS infrastructure from scratch — VPCs, EC2, RDS, S3, IAM, Load Balancers, Auto Scaling — and define every byte of it as Terraform code. 25 projects. Production-grade. The foundation every Senior DevOps engineer must master.</p>
+  <div class="badge-row">
+    <div class="badge c"><div class="bd"></div>25 Projects</div>
+    <div class="badge r"><div class="bd"></div>6–8 Weeks</div>
+    <div class="badge s"><div class="bd"></div>AWS SAA-C03 Path</div>
+    <div class="badge k"><div class="bd"></div>AWS DOP-C02 Foundation</div>
+    <div class="badge g"><div class="bd"></div>HashiCorp Terraform Associate</div>
+  </div>
+</div>
+</header>
+
+<div class="nav-bar">
+<div class="wrap">
+<div class="nav-scroll">
+  <button class="nb active" onclick="st('overview',this)">Overview</button>
+  <button class="nb" onclick="st('aws101',this)">AWS 101</button>
+  <button class="nb" onclick="st('terraform101',this)">Terraform 101</button>
+  <button class="nb" onclick="st('all',this)">All 25 Projects</button>
+  <button class="nb" onclick="st('p1p5',this)">P1–P5 Foundations</button>
+  <button class="nb" onclick="st('p6p10',this)">P6–P10 Networking</button>
+  <button class="nb" onclick="st('p11p15',this)">P11–P15 Compute</button>
+  <button class="nb" onclick="st('p16p20',this)">P16–P20 Data &amp; Security</button>
+  <button class="nb" onclick="st('p21p25',this)">P21–P25 Terraform Advanced</button>
+  <button class="nb" onclick="st('cheatsheet',this)">Cheat Sheet</button>
+</div>
+</div>
+</div>
+
+<div class="wrap">
+<div class="content">
+
+<!-- ══════════════════════════════════════
+     OVERVIEW
+════════════════════════════════════════ -->
+<div id="tab-overview" class="tab-pane active">
+  <div class="sh">
+    <div class="sh-eye">Start Here</div>
+    <h2>25 Projects. Five Pillars.</h2>
+    <p>Phase 3 is structured in five progressive layers. Each layer builds on the previous and produces a real, running AWS infrastructure. By P25 you'll have a production-grade multi-tier application fully defined as Terraform code, deployed with a CI/CD pipeline, and secured with AWS best practices.</p>
+  </div>
+
+  <div class="tl-row">
+    <div class="tl-blk" style="--tc:var(--copper)">
+      <div class="tl-wk">WEEK 1 · P1–P5</div>
+      <div class="tl-title">AWS Foundations</div>
+      <div class="tl-items">Account setup · IAM · CLI · S3 · Cost controls</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--rust)">
+      <div class="tl-wk">WEEK 2–3 · P6–P10</div>
+      <div class="tl-title">Networking</div>
+      <div class="tl-items">VPC · Subnets · NAT · Route53 · CloudFront</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--sage)">
+      <div class="tl-wk">WEEK 3–4 · P11–P15</div>
+      <div class="tl-title">Compute</div>
+      <div class="tl-items">EC2 · ALB · ASG · Launch Templates · SSM</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--sky)">
+      <div class="tl-wk">WEEK 5–6 · P16–P20</div>
+      <div class="tl-title">Data &amp; Security</div>
+      <div class="tl-items">RDS · ElastiCache · Secrets Manager · GuardDuty · WAF</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--gold)">
+      <div class="tl-wk">WEEK 6–8 · P21–P25</div>
+      <div class="tl-title">Terraform Advanced</div>
+      <div class="tl-items">Modules · Remote state · Workspaces · Terragrunt · CI/CD</div>
+    </div>
+  </div>
+
+  <div class="ov-grid">
+    <div class="ov-card"><div class="oc-num">P01</div><div class="oc-icon">🔑</div><div class="oc-title">AWS Account Hardening</div><p>Root account lockdown, MFA, IAM Identity Center, billing alerts, CloudTrail.</p></div>
+    <div class="ov-card"><div class="oc-num">P02</div><div class="oc-icon">👤</div><div class="oc-title">IAM Deep Dive</div><p>Users, groups, roles, policies, least privilege, permission boundaries, SCP.</p></div>
+    <div class="ov-card"><div class="oc-num">P03</div><div class="oc-icon">🪣</div><div class="oc-title">S3 Mastery</div><p>Buckets, versioning, lifecycle, replication, encryption, bucket policies, presigned URLs.</p></div>
+    <div class="ov-card"><div class="oc-num">P04</div><div class="oc-icon">💰</div><div class="oc-title">AWS Cost Engineering</div><p>Cost Explorer, budgets, anomaly detection, Savings Plans, rightsizing analysis.</p></div>
+    <div class="ov-card"><div class="oc-num">P05</div><div class="oc-icon">🏗️</div><div class="oc-title">Terraform from Zero</div><p>Install, first resource, state, plan/apply/destroy. The foundational Terraform workflow.</p></div>
+    <div class="ov-card"><div class="oc-num">P06</div><div class="oc-icon">🌐</div><div class="oc-title">VPC from Scratch</div><p>Custom VPC, public/private subnets, IGW, NAT Gateway, route tables, NACLs.</p></div>
+    <div class="ov-card"><div class="oc-num">P07</div><div class="oc-icon">🔒</div><div class="oc-title">Security Groups Mastery</div><p>Stateful rules, layered SG architecture, bastion host, SG referencing.</p></div>
+    <div class="ov-card"><div class="oc-num">P08</div><div class="oc-icon">🌍</div><div class="oc-title">Route 53 &amp; DNS</div><p>Hosted zones, record types, routing policies, health checks, failover routing.</p></div>
+    <div class="ov-card"><div class="oc-num">P09</div><div class="oc-icon">⚡</div><div class="oc-title">CloudFront CDN</div><p>Distribution config, origins, cache behaviours, Lambda@Edge, WAF integration.</p></div>
+    <div class="ov-card"><div class="oc-num">P10</div><div class="oc-icon">🔗</div><div class="oc-title">VPC Peering &amp; PrivateLink</div><p>Connect VPCs, cross-account access, VPC endpoints for AWS services.</p></div>
+    <div class="ov-card"><div class="oc-num">P11</div><div class="oc-icon">🖥️</div><div class="oc-title">EC2 Production Setup</div><p>AMIs, user data, instance profiles, EBS volumes, Snapshots, Nitro enclaves.</p></div>
+    <div class="ov-card"><div class="oc-num">P12</div><div class="oc-icon">⚖️</div><div class="oc-title">Application Load Balancer</div><p>ALB rules, target groups, health checks, sticky sessions, HTTPS termination.</p></div>
+    <div class="ov-card"><div class="oc-num">P13</div><div class="oc-icon">📈</div><div class="oc-title">Auto Scaling Groups</div><p>Launch templates, scaling policies, scheduled scaling, lifecycle hooks, instance refresh.</p></div>
+    <div class="ov-card"><div class="oc-num">P14</div><div class="oc-icon">📡</div><div class="oc-title">Systems Manager (SSM)</div><p>Session Manager (no SSH), Patch Manager, Parameter Store, Run Command, Automation.</p></div>
+    <div class="ov-card"><div class="oc-num">P15</div><div class="oc-icon">🐑</div><div class="oc-title">Lambda &amp; API Gateway</div><p>Serverless functions, REST API, authorizers, deployment stages, Lambda layers.</p></div>
+    <div class="ov-card"><div class="oc-num">P16</div><div class="oc-icon">🗄️</div><div class="oc-title">RDS Production Setup</div><p>Multi-AZ, read replicas, parameter groups, automated backups, RDS Proxy.</p></div>
+    <div class="ov-card"><div class="oc-num">P17</div><div class="oc-icon">⚡</div><div class="oc-title">ElastiCache &amp; Caching</div><p>Redis cluster, session storage, cache-aside pattern, eviction policies.</p></div>
+    <div class="ov-card"><div class="oc-num">P18</div><div class="oc-icon">🔐</div><div class="oc-title">Secrets Manager &amp; KMS</div><p>Secret rotation, cross-service access, envelope encryption, key policies, CMKs.</p></div>
+    <div class="ov-card"><div class="oc-num">P19</div><div class="oc-icon">🛡️</div><div class="oc-title">Security Hardening</div><p>GuardDuty, Security Hub, Config Rules, WAF, Shield, Inspector, SCPs.</p></div>
+    <div class="ov-card"><div class="oc-num">P20</div><div class="oc-icon">📊</div><div class="oc-title">CloudWatch Observability</div><p>Custom metrics, dashboards, alarms, log insights, X-Ray tracing, EventBridge.</p></div>
+    <div class="ov-card"><div class="oc-num">P21</div><div class="oc-icon">📦</div><div class="oc-title">Terraform Modules</div><p>Write reusable modules. VPC module, EC2 module, RDS module. Module registry.</p></div>
+    <div class="ov-card"><div class="oc-num">P22</div><div class="oc-icon">🗃️</div><div class="oc-title">Remote State &amp; Locking</div><p>S3 backend, DynamoDB state locking, state workspaces, state import/mv/rm.</p></div>
+    <div class="ov-card"><div class="oc-num">P23</div><div class="oc-icon">🌿</div><div class="oc-title">Terragrunt — DRY IaC</div><p>Eliminate Terraform boilerplate. Multi-environment configs, dependency management.</p></div>
+    <div class="ov-card"><div class="oc-num">P24</div><div class="oc-icon">🔍</div><div class="oc-title">Terraform Testing &amp; Compliance</div><p>Checkov, tfsec, Terrascan, Conftest/OPA. Policy-as-code gates in your CI pipeline.</p></div>
+    <div class="ov-card"><div class="oc-num">P25</div><div class="oc-icon">🏆</div><div class="oc-title">Capstone — Full Production AWS Stack</div><p>VPC + EC2 ASG + ALB + RDS + ElastiCache + CloudFront + WAF — all Terraform, all CI/CD deployed.</p></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     AWS 101
+════════════════════════════════════════ -->
+<div id="tab-aws101" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Concepts First</div><h2>AWS 101 — The Mental Model</h2><p>Before writing a single line of Terraform, you need to understand how AWS thinks. These concepts are the foundation everything else builds on.</p></div>
+
+  <div class="concept">
+    <h3>🌍 Regions, Availability Zones, and the Global Network</h3>
+    <p>AWS has <strong>Regions</strong> — geographical locations (us-east-1, eu-west-1) each containing independent data centres. Within each Region are <strong>Availability Zones (AZs)</strong> — physically separate data centres connected by low-latency private fibre. Think of a Region as a city and AZs as separate neighbourhoods. A building fire in one neighbourhood doesn't affect the others.</p>
+    <p>The critical rule: <strong>always deploy across multiple AZs</strong>. A single-AZ deployment will go down. Multi-AZ deployments survive AZ failures automatically. This is why every production resource (RDS, EC2 ASG, ALB) should span at least two AZs, and ideally three.</p>
+    <div class="analogy"><div class="ai-icon">🏙️</div><div><strong>Analogy:</strong> A Region is like a city's power grid. AZs are separate substations. If one substation fails, the others keep running — but you need to design your buildings to draw from multiple substations. AWS gives you the substations; you have to wire your architecture correctly to use them.</div></div>
+  </div>
+
+  <div class="concept r">
+    <h3>🪪 IAM — The Keymaster of AWS</h3>
+    <p>Every AWS API call is authenticated (who are you?) and authorised (what can you do?). IAM is the system that answers both questions. <strong>Users</strong> are people. <strong>Roles</strong> are identities that services (EC2, Lambda, CodeBuild) assume — they have no permanent credentials, only temporary ones via STS. <strong>Policies</strong> are JSON documents that grant or deny actions on resources.</p>
+    <p>The <strong>Principle of Least Privilege</strong> is not optional in AWS — it's the difference between a breach that's contained and one that compromises your entire account. Every service should have permission to do exactly what it needs, nothing more. An EC2 instance that only reads from one specific S3 bucket should have a role policy that permits only that.</p>
+    <div class="analogy"><div class="ai-icon">🔑</div><div><strong>Analogy:</strong> IAM is a hotel key card system. Users have their own cards. Services (like the room service robot) have temporary cards that expire after their shift. Every card is programmed to open only the specific doors needed — the robot can access the kitchen and guest floors but not the manager's office or the vault.</div></div>
+  </div>
+
+  <div class="concept s">
+    <h3>🌐 VPC — Your Private Cloud Network</h3>
+    <p>A VPC (Virtual Private Cloud) is your own isolated network inside AWS. Think of it as the building's internal wiring — completely separate from other tenants' wiring in the same building. Within your VPC you define <strong>subnets</strong> (public-facing vs private), <strong>route tables</strong> (which traffic goes where), <strong>Internet Gateways</strong> (door to the internet), and <strong>NAT Gateways</strong> (private subnets can reach the internet to download packages, but internet can't reach them).</p>
+    <p>The standard pattern: put load balancers and bastion hosts in public subnets. Put application servers and databases in private subnets. <strong>Nothing in a private subnet should have a public IP.</strong> The NAT Gateway handles outbound internet access without exposing the instances.</p>
+  </div>
+
+  <div class="concept k">
+    <h3>📦 The AWS Shared Responsibility Model</h3>
+    <p>AWS secures <strong>the infrastructure</strong> (physical hardware, network, hypervisor, managed service patching). You secure <strong>everything you put on it</strong> (your OS patches, your application security, your IAM config, your data encryption, your network rules). Many breaches happen because teams assume AWS handles more than it does.</p>
+    <p>Concrete examples: AWS patches the RDS engine for you. You must still restrict which IP ranges can reach port 5432. AWS encrypts EBS volumes at rest if you enable it. You must still rotate the access keys your app uses. The model is simple — if you configured it, you own its security.</p>
+  </div>
+
+  <div class="concept g">
+    <h3>🔢 AWS Service Categories — The Landscape</h3>
+    <p><strong>Compute:</strong> EC2 (virtual machines), Lambda (serverless functions), ECS/EKS (containers). <strong>Storage:</strong> S3 (object storage), EBS (block storage for EC2), EFS (shared filesystem). <strong>Database:</strong> RDS (managed SQL), DynamoDB (managed NoSQL), ElastiCache (managed Redis/Memcached). <strong>Networking:</strong> VPC, Route 53 (DNS), CloudFront (CDN), ALB/NLB (load balancers). <strong>Security:</strong> IAM, KMS (encryption keys), Secrets Manager, GuardDuty, WAF. <strong>Observability:</strong> CloudWatch (metrics/logs/alarms), X-Ray (distributed tracing), CloudTrail (API audit log).</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     TERRAFORM 101
+════════════════════════════════════════ -->
+<div id="tab-terraform101" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Infrastructure as Code</div><h2>Terraform 101 — Define Everything as Code</h2><p>Terraform lets you describe infrastructure in HCL (HashiCorp Configuration Language) and have it created, updated, and destroyed automatically. If you're clicking in the AWS console, you're doing it wrong.</p></div>
+
+  <div class="concept">
+    <h3>⚙️ How Terraform Actually Works</h3>
+    <p>Terraform's workflow is always the same three steps: <strong>Write</strong> (define resources in .tf files), <strong>Plan</strong> (<code>terraform plan</code> — shows you exactly what will change without changing anything), <strong>Apply</strong> (<code>terraform apply</code> — makes the changes).</p>
+    <p>Terraform maintains a <strong>state file</strong> (terraform.tfstate) that maps your code to real AWS resources. When you run plan, Terraform compares your code to the state to determine what needs to change. Never edit the state file manually. In teams, always use a remote backend (S3 + DynamoDB) so everyone shares the same state.</p>
+    <div class="analogy"><div class="ai-icon">🏗️</div><div><strong>Analogy:</strong> Terraform is like an architect + construction crew combo. The .tf files are the blueprints. <code>terraform plan</code> is the architect reviewing the blueprints and marking what needs to be built, modified, or demolished. <code>terraform apply</code> is the crew executing the work. The state file is the as-built record — it documents exactly what was built so future changes can be diffed against reality.</div></div>
+  </div>
+
+  <div class="concept r">
+    <h3>📝 HCL Fundamentals — The Four Building Blocks</h3>
+    <p><strong>resource</strong> — declares a real infrastructure object to manage. <code>resource "aws_instance" "web" { ... }</code>. <strong>variable</strong> — parameterises your code. Values passed in at plan/apply time or from .tfvars files. <strong>output</strong> — exposes values after apply (e.g. the IP of the created instance). <strong>data</strong> — reads existing infrastructure Terraform didn't create (e.g. the current AWS account ID, an existing AMI, an existing VPC). These four concepts cover 90% of what you'll write.</p>
+  </div>
+
+  <div class="concept s">
+    <h3>🧱 Modules — Reusable Infrastructure Components</h3>
+    <p>A module is just a directory of .tf files. Your root module is the directory you run terraform from. Child modules are subdirectories or remote sources. When your infrastructure gets large, modules let you package a VPC configuration, EC2 ASG configuration, or RDS setup as a reusable component that accepts inputs and returns outputs — exactly like a function in programming.</p>
+    <p>The pattern: keep your modules generic and parameterised (accept environment name, instance type, AZ list as variables). Use them in your root module to build environments. The same VPC module creates your dev VPC and your prod VPC with different parameters.</p>
+  </div>
+
+  <div class="concept k">
+    <h3>⚠️ Terraform Anti-Patterns to Avoid</h3>
+    <p><strong>Never use <code>terraform apply -auto-approve</code> in production</strong> without reviewing the plan first. A typo that removes a database will show up in the plan — catching it before apply is the whole point. <strong>Never store state locally in teams</strong> — use S3+DynamoDB backend from day one. <strong>Never hardcode account IDs, regions, or credentials</strong> in .tf files — use variables and data sources. <strong>Never import manually-created resources and call it "done"</strong> — anything in AWS that's not in Terraform will eventually cause drift and confusion.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ALL 25 PROJECTS
+════════════════════════════════════════ -->
+<div id="tab-all" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Complete List</div><h2>All 25 Projects</h2><p>Click to expand. Do them in order — each builds directly on the previous.</p></div>
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">01</div><div class="pmeta"><h3>AWS Account Hardening — Lock Down Your Account</h3><p>Every AWS account is a security incident waiting to happen if misconfigured. Lock down the root account, enable MFA everywhere, configure CloudTrail for full auditability, set up billing alerts so you never get a surprise $10,000 bill.</p><div class="pmeta-foot"><span class="ptag c">IAM</span><span class="ptag c">CloudTrail</span><span class="ptag c">Billing</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 2 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="note err"><div class="note-i">🚨</div><p><strong>Do this first — before anything else.</strong> An insecure AWS account will get compromised within hours of having any credentials leaked. These steps are non-negotiable.</p></div>
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Root Account Lockdown</h4>
+            <p>The AWS root account has unlimited power and cannot be restricted by IAM policies. It should never be used for day-to-day operations.</p>
+            <ul>
+              <li>Log in as root, go to <strong>IAM → My Security Credentials</strong></li>
+              <li>Enable <strong>MFA on root</strong> using a hardware key or authenticator app</li>
+              <li>Delete all root <strong>access keys</strong> (there should be none)</li>
+              <li>Set a strong, unique root password and store in a password manager</li>
+              <li>Never use root again except for the 3 tasks that genuinely require it (changing support plan, closing account, enabling some services)</li>
+            </ul>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Enable CloudTrail — Full API Audit Log</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Enable CloudTrail via AWS CLI</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Create S3 bucket for CloudTrail logs</span>
+<span class="var">ACCOUNT_ID</span>=$(aws sts get-caller-identity --query Account --output text)
+<span class="var">BUCKET</span>=<span class="str">"cloudtrail-logs-${ACCOUNT_ID}"</span>
+
+aws s3api create-bucket \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --region us-east-1
+
+<span class="cm"># Block all public access</span>
+aws s3api put-public-access-block \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --public-access-block-configuration <span class="str">"BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"</span>
+
+<span class="cm"># Enable bucket versioning and encryption</span>
+aws s3api put-bucket-versioning \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --versioning-configuration Status=Enabled
+
+aws s3api put-bucket-encryption \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --server-side-encryption-configuration <span class="str">'{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'</span>
+
+<span class="cm"># Create CloudTrail (all regions)</span>
+aws cloudtrail create-trail \
+    --name myorg-cloudtrail \
+    --s3-bucket-name <span class="str">"$BUCKET"</span> \
+    --is-multi-region-trail \
+    --include-global-service-events \
+    --enable-log-file-validation
+
+aws cloudtrail start-logging --name myorg-cloudtrail
+
+echo <span class="str">"✅ CloudTrail active. All API calls are now logged to s3://$BUCKET"</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Billing Alerts — Never Get Surprised</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create billing alarms</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># First: enable billing alerts in Account Settings (console, one-time)</span>
+<span class="cm"># Billing → Billing preferences → Receive Billing Alerts → Save</span>
+
+<span class="cm"># Create SNS topic for billing alerts</span>
+<span class="var">TOPIC_ARN</span>=$(aws sns create-topic --name billing-alerts --region us-east-1 --query TopicArn --output text)
+
+<span class="cm"># Subscribe your email</span>
+aws sns subscribe \
+    --topic-arn <span class="str">"$TOPIC_ARN"</span> \
+    --protocol email \
+    --notification-endpoint <span class="str">"your@email.com"</span>
+
+<span class="cm"># Create alarm for $10 total monthly spend</span>
+aws cloudwatch put-metric-alarm \
+    --alarm-name <span class="str">"billing-alert-10usd"</span> \
+    --alarm-description <span class="str">"Alert when monthly bill exceeds $10"</span> \
+    --metric-name EstimatedCharges \
+    --namespace AWS/Billing \
+    --statistic Maximum \
+    --period 86400 \
+    --threshold 10 \
+    --comparison-operator GreaterThanThreshold \
+    --dimensions Name=Currency,Value=USD \
+    --evaluation-periods 1 \
+    --alarm-actions <span class="str">"$TOPIC_ARN"</span> \
+    --region us-east-1
+
+<span class="cm"># Create alarm for $50</span>
+aws cloudwatch put-metric-alarm \
+    --alarm-name <span class="str">"billing-alert-50usd"</span> \
+    --alarm-description <span class="str">"Alert when monthly bill exceeds $50"</span> \
+    --metric-name EstimatedCharges \
+    --namespace AWS/Billing \
+    --statistic Maximum \
+    --period 86400 \
+    --threshold 50 \
+    --comparison-operator GreaterThanThreshold \
+    --dimensions Name=Currency,Value=USD \
+    --evaluation-periods 1 \
+    --alarm-actions <span class="str">"$TOPIC_ARN"</span> \
+    --region us-east-1</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">4</div><div class="sb">
+            <h4>Create an Admin IAM User — Stop Using Root</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create admin user with MFA requirement</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Create admin group and user</span>
+aws iam create-group --group-name Administrators
+aws iam attach-group-policy \
+    --group-name Administrators \
+    --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+
+aws iam create-user --user-name admin-yourname
+aws iam add-user-to-group --user-name admin-yourname --group-name Administrators
+
+<span class="cm"># Force MFA for all operations</span>
+<span class="cm"># Create inline policy requiring MFA to do anything</span>
+aws iam put-user-policy \
+    --user-name admin-yourname \
+    --policy-name RequireMFA \
+    --policy-document <span class="str">'{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Deny",
+        "NotAction": ["iam:CreateVirtualMFADevice","iam:EnableMFADevice","iam:GetUser","iam:ListMFADevices"],
+        "Resource": "*",
+        "Condition": {"BoolIfExists": {"aws:MultiFactorAuthPresent": "false"}}
+      }]
+    }'</span>
+
+<span class="cm"># Create access keys (then configure MFA in console)</span>
+aws iam create-access-key --user-name admin-yourname
+
+<span class="cm"># Configure AWS CLI profile</span>
+aws configure --profile admin</pre></div>
+          </div></div>
+        </div>
+        <div class="note ok"><div class="note-i">✅</div><p><strong>P1 complete.</strong> Your account now has: root MFA, CloudTrail active for all regions, billing alerts, a non-root admin user with MFA required. This is the security baseline every AWS account must have before day 1.</p></div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">02</div><div class="pmeta"><h3>IAM Deep Dive — Master AWS Identity</h3><p>Users, groups, roles, policies, permissions boundaries, and cross-account access. Build a real-world IAM structure for a multi-team environment. Understand the policy evaluation logic that determines if an action is allowed.</p><div class="pmeta-foot"><span class="ptag c">IAM</span><span class="ptag c">Roles</span><span class="ptag c">Policies</span><span class="ptag n">STS</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>IAM Policy Deep Dive — How AWS Evaluates Permissions</h4>
+            <p>AWS evaluates every API call with this logic: <strong>Explicit Deny always wins</strong> → check Organisation SCPs → check resource-based policies → check IAM policies → check permission boundaries → default deny. Understanding this matters when you can't figure out why something is being denied.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">json</span> — Least-privilege policy for a CI/CD deployment role</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">{
+  <span class="str">"Version"</span>: <span class="str">"2012-10-17"</span>,
+  <span class="str">"Statement"</span>: [
+    {
+      <span class="str">"Sid"</span>: <span class="str">"ECRPush"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [
+        <span class="str">"ecr:GetAuthorizationToken"</span>,
+        <span class="str">"ecr:BatchCheckLayerAvailability"</span>,
+        <span class="str">"ecr:GetDownloadUrlForLayer"</span>,
+        <span class="str">"ecr:PutImage"</span>,
+        <span class="str">"ecr:InitiateLayerUpload"</span>,
+        <span class="str">"ecr:UploadLayerPart"</span>,
+        <span class="str">"ecr:CompleteLayerUpload"</span>
+      ],
+      <span class="str">"Resource"</span>: <span class="str">"arn:aws:ecr:us-east-1:ACCOUNT_ID:repository/myapp"</span>
+    },
+    {
+      <span class="str">"Sid"</span>: <span class="str">"EC2Deploy"</span>,
+      <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="str">"Action"</span>: [
+        <span class="str">"ec2:DescribeInstances"</span>,
+        <span class="str">"autoscaling:StartInstanceRefresh"</span>,
+        <span class="str">"autoscaling:DescribeInstanceRefreshes"</span>
+      ],
+      <span class="str">"Resource"</span>: <span class="str">"*"</span>,
+      <span class="str">"Condition"</span>: {
+        <span class="str">"StringEquals"</span>: {
+          <span class="str">"aws:ResourceTag/Environment"</span>: <span class="str">"production"</span>
+        }
+      }
+    }
+  ]
+}</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>IAM Roles for Services — The Right Way to Give EC2 AWS Access</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create EC2 instance role with S3 read access</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Create the role (trust policy allows EC2 to assume it)</span>
+aws iam create-role \
+    --role-name EC2AppRole \
+    --assume-role-policy-document <span class="str">'{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Principal": {"Service": "ec2.amazonaws.com"},
+        "Action": "sts:AssumeRole"
+      }]
+    }'</span>
+
+<span class="cm"># Attach least-privilege policy (read from specific S3 bucket only)</span>
+aws iam put-role-policy \
+    --role-name EC2AppRole \
+    --policy-name S3ReadAccess \
+    --policy-document <span class="str">'{
+      "Version": "2012-10-17",
+      "Statement": [{
+        "Effect": "Allow",
+        "Action": ["s3:GetObject","s3:ListBucket"],
+        "Resource": [
+          "arn:aws:s3:::my-app-configs",
+          "arn:aws:s3:::my-app-configs/*"
+        ]
+      }]
+    }'</span>
+
+<span class="cm"># Also attach SSM for session manager (no SSH keys needed)</span>
+aws iam attach-role-policy \
+    --role-name EC2AppRole \
+    --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+<span class="cm"># Create instance profile (wrapper that attaches role to EC2)</span>
+aws iam create-instance-profile --instance-profile-name EC2AppProfile
+aws iam add-role-to-instance-profile \
+    --instance-profile-name EC2AppProfile \
+    --role-name EC2AppRole</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Cross-Account Role Assumption</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Assume a role in another AWS account</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># In ACCOUNT B: create a role that ACCOUNT A can assume</span>
+aws iam create-role \
+    --role-name CrossAccountReadOnly \
+    --assume-role-policy-document <span class="str">'{
+      "Version":"2012-10-17",
+      "Statement":[{
+        "Effect":"Allow",
+        "Principal":{"AWS":"arn:aws:iam::ACCOUNT_A_ID:root"},
+        "Action":"sts:AssumeRole"
+      }]
+    }'</span>
+
+aws iam attach-role-policy \
+    --role-name CrossAccountReadOnly \
+    --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
+
+<span class="cm"># From ACCOUNT A: assume the role</span>
+<span class="var">CREDS</span>=$(aws sts assume-role \
+    --role-arn arn:aws:iam::ACCOUNT_B_ID:role/CrossAccountReadOnly \
+    --role-session-name audit-session \
+    --query Credentials \
+    --output json)
+
+<span class="cm"># Extract credentials and use them</span>
+export AWS_ACCESS_KEY_ID=$(echo <span class="str">"$CREDS"</span> | python3 -c <span class="str">"import sys,json; c=json.load(sys.stdin); print(c['AccessKeyId'])"</span>)
+export AWS_SECRET_ACCESS_KEY=$(echo <span class="str">"$CREDS"</span> | python3 -c <span class="str">"import sys,json; c=json.load(sys.stdin); print(c['SecretAccessKey'])"</span>)
+export AWS_SESSION_TOKEN=$(echo <span class="str">"$CREDS"</span> | python3 -c <span class="str">"import sys,json; c=json.load(sys.stdin); print(c['SessionToken'])"</span>)
+
+<span class="cm"># Now API calls go to Account B</span>
+aws s3 ls  <span class="cm"># lists Account B's buckets</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">03</div><div class="pmeta"><h3>S3 Mastery — Object Storage Done Right</h3><p>S3 is the backbone of AWS. Buckets, versioning, lifecycle policies, cross-region replication, server-side encryption, bucket policies, presigned URLs, and S3 as a static website. The features you'll use daily.</p><div class="pmeta-foot"><span class="ptag c">S3</span><span class="ptag c">Lifecycle</span><span class="ptag c">Replication</span><span class="ptag n">Encryption</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Create a Hardened S3 Bucket</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Production-ready S3 bucket setup</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="var">BUCKET</span>=<span class="str">"myapp-assets-$(aws sts get-caller-identity --query Account --output text)"</span>
+<span class="var">REGION</span>=<span class="str">"us-east-1"</span>
+
+<span class="cm"># Create bucket</span>
+aws s3api create-bucket --bucket <span class="str">"$BUCKET"</span> --region <span class="str">"$REGION"</span>
+
+<span class="cm"># Block ALL public access (critical — do this immediately)</span>
+aws s3api put-public-access-block \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --public-access-block-configuration \
+    BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+<span class="cm"># Enable versioning</span>
+aws s3api put-bucket-versioning \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --versioning-configuration Status=Enabled
+
+<span class="cm"># Enable server-side encryption (AES-256 default)</span>
+aws s3api put-bucket-encryption \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --server-side-encryption-configuration \
+    '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"},"BucketKeyEnabled":true}]}'
+
+<span class="cm"># Enable access logging to a separate bucket</span>
+aws s3api put-bucket-logging \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --bucket-logging-status \
+    "{\"LoggingEnabled\":{\"TargetBucket\":\"${BUCKET}-logs\",\"TargetPrefix\":\"s3-access/\"}}"</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Lifecycle Policies — Auto-Manage Object Storage Costs</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Cost-saving lifecycle rules</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">aws s3api put-bucket-lifecycle-configuration \
+    --bucket <span class="str">"$BUCKET"</span> \
+    --lifecycle-configuration <span class="str">'{
+      "Rules": [
+        {
+          "ID": "transition-old-versions",
+          "Status": "Enabled",
+          "Filter": {},
+          "NoncurrentVersionTransitions": [
+            {"NoncurrentDays": 30, "StorageClass": "STANDARD_IA"},
+            {"NoncurrentDays": 90, "StorageClass": "GLACIER"}
+          ],
+          "NoncurrentVersionExpiration": {"NoncurrentDays": 365}
+        },
+        {
+          "ID": "delete-incomplete-multipart",
+          "Status": "Enabled",
+          "Filter": {},
+          "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": 7}
+        },
+        {
+          "ID": "archive-logs",
+          "Status": "Enabled",
+          "Filter": {"Prefix": "logs/"},
+          "Transitions": [
+            {"Days": 30, "StorageClass": "STANDARD_IA"},
+            {"Days": 180, "StorageClass": "GLACIER_IR"}
+          ],
+          "Expiration": {"Days": 730}
+        }
+      ]
+    }'</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Presigned URLs — Temporary Secure Access</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — Generate presigned URLs in Python</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">import boto3
+from datetime import timedelta
+
+s3 = boto3.client(<span class="str">'s3'</span>, region_name=<span class="str">'us-east-1'</span>)
+
+<span class="cm"># Presigned GET URL — share a private file for 1 hour</span>
+url = s3.generate_presigned_url(
+    <span class="str">'get_object'</span>,
+    Params={<span class="str">'Bucket'</span>: <span class="str">'my-private-bucket'</span>, <span class="str">'Key'</span>: <span class="str">'reports/q4-2024.pdf'</span>},
+    ExpiresIn=3600  <span class="cm"># 1 hour</span>
+)
+print(f<span class="str">"Download URL (expires in 1hr): {url}"</span>)
+
+<span class="cm"># Presigned POST URL — allow a browser to upload directly to S3</span>
+<span class="cm"># without going through your server (bypasses upload size limits)</span>
+post = s3.generate_presigned_post(
+    Bucket=<span class="str">'my-upload-bucket'</span>,
+    Key=<span class="str">'uploads/${filename}'</span>,
+    Fields={<span class="str">'Content-Type'</span>: <span class="str">'image/jpeg'</span>},
+    Conditions=[
+        {<span class="str">'Content-Type'</span>: <span class="str">'image/jpeg'</span>},
+        [<span class="str">'content-length-range'</span>, 1, 10485760]  <span class="cm"># max 10MB</span>
+    ],
+    ExpiresIn=3600
+)
+print(f<span class="str">"Upload POST URL: {post['url']}"</span>)
+print(f<span class="str">"Fields to include in form: {post['fields']}"</span>)</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">04</div><div class="pmeta"><h3>AWS Cost Engineering — Control What You Spend</h3><p>AWS bills can spiral quickly. Build a full cost visibility and control system: Cost Explorer queries, budget alerts, anomaly detection, resource tagging strategy, and a rightsizing report to find wasted spend.</p><div class="pmeta-foot"><span class="ptag c">Cost Explorer</span><span class="ptag c">Budgets</span><span class="ptag r">FinOps</span><span class="ptag n">Tagging</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Tagging Strategy — The Foundation of Cost Allocation</h4>
+            <p>Without tags, you can't answer "how much does the payments service cost?" Tags are key-value pairs on every AWS resource. Design your tagging strategy before deploying anything, because retrofitting tags is painful.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">json</span> — Mandatory tag schema (enforce with Service Control Policies)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">{
+  <span class="str">"required_tags"</span>: {
+    <span class="str">"Environment"</span>: [<span class="str">"production"</span>, <span class="str">"staging"</span>, <span class="str">"development"</span>],
+    <span class="str">"Service"</span>: <span class="str">"string — the service name (e.g. payments, auth, api)"</span>,
+    <span class="str">"Team"</span>: <span class="str">"string — owning team (e.g. backend, platform, data)"</span>,
+    <span class="str">"CostCenter"</span>: <span class="str">"string — finance cost centre code"</span>,
+    <span class="str">"ManagedBy"</span>: [<span class="str">"terraform"</span>, <span class="str">"ansible"</span>, <span class="str">"manual"</span>]
+  }
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Find untagged resources</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># List all EC2 instances missing the required tags</span>
+aws ec2 describe-instances \
+    --query <span class="str">"Reservations[*].Instances[?!not_null(Tags[?Key=='Environment'])].[InstanceId,State.Name]"</span> \
+    --output table
+
+<span class="cm"># AWS Resource Groups Tagging API — find ALL resource types missing a tag</span>
+aws resourcegroupstaggingapi get-resources \
+    --tag-filters Key=Environment \
+    --include-compliance-details \
+    --query <span class="str">"ResourceTagMappingList[?ComplianceDetails.ComplianceStatus==\`false\`]"</span> \
+    --output table</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Cost Anomaly Detection — Automatic Spending Alerts</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Set up anomaly detection monitors</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Create anomaly monitor (watches all services)</span>
+<span class="var">MONITOR_ARN</span>=$(aws ce create-anomaly-monitor \
+    --anomaly-monitor <span class="str">'{
+        "MonitorName": "AllServices",
+        "MonitorType": "DIMENSIONAL",
+        "MonitorDimension": "SERVICE"
+    }'</span> \
+    --query AnomalyMonitorArn --output text)
+
+<span class="cm"># Create subscription — alert when anomaly > $10</span>
+aws ce create-anomaly-subscription \
+    --anomaly-subscription <span class="str">"{
+        \"SubscriptionName\": \"DailyAnomalyAlert\",
+        \"MonitorArnList\": [\"$MONITOR_ARN\"],
+        \"Subscribers\": [{
+            \"Address\": \"team@company.com\",
+            \"Type\": \"EMAIL\"
+        }],
+        \"Threshold\": 10,
+        \"ThresholdExpression\": {
+            \"Dimensions\": {\"Key\": \"ANOMALY_TOTAL_IMPACT_ABSOLUTE\", \"MatchOptions\": [\"GREATER_THAN_OR_EQUAL\"], \"Values\": [\"10\"]}
+        },
+        \"Frequency\": \"DAILY\"
+    }"</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">05</div><div class="pmeta"><h3>Terraform from Zero — Your First Infrastructure as Code</h3><p>Install Terraform, configure the AWS provider, create your first real resources (S3 bucket, then an EC2 instance), understand state, plan, apply, destroy. The core Terraform workflow you'll use for everything.</p><div class="pmeta-foot"><span class="ptag g">Terraform</span><span class="ptag g">HCL</span><span class="ptag g">State</span><span class="ptag g">AWS Provider</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Install Terraform and Configure the AWS Provider</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Terraform on Rocky Linux</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Install via dnf (HashiCorp repo)</span>
+sudo dnf install -y dnf-plugins-core
+sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+sudo dnf install -y terraform
+
+<span class="cm"># Verify</span>
+terraform version</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — main.tf — provider configuration</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Declare required providers and versions</span>
+terraform {
+  required_version = ">= 1.7"
+  required_providers {
+    aws = {
+      source  = <span class="str">"hashicorp/aws"</span>
+      version = <span class="str">"~> 5.0"</span>   <span class="cm"># 5.x, but not 6.x</span>
+    }
+  }
+}
+
+<span class="cm"># Configure the AWS provider</span>
+provider <span class="str">"aws"</span> {
+  region  = var.aws_region
+  profile = var.aws_profile   <span class="cm"># from ~/.aws/credentials</span>
+
+  <span class="cm"># Default tags applied to every resource created by this provider</span>
+  default_tags {
+    tags = {
+      ManagedBy   = <span class="str">"terraform"</span>
+      Project     = <span class="str">"devops-learning"</span>
+      Environment = var.environment
+    }
+  }
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — variables.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">variable <span class="str">"aws_region"</span> {
+  description = <span class="str">"AWS region to deploy into"</span>
+  type        = string
+  default     = <span class="str">"us-east-1"</span>
+}
+
+variable <span class="str">"aws_profile"</span> {
+  description = <span class="str">"AWS CLI profile name"</span>
+  type        = string
+  default     = <span class="str">"default"</span>
+}
+
+variable <span class="str">"environment"</span> {
+  description = <span class="str">"Environment name (dev/staging/production)"</span>
+  type        = string
+  default     = <span class="str">"dev"</span>
+
+  validation {
+    condition     = contains([<span class="str">"dev"</span>, <span class="str">"staging"</span>, <span class="str">"production"</span>], var.environment)
+    error_message = <span class="str">"Environment must be dev, staging, or production."</span>
+  }
+}</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Your First Resources — S3 Bucket in Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — s3.tf — hardened S3 bucket</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">resource <span class="str">"aws_s3_bucket"</span> <span class="str">"assets"</span> {
+  bucket = <span class="str">"${var.environment}-myapp-assets-${data.aws_caller_identity.current.account_id}"</span>
+  tags   = { Name = <span class="str">"myapp-assets"</span> }
+}
+
+resource <span class="str">"aws_s3_bucket_public_access_block"</span> <span class="str">"assets"</span> {
+  bucket = aws_s3_bucket.assets.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource <span class="str">"aws_s3_bucket_versioning"</span> <span class="str">"assets"</span> {
+  bucket = aws_s3_bucket.assets.id
+  versioning_configuration { status = <span class="str">"Enabled"</span> }
+}
+
+resource <span class="str">"aws_s3_bucket_server_side_encryption_configuration"</span> <span class="str">"assets"</span> {
+  bucket = aws_s3_bucket.assets.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = <span class="str">"AES256"</span>
+    }
+    bucket_key_enabled = true
+  }
+}
+
+<span class="cm"># Data source — get current AWS account ID</span>
+data <span class="str">"aws_caller_identity"</span> <span class="str">"current"</span> {}
+
+output <span class="str">"bucket_name"</span> {
+  value       = aws_s3_bucket.assets.bucket
+  description = <span class="str">"The S3 bucket name"</span>
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Core Terraform workflow</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Initialise — downloads providers, sets up backend</span>
+terraform init
+
+<span class="cm"># Format code (always run before committing)</span>
+terraform fmt
+
+<span class="cm"># Validate syntax</span>
+terraform validate
+
+<span class="cm"># See what will be created (ALWAYS review this output)</span>
+terraform plan
+
+<span class="cm"># Apply with a named plan file (safer — ensures you apply what you reviewed)</span>
+terraform plan -out=tfplan
+terraform apply tfplan
+
+<span class="cm"># See current state</span>
+terraform show
+terraform state list
+
+<span class="cm"># Destroy everything (careful!)</span>
+terraform destroy</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /proj-list in tab-all -->
+  <div class="note tip" style="margin-top:20px;"><div class="note-i">💡</div><p>P6–P25 have full walkthroughs in the dedicated tabs above. All projects include complete Terraform code, AWS CLI commands, and architectural context.</p></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     P1-P5
+════════════════════════════════════════ -->
+<div id="tab-p1p5" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 1–5 · Foundations</div><h2>AWS Foundations + First Terraform</h2><p>Full walkthroughs in the All 25 Projects tab. Use this tab for concept review and quick reference.</p></div>
+
+  <div class="concept">
+    <h3>P1–P5 Mental Model</h3>
+    <p><strong>P1 — Account hardening:</strong> Root MFA → CloudTrail → billing alerts → non-root admin user. Non-negotiable before touching anything else.</p>
+    <p><strong>P2 — IAM:</strong> Users for humans, Roles for services (EC2, Lambda). Least privilege always. Trust policies control who can assume a role. Permission policies control what it can do. Explicit Deny always wins in evaluation.</p>
+    <p><strong>P3 — S3:</strong> Block public access immediately. Enable versioning + encryption. Lifecycle policies save 60-80% on old data. Presigned URLs give temporary access to private objects without making them public.</p>
+    <p><strong>P4 — Cost:</strong> Tags are the foundation of cost visibility. Anomaly detection catches runaway spend before it's a crisis. Cost Explorer is your weekly check-in.</p>
+    <p><strong>P5 — Terraform:</strong> <code>init → fmt → validate → plan → apply</code>. Never skip the plan review. Use <code>default_tags</code> in the provider block to tag everything automatically.</p>
+  </div>
+
+  <div class="concept r">
+    <h3>Key Commands — P1–P5</h3>
+    <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Essential AWS CLI commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Who am I?</span>
+aws sts get-caller-identity
+
+<span class="cm"># List IAM users</span>
+aws iam list-users --output table
+
+<span class="cm"># List S3 buckets</span>
+aws s3 ls
+
+<span class="cm"># S3 sync (upload a directory)</span>
+aws s3 sync ./dist/ s3://my-bucket/dist/ --delete
+
+<span class="cm"># Get current month costs by service</span>
+aws ce get-cost-and-usage \
+    --time-period Start=$(date -d "$(date +%Y-%m-01)" +%Y-%m-%d),End=$(date +%Y-%m-%d) \
+    --granularity MONTHLY \
+    --metrics UnblendedCost \
+    --group-by Type=DIMENSION,Key=SERVICE \
+    --query "ResultsByTime[0].Groups[*].[Keys[0],Metrics.UnblendedCost.Amount]" \
+    --output table | sort -k2 -rn | head -20</pre></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     P6-P10 NETWORKING
+════════════════════════════════════════ -->
+<div id="tab-p6p10" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 6–10 · Networking</div><h2>VPC, DNS, CDN — Your Cloud Network</h2></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">06</div><div class="pmeta"><h3>VPC from Scratch with Terraform</h3><p>Build a production-grade VPC entirely in Terraform: 3 public subnets, 3 private subnets across 3 AZs, Internet Gateway, NAT Gateways, route tables, flow logs. The networking foundation every other project uses.</p><div class="pmeta-foot"><span class="ptag r">VPC</span><span class="ptag g">Terraform</span><span class="ptag c">NAT</span><span class="ptag n">Flow Logs</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>VPC Architecture Design</h4>
+            <p>Production VPC pattern: 3 AZs, each with a public subnet (for ALBs, NAT GWs, Bastions) and a private subnet (for EC2 app servers, RDS). Public subnets route to an Internet Gateway. Private subnets route to a NAT Gateway in the public subnet of the same AZ.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — vpc.tf — complete VPC Terraform configuration</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">locals {
+  azs             = slice(data.aws_availability_zones.available.names, 0, 3)
+  public_subnets  = [<span class="str">"10.0.1.0/24"</span>, <span class="str">"10.0.2.0/24"</span>, <span class="str">"10.0.3.0/24"</span>]
+  private_subnets = [<span class="str">"10.0.11.0/24"</span>, <span class="str">"10.0.12.0/24"</span>, <span class="str">"10.0.13.0/24"</span>]
+  db_subnets      = [<span class="str">"10.0.21.0/24"</span>, <span class="str">"10.0.22.0/24"</span>, <span class="str">"10.0.23.0/24"</span>]
+}
+
+data <span class="str">"aws_availability_zones"</span> <span class="str">"available"</span> { state = <span class="str">"available"</span> }
+
+<span class="cm"># ── VPC ──────────────────────────────────────────────</span>
+resource <span class="str">"aws_vpc"</span> <span class="str">"main"</span> {
+  cidr_block           = <span class="str">"10.0.0.0/16"</span>
+  enable_dns_support   = true
+  enable_dns_hostnames = true   <span class="cm"># required for RDS, EFS, private hosted zones</span>
+  tags = { Name = <span class="str">"${var.environment}-vpc"</span> }
+}
+
+<span class="cm"># ── Internet Gateway ─────────────────────────────────</span>
+resource <span class="str">"aws_internet_gateway"</span> <span class="str">"main"</span> {
+  vpc_id = aws_vpc.main.id
+  tags   = { Name = <span class="str">"${var.environment}-igw"</span> }
+}
+
+<span class="cm"># ── Public Subnets (one per AZ) ──────────────────────</span>
+resource <span class="str">"aws_subnet"</span> <span class="str">"public"</span> {
+  count             = length(local.azs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.public_subnets[count.index]
+  availability_zone = local.azs[count.index]
+  map_public_ip_on_launch = false   <span class="cm"># explicit public IPs only when needed</span>
+  tags = { Name = <span class="str">"public-${local.azs[count.index]}"</span>, Tier = <span class="str">"public"</span> }
+}
+
+<span class="cm"># ── Private Subnets (app servers) ───────────────────</span>
+resource <span class="str">"aws_subnet"</span> <span class="str">"private"</span> {
+  count             = length(local.azs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.private_subnets[count.index]
+  availability_zone = local.azs[count.index]
+  tags = { Name = <span class="str">"private-${local.azs[count.index]}"</span>, Tier = <span class="str">"private"</span> }
+}
+
+<span class="cm"># ── DB Subnets (isolated, no internet) ──────────────</span>
+resource <span class="str">"aws_subnet"</span> <span class="str">"db"</span> {
+  count             = length(local.azs)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.db_subnets[count.index]
+  availability_zone = local.azs[count.index]
+  tags = { Name = <span class="str">"db-${local.azs[count.index]}"</span>, Tier = <span class="str">"database"</span> }
+}
+
+<span class="cm"># ── NAT Gateways (one per AZ for HA) ────────────────</span>
+resource <span class="str">"aws_eip"</span> <span class="str">"nat"</span> {
+  count  = length(local.azs)
+  domain = <span class="str">"vpc"</span>
+  tags   = { Name = <span class="str">"nat-eip-${local.azs[count.index]}"</span> }
+}
+
+resource <span class="str">"aws_nat_gateway"</span> <span class="str">"main"</span> {
+  count         = length(local.azs)
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id   <span class="cm"># NAT goes in PUBLIC subnet</span>
+  tags          = { Name = <span class="str">"nat-${local.azs[count.index]}"</span> }
+  depends_on    = [aws_internet_gateway.main]
+}
+
+<span class="cm"># ── Route Tables ─────────────────────────────────────</span>
+<span class="cm"># Public: 0.0.0.0/0 → Internet Gateway</span>
+resource <span class="str">"aws_route_table"</span> <span class="str">"public"</span> {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = <span class="str">"0.0.0.0/0"</span>
+    gateway_id = aws_internet_gateway.main.id
+  }
+  tags = { Name = <span class="str">"public-rt"</span> }
+}
+
+resource <span class="str">"aws_route_table_association"</span> <span class="str">"public"</span> {
+  count          = length(local.azs)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+<span class="cm"># Private: 0.0.0.0/0 → NAT Gateway (per-AZ for resilience)</span>
+resource <span class="str">"aws_route_table"</span> <span class="str">"private"</span> {
+  count  = length(local.azs)
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block     = <span class="str">"0.0.0.0/0"</span>
+    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  }
+  tags = { Name = <span class="str">"private-rt-${local.azs[count.index]}"</span> }
+}
+
+resource <span class="str">"aws_route_table_association"</span> <span class="str">"private"</span> {
+  count          = length(local.azs)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[count.index].id
+}
+
+<span class="cm"># ── VPC Flow Logs ─────────────────────────────────────</span>
+resource <span class="str">"aws_flow_log"</span> <span class="str">"main"</span> {
+  vpc_id          = aws_vpc.main.id
+  traffic_type    = <span class="str">"ALL"</span>
+  iam_role_arn    = aws_iam_role.flow_logs.arn
+  log_destination = aws_cloudwatch_log_group.flow_logs.arn
+}
+
+resource <span class="str">"aws_cloudwatch_log_group"</span> <span class="str">"flow_logs"</span> {
+  name              = <span class="str">"/aws/vpc/flow-logs/${var.environment}"</span>
+  retention_in_days = 30
+}
+
+<span class="cm"># Outputs for use by other Terraform configs</span>
+output <span class="str">"vpc_id"</span>              { value = aws_vpc.main.id }
+output <span class="str">"public_subnet_ids"</span>  { value = aws_subnet.public[*].id }
+output <span class="str">"private_subnet_ids"</span> { value = aws_subnet.private[*].id }
+output <span class="str">"db_subnet_ids"</span>      { value = aws_subnet.db[*].id }</pre></div>
+          </div></div>
+        </div>
+        <div class="note warn"><div class="note-i">💰</div><p>NAT Gateways cost ~$32/month each. 3 NAT GWs for HA = ~$96/month. In development, use a single NAT GW to save money. In production, always use one per AZ so a NAT GW failure doesn't take down private instances in other AZs.</p></div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">07</div><div class="pmeta"><h3>Security Groups — Layered Firewall Architecture</h3><p>Design a multi-layer security group architecture: ALB SG, App SG, Database SG. Use SG-to-SG referencing instead of CIDR ranges for internal traffic. Build a bastion host pattern for secure admin access.</p><div class="pmeta-foot"><span class="ptag r">Security Groups</span><span class="ptag g">Terraform</span><span class="ptag n">Bastion</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Layered Security Group Architecture</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — security_groups.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># ── 1. ALB Security Group — internet → ALB ──────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"alb"</span> {
+  name        = <span class="str">"${var.environment}-alb-sg"</span>
+  vpc_id      = var.vpc_id
+  description = <span class="str">"ALB: allow HTTP and HTTPS from internet"</span>
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+    description = <span class="str">"HTTP from internet"</span>
+  }
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+    description = <span class="str">"HTTPS from internet"</span>
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = <span class="str">"-1"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+  }
+}
+
+<span class="cm"># ── 2. App Security Group — ALB → App ───────────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"app"</span> {
+  name        = <span class="str">"${var.environment}-app-sg"</span>
+  vpc_id      = var.vpc_id
+  description = <span class="str">"App servers: only receive traffic from ALB"</span>
+
+  ingress {
+    from_port       = 8000
+    to_port         = 8000
+    protocol        = <span class="str">"tcp"</span>
+    <span class="cm"># SG reference — only allows traffic FROM the ALB SG, not from any IP</span>
+    security_groups = [aws_security_group.alb.id]
+    description     = <span class="str">"App port from ALB only"</span>
+  }
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.bastion.id]
+    description     = <span class="str">"SSH from bastion only"</span>
+  }
+  egress {
+    from_port   = 0; to_port = 0; protocol = <span class="str">"-1"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+  }
+}
+
+<span class="cm"># ── 3. Database Security Group — App → DB ───────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"db"</span> {
+  name        = <span class="str">"${var.environment}-db-sg"</span>
+  vpc_id      = var.vpc_id
+  description = <span class="str">"RDS: only allow traffic from app servers"</span>
+
+  ingress {
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = <span class="str">"tcp"</span>
+    security_groups = [aws_security_group.app.id]
+    description     = <span class="str">"PostgreSQL from app only"</span>
+  }
+  <span class="cm"># No egress rule — databases don't initiate outbound connections</span>
+}
+
+<span class="cm"># ── 4. Bastion Security Group ───────────────────────</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"bastion"</span> {
+  name        = <span class="str">"${var.environment}-bastion-sg"</span>
+  vpc_id      = var.vpc_id
+  description = <span class="str">"Bastion: SSH from your office IP only"</span>
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = <span class="str">"tcp"</span>
+    cidr_blocks = [var.admin_cidr]   <span class="cm"># your office IP, NEVER 0.0.0.0/0</span>
+    description = <span class="str">"SSH from office"</span>
+  }
+  egress {
+    from_port = 0; to_port = 0; protocol = <span class="str">"-1"</span>
+    cidr_blocks = [<span class="str">"0.0.0.0/0"</span>]
+  }
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">08</div><div class="pmeta"><h3>Route 53 — DNS, Routing Policies &amp; Health Checks</h3><p>Register a domain, create hosted zones, all record types (A, AAAA, CNAME, MX, TXT). Advanced routing: latency-based, weighted, failover, geolocation. Health checks that auto-failover your DNS when an endpoint goes down.</p><div class="pmeta-foot"><span class="ptag r">Route 53</span><span class="ptag g">Terraform</span><span class="ptag c">DNS</span><span class="ptag n">Failover</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Hosted Zone and Records in Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — route53.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Public hosted zone for your domain</span>
+resource <span class="str">"aws_route53_zone"</span> <span class="str">"main"</span> {
+  name = var.domain_name   <span class="cm"># e.g. "myapp.example.com"</span>
+  tags = { Name = var.domain_name }
+}
+
+<span class="cm"># A record pointing to ALB</span>
+resource <span class="str">"aws_route53_record"</span> <span class="str">"app"</span> {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = <span class="str">"app.${var.domain_name}"</span>
+  type    = <span class="str">"A"</span>
+
+  <span class="cm"># Alias record — preferred for AWS resources (no TTL cost, auto-updates)</span>
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}
+
+<span class="cm"># Weighted routing — send 90% to primary, 10% to canary</span>
+resource <span class="str">"aws_route53_record"</span> <span class="str">"api_primary"</span> {
+  zone_id        = aws_route53_zone.main.zone_id
+  name           = <span class="str">"api.${var.domain_name}"</span>
+  type           = <span class="str">"A"</span>
+  set_identifier = <span class="str">"primary"</span>
+
+  weighted_routing_policy { weight = 90 }
+  alias {
+    name    = aws_lb.primary.dns_name
+    zone_id = aws_lb.primary.zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource <span class="str">"aws_route53_record"</span> <span class="str">"api_canary"</span> {
+  zone_id        = aws_route53_zone.main.zone_id
+  name           = <span class="str">"api.${var.domain_name}"</span>
+  type           = <span class="str">"A"</span>
+  set_identifier = <span class="str">"canary"</span>
+
+  weighted_routing_policy { weight = 10 }
+  alias {
+    name    = aws_lb.canary.dns_name
+    zone_id = aws_lb.canary.zone_id
+    evaluate_target_health = true
+  }
+}
+
+<span class="cm"># Health check for failover routing</span>
+resource <span class="str">"aws_route53_health_check"</span> <span class="str">"app"</span> {
+  fqdn              = <span class="str">"app.${var.domain_name}"</span>
+  port              = 443
+  type              = <span class="str">"HTTPS"</span>
+  resource_path     = <span class="str">"/health"</span>
+  failure_threshold = <span class="str">"3"</span>
+  request_interval  = <span class="str">"30"</span>
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">09</div><div class="pmeta"><h3>CloudFront CDN — Global Content Delivery</h3><p>Set up a CloudFront distribution for your application: S3 origin for static assets, ALB origin for API, custom cache behaviours, OAC for S3 security, ACM certificate for HTTPS, WAF integration.</p><div class="pmeta-foot"><span class="ptag r">CloudFront</span><span class="ptag g">Terraform</span><span class="ptag c">ACM</span><span class="ptag n">WAF</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>CloudFront Distribution with Multi-Origin</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — cloudfront.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># ACM Certificate (must be in us-east-1 for CloudFront)</span>
+provider <span class="str">"aws"</span> {
+  alias  = <span class="str">"us_east_1"</span>
+  region = <span class="str">"us-east-1"</span>
+}
+
+resource <span class="str">"aws_acm_certificate"</span> <span class="str">"main"</span> {
+  provider                  = aws.us_east_1
+  domain_name               = var.domain_name
+  subject_alternative_names = [<span class="str">"*.${var.domain_name}"</span>]
+  validation_method         = <span class="str">"DNS"</span>
+  lifecycle { create_before_destroy = true }
+}
+
+<span class="cm"># Origin Access Control for S3 (replaces OAI)</span>
+resource <span class="str">"aws_cloudfront_origin_access_control"</span> <span class="str">"s3"</span> {
+  name                              = <span class="str">"s3-oac"</span>
+  origin_access_control_origin_type = <span class="str">"s3"</span>
+  signing_behavior                  = <span class="str">"always"</span>
+  signing_protocol                  = <span class="str">"sigv4"</span>
+}
+
+resource <span class="str">"aws_cloudfront_distribution"</span> <span class="str">"main"</span> {
+  aliases             = [var.domain_name, <span class="str">"www.${var.domain_name}"</span>]
+  enabled             = true
+  is_ipv6_enabled     = true
+  http_version        = <span class="str">"http2and3"</span>
+  price_class         = <span class="str">"PriceClass_100"</span>   <span class="cm"># US+Europe only (cheapest)</span>
+  web_acl_id          = aws_wafv2_web_acl.cloudfront.arn
+
+  <span class="cm"># Origin 1: S3 for static assets</span>
+  origin {
+    domain_name              = aws_s3_bucket.assets.bucket_regional_domain_name
+    origin_id                = <span class="str">"S3-assets"</span>
+    origin_access_control_id = aws_cloudfront_origin_access_control.s3.id
+  }
+
+  <span class="cm"># Origin 2: ALB for API</span>
+  origin {
+    domain_name = aws_lb.main.dns_name
+    origin_id   = <span class="str">"ALB-api"</span>
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = <span class="str">"https-only"</span>
+      origin_ssl_protocols   = [<span class="str">"TLSv1.2"</span>]
+    }
+  }
+
+  <span class="cm"># Default cache: S3 static assets (long TTL)</span>
+  default_cache_behavior {
+    target_origin_id       = <span class="str">"S3-assets"</span>
+    viewer_protocol_policy = <span class="str">"redirect-to-https"</span>
+    allowed_methods        = [<span class="str">"GET"</span>, <span class="str">"HEAD"</span>]
+    cached_methods         = [<span class="str">"GET"</span>, <span class="str">"HEAD"</span>]
+    compress               = true
+    cache_policy_id        = data.aws_cloudfront_cache_policy.optimized.id
+  }
+
+  <span class="cm"># /api/* → ALB (no caching)</span>
+  ordered_cache_behavior {
+    path_pattern           = <span class="str">"/api/*"</span>
+    target_origin_id       = <span class="str">"ALB-api"</span>
+    viewer_protocol_policy = <span class="str">"https-only"</span>
+    allowed_methods        = [<span class="str">"DELETE"</span>,<span class="str">"GET"</span>,<span class="str">"HEAD"</span>,<span class="str">"OPTIONS"</span>,<span class="str">"PATCH"</span>,<span class="str">"POST"</span>,<span class="str">"PUT"</span>]
+    cached_methods         = [<span class="str">"GET"</span>, <span class="str">"HEAD"</span>]
+    cache_policy_id        = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate.main.arn
+    ssl_support_method       = <span class="str">"sni-only"</span>
+    minimum_protocol_version = <span class="str">"TLSv1.2_2021"</span>
+  }
+
+  restrictions {
+    geo_restriction { restriction_type = <span class="str">"none"</span> }
+  }
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">10</div><div class="pmeta"><h3>VPC Endpoints — Keep AWS Traffic Off the Internet</h3><p>Use VPC Endpoints so that traffic from your private subnets to S3, ECR, Secrets Manager, and SSM never leaves the AWS network. Eliminates NAT Gateway data transfer costs for these services and improves security.</p><div class="pmeta-foot"><span class="ptag r">VPC Endpoints</span><span class="ptag g">Terraform</span><span class="ptag c">PrivateLink</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Gateway and Interface VPC Endpoints</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — vpc_endpoints.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Gateway Endpoints (free — no hourly cost)</span>
+<span class="cm"># S3 — most important, massive NAT cost savings</span>
+resource <span class="str">"aws_vpc_endpoint"</span> <span class="str">"s3"</span> {
+  vpc_id            = var.vpc_id
+  service_name      = <span class="str">"com.amazonaws.${var.region}.s3"</span>
+  vpc_endpoint_type = <span class="str">"Gateway"</span>
+  route_table_ids   = concat(
+    var.private_route_table_ids,
+    var.public_route_table_ids
+  )
+  tags = { Name = <span class="str">"s3-endpoint"</span> }
+}
+
+resource <span class="str">"aws_vpc_endpoint"</span> <span class="str">"dynamodb"</span> {
+  vpc_id            = var.vpc_id
+  service_name      = <span class="str">"com.amazonaws.${var.region}.dynamodb"</span>
+  vpc_endpoint_type = <span class="str">"Gateway"</span>
+  route_table_ids   = var.private_route_table_ids
+}
+
+<span class="cm"># Interface Endpoints (hourly cost ~$7.50/month each — use selectively)</span>
+<span class="cm"># ECR — so ECS/Docker pulls don't go through NAT GW</span>
+resource <span class="str">"aws_vpc_endpoint"</span> <span class="str">"ecr_api"</span> {
+  vpc_id              = var.vpc_id
+  service_name        = <span class="str">"com.amazonaws.${var.region}.ecr.api"</span>
+  vpc_endpoint_type   = <span class="str">"Interface"</span>
+  subnet_ids          = var.private_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  private_dns_enabled = true   <span class="cm"># resolves api.ecr.us-east-1.amazonaws.com → private IP</span>
+}
+
+resource <span class="str">"aws_vpc_endpoint"</span> <span class="str">"ssm"</span> {
+  vpc_id              = var.vpc_id
+  service_name        = <span class="str">"com.amazonaws.${var.region}.ssm"</span>
+  vpc_endpoint_type   = <span class="str">"Interface"</span>
+  subnet_ids          = var.private_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  private_dns_enabled = true
+}
+
+<span class="cm"># Session Manager also needs these three</span>
+resource <span class="str">"aws_vpc_endpoint"</span> <span class="str">"ssmmessages"</span> {
+  vpc_id              = var.vpc_id
+  service_name        = <span class="str">"com.amazonaws.${var.region}.ssmmessages"</span>
+  vpc_endpoint_type   = <span class="str">"Interface"</span>
+  subnet_ids          = var.private_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  private_dns_enabled = true
+}
+
+resource <span class="str">"aws_vpc_endpoint"</span> <span class="str">"secrets_manager"</span> {
+  vpc_id              = var.vpc_id
+  service_name        = <span class="str">"com.amazonaws.${var.region}.secretsmanager"</span>
+  vpc_endpoint_type   = <span class="str">"Interface"</span>
+  subnet_ids          = var.private_subnet_ids
+  security_group_ids  = [aws_security_group.endpoints.id]
+  private_dns_enabled = true
+}
+
+<span class="cm"># SG for endpoint ENIs — accept HTTPS from VPC CIDR</span>
+resource <span class="str">"aws_security_group"</span> <span class="str">"endpoints"</span> {
+  name   = <span class="str">"vpc-endpoints-sg"</span>
+  vpc_id = var.vpc_id
+  ingress {
+    from_port   = 443; to_port = 443; protocol = <span class="str">"tcp"</span>
+    cidr_blocks = [var.vpc_cidr]
+    description = <span class="str">"HTTPS from VPC"</span>
+  }
+}</pre></div>
+          </div></div>
+        </div>
+        <div class="note ok"><div class="note-i">💰</div><p>S3 Gateway Endpoint is <strong>free</strong> and eliminates data-transfer charges for S3 traffic via NAT Gateway ($0.045/GB). If your instances download from S3 heavily (e.g. pulling Docker layers, reading config files), this endpoint pays for itself within the first day.</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     P11-P15 COMPUTE
+════════════════════════════════════════ -->
+<div id="tab-p11p15" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 11–15 · Compute</div><h2>EC2, Load Balancers, Auto Scaling &amp; Serverless</h2></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">11</div><div class="pmeta"><h3>EC2 Production Setup — AMIs, User Data, EBS</h3><p>Build a production EC2 instance with a custom AMI (using Packer), user data bootstrap script, encrypted EBS volumes, instance profile, and automated snapshots. The base everything else in Phase 3 runs on.</p><div class="pmeta-foot"><span class="ptag s">EC2</span><span class="ptag g">Terraform</span><span class="ptag c">Packer</span><span class="ptag n">EBS</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Build a Custom AMI with Packer</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — packer/web-server.pkr.hcl</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">packer {
+  required_plugins {
+    amazon = {
+      source  = <span class="str">"github.com/hashicorp/amazon"</span>
+      version = <span class="str">"~> 1"</span>
+    }
+  }
+}
+
+variable <span class="str">"region"</span>      { default = <span class="str">"us-east-1"</span> }
+variable <span class="str">"environment"</span> { default = <span class="str">"production"</span> }
+
+source <span class="str">"amazon-ebs"</span> <span class="str">"web"</span> {
+  region        = var.region
+  instance_type = <span class="str">"t3.small"</span>   <span class="cm"># temporary build instance</span>
+  
+  <span class="cm"># Use latest Amazon Linux 2023 as base</span>
+  source_ami_filter {
+    filters = {
+      name                = <span class="str">"al2023-ami-2023*-x86_64"</span>
+      root-device-type    = <span class="str">"ebs"</span>
+      virtualization-type = <span class="str">"hvm"</span>
+    }
+    most_recent = true
+    owners      = [<span class="str">"amazon"</span>]
+  }
+  
+  ssh_username = <span class="str">"ec2-user"</span>
+  ami_name     = <span class="str">"myapp-web-${var.environment}-{{timestamp}}"</span>
+  
+  tags = {
+    Environment = var.environment
+    ManagedBy   = <span class="str">"packer"</span>
+    BuildDate   = <span class="str">"{{timestamp}}"</span>
+  }
+  
+  <span class="cm"># Encrypt the AMI and all snapshots</span>
+  encrypt_boot   = true
+  kms_key_id     = <span class="str">"alias/aws/ebs"</span>
+}
+
+build {
+  sources = [<span class="str">"source.amazon-ebs.web"</span>]
+  
+  provisioner <span class="str">"shell"</span> {
+    inline = [
+      <span class="str">"sudo dnf update -y"</span>,
+      <span class="str">"sudo dnf install -y docker nginx amazon-cloudwatch-agent"</span>,
+      <span class="str">"sudo systemctl enable docker nginx amazon-cloudwatch-agent"</span>,
+      <span class="str">"sudo usermod -aG docker ec2-user"</span>,
+    ]
+  }
+  
+  <span class="cm"># Upload and run a more complex script</span>
+  provisioner <span class="str">"script"</span> {
+    script = <span class="str">"./scripts/harden.sh"</span>
+  }
+}
+</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Build the AMI</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">packer init .
+packer validate web-server.pkr.hcl
+packer build web-server.pkr.hcl
+
+<span class="cm"># Get the new AMI ID</span>
+aws ec2 describe-images \
+    --owners self \
+    --filters Name=name,Values="myapp-web-production-*" \
+    --query <span class="str">"Images | sort_by(@, &CreationDate) | [-1].ImageId"</span> \
+    --output text</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>EC2 Instance with User Data in Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — ec2.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Find the latest AMI we built with Packer</span>
+data <span class="str">"aws_ami"</span> <span class="str">"web"</span> {
+  most_recent = true
+  owners      = [<span class="str">"self"</span>]
+  filter {
+    name   = <span class="str">"name"</span>
+    values = [<span class="str">"myapp-web-${var.environment}-*"</span>]
+  }
+}
+
+resource <span class="str">"aws_instance"</span> <span class="str">"web"</span> {
+  ami                    = data.aws_ami.web.id
+  instance_type          = var.instance_type
+  subnet_id              = var.private_subnet_ids[0]
+  vpc_security_group_ids = [var.app_sg_id]
+  iam_instance_profile   = aws_iam_instance_profile.app.name
+  
+  <span class="cm"># User data — runs once on first boot</span>
+  user_data = base64encode(templatefile(<span class="str">"${path.module}/templates/user_data.sh.tpl"</span>, {
+    environment     = var.environment
+    app_version     = var.app_version
+    ecr_registry    = var.ecr_registry
+    db_secret_arn   = var.db_secret_arn
+  }))
+
+  root_block_device {
+    volume_type           = <span class="str">"gp3"</span>
+    volume_size           = 30
+    encrypted             = true
+    delete_on_termination = true
+    tags = { Name = <span class="str">"web-root-${var.environment}"</span> }
+  }
+  
+  <span class="cm"># Additional EBS volume for application data</span>
+  ebs_block_device {
+    device_name           = <span class="str">"/dev/sdf"</span>
+    volume_type           = <span class="str">"gp3"</span>
+    volume_size           = 100
+    encrypted             = true
+    iops                  = 3000
+    throughput            = 125
+    delete_on_termination = false   <span class="cm"># keep data after instance termination</span>
+    tags = { Name = <span class="str">"web-data-${var.environment}"</span> }
+  }
+
+  metadata_options {
+    http_tokens   = <span class="str">"required"</span>   <span class="cm"># IMDSv2 only — prevents SSRF attacks</span>
+    http_endpoint = <span class="str">"enabled"</span>
+  }
+
+  tags = { Name = <span class="str">"web-${var.environment}"</span> }
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">12</div><div class="pmeta"><h3>Application Load Balancer — HTTPS, Rules &amp; Target Groups</h3><p>Deploy an ALB with HTTPS termination (ACM cert), host-based and path-based routing rules, multiple target groups, health checks, sticky sessions, and access logs to S3.</p><div class="pmeta-foot"><span class="ptag s">ALB</span><span class="ptag g">Terraform</span><span class="ptag c">ACM</span><span class="ptag n">HTTPS</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>ALB with HTTPS and Routing Rules</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — alb.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">resource <span class="str">"aws_lb"</span> <span class="str">"main"</span> {
+  name               = <span class="str">"${var.environment}-alb"</span>
+  internal           = false
+  load_balancer_type = <span class="str">"application"</span>
+  security_groups    = [var.alb_sg_id]
+  subnets            = var.public_subnet_ids
+
+  enable_deletion_protection = var.environment == <span class="str">"production"</span> ? true : false
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.bucket
+    prefix  = <span class="str">"alb/${var.environment}"</span>
+    enabled = true
+  }
+
+  tags = { Name = <span class="str">"${var.environment}-alb"</span> }
+}
+
+<span class="cm"># HTTPS Listener</span>
+resource <span class="str">"aws_lb_listener"</span> <span class="str">"https"</span> {
+  load_balancer_arn = aws_lb.main.arn
+  port              = <span class="str">"443"</span>
+  protocol          = <span class="str">"HTTPS"</span>
+  ssl_policy        = <span class="str">"ELBSecurityPolicy-TLS13-1-2-2021-06"</span>
+  certificate_arn   = aws_acm_certificate.main.arn
+
+  <span class="cm"># Default: forward to main app target group</span>
+  default_action {
+    type             = <span class="str">"forward"</span>
+    target_group_arn = aws_lb_target_group.app.arn
+  }
+}
+
+<span class="cm"># HTTP → HTTPS redirect</span>
+resource <span class="str">"aws_lb_listener"</span> <span class="str">"http_redirect"</span> {
+  load_balancer_arn = aws_lb.main.arn
+  port              = <span class="str">"80"</span>
+  protocol          = <span class="str">"HTTP"</span>
+  default_action {
+    type = <span class="str">"redirect"</span>
+    redirect {
+      port        = <span class="str">"443"</span>
+      protocol    = <span class="str">"HTTPS"</span>
+      status_code = <span class="str">"HTTP_301"</span>
+    }
+  }
+}
+
+<span class="cm"># API routing rule — /api/* → API target group</span>
+resource <span class="str">"aws_lb_listener_rule"</span> <span class="str">"api"</span> {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 100
+
+  action {
+    type             = <span class="str">"forward"</span>
+    target_group_arn = aws_lb_target_group.api.arn
+  }
+  condition {
+    path_pattern { values = [<span class="str">"/api/*"</span>] }
+  }
+}
+
+<span class="cm"># Target Group — App Servers</span>
+resource <span class="str">"aws_lb_target_group"</span> <span class="str">"app"</span> {
+  name             = <span class="str">"${var.environment}-app-tg"</span>
+  port             = 8000
+  protocol         = <span class="str">"HTTP"</span>
+  vpc_id           = var.vpc_id
+  target_type      = <span class="str">"instance"</span>
+
+  health_check {
+    enabled             = true
+    path                = <span class="str">"/health"</span>
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 5
+    interval            = 30
+    matcher             = <span class="str">"200"</span>
+  }
+
+  stickiness {
+    type            = <span class="str">"lb_cookie"</span>
+    cookie_duration = 86400
+    enabled         = false   <span class="cm"># disable for stateless apps</span>
+  }
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">13</div><div class="pmeta"><h3>Auto Scaling Groups — Elastic, Self-Healing Compute</h3><p>Build an ASG with launch templates, target tracking scaling policies, scheduled scaling, lifecycle hooks for graceful startup/shutdown, and instance refresh for zero-downtime deployments.</p><div class="pmeta-foot"><span class="ptag s">ASG</span><span class="ptag g">Terraform</span><span class="ptag c">Launch Templates</span><span class="ptag n">Scaling Policies</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Launch Template + Auto Scaling Group</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — asg.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">resource <span class="str">"aws_launch_template"</span> <span class="str">"app"</span> {
+  name_prefix   = <span class="str">"${var.environment}-app-"</span>
+  image_id      = data.aws_ami.web.id
+  instance_type = var.instance_type
+
+  iam_instance_profile { arn = aws_iam_instance_profile.app.arn }
+  vpc_security_group_ids = [var.app_sg_id]
+
+  user_data = base64encode(templatefile(<span class="str">"templates/user_data.sh.tpl"</span>, {
+    environment = var.environment
+    app_version = var.app_version
+  }))
+
+  block_device_mappings {
+    device_name = <span class="str">"/dev/xvda"</span>
+    ebs {
+      volume_size           = 30
+      volume_type           = <span class="str">"gp3"</span>
+      encrypted             = true
+      delete_on_termination = true
+    }
+  }
+
+  metadata_options {
+    http_tokens   = <span class="str">"required"</span>   <span class="cm"># IMDSv2</span>
+    http_endpoint = <span class="str">"enabled"</span>
+  }
+
+  tag_specifications {
+    resource_type = <span class="str">"instance"</span>
+    tags = { Name = <span class="str">"${var.environment}-app"</span>, Environment = var.environment }
+  }
+
+  lifecycle { create_before_destroy = true }
+}
+
+resource <span class="str">"aws_autoscaling_group"</span> <span class="str">"app"</span> {
+  name                = <span class="str">"${var.environment}-app-asg"</span>
+  vpc_zone_identifier = var.private_subnet_ids
+  target_group_arns   = [aws_lb_target_group.app.arn]
+  health_check_type   = <span class="str">"ELB"</span>   <span class="cm"># use ALB health check, not EC2 status</span>
+  health_check_grace_period = 300
+
+  min_size         = var.asg_min
+  max_size         = var.asg_max
+  desired_capacity = var.asg_desired
+
+  launch_template {
+    id      = aws_launch_template.app.id
+    version = <span class="str">"$Latest"</span>
+  }
+
+  <span class="cm"># Instance refresh — rolling deploy with new launch template</span>
+  instance_refresh {
+    strategy = <span class="str">"Rolling"</span>
+    preferences {
+      min_healthy_percentage = 50    <span class="cm"># keep 50% healthy during refresh</span>
+      instance_warmup        = 300
+    }
+  }
+
+  <span class="cm"># Protect from scale-in during deployments</span>
+  protect_from_scale_in = false
+
+  dynamic <span class="str">"tag"</span> {
+    for_each = { Environment = var.environment, ManagedBy = <span class="str">"terraform"</span> }
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
+  }
+}
+
+<span class="cm"># Target tracking: keep CPU at 60%</span>
+resource <span class="str">"aws_autoscaling_policy"</span> <span class="str">"cpu"</span> {
+  name                   = <span class="str">"cpu-target-tracking"</span>
+  autoscaling_group_name = aws_autoscaling_group.app.name
+  policy_type            = <span class="str">"TargetTrackingScaling"</span>
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = <span class="str">"ASGAverageCPUUtilization"</span>
+    }
+    target_value = 60.0
+  }
+}
+
+<span class="cm"># Scheduled scale-up for peak hours</span>
+resource <span class="str">"aws_autoscaling_schedule"</span> <span class="str">"peak"</span> {
+  scheduled_action_name  = <span class="str">"peak-hours"</span>
+  autoscaling_group_name = aws_autoscaling_group.app.name
+  min_size               = 3
+  max_size               = 20
+  desired_capacity       = 5
+  recurrence             = <span class="str">"0 9 * * MON-FRI"</span>   <span class="cm"># 9am weekdays</span>
+  time_zone              = <span class="str">"America/New_York"</span>
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">14</div><div class="pmeta"><h3>AWS Systems Manager — No More SSH Keys</h3><p>Replace SSH with Systems Manager Session Manager. Patch Manager to auto-patch your instances. Parameter Store for configuration. Run Command to execute commands across fleets without opening any ports.</p><div class="pmeta-foot"><span class="ptag s">SSM</span><span class="ptag g">Terraform</span><span class="ptag c">Patch Manager</span><span class="ptag n">Parameter Store</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Session Manager — SSH Without SSH</h4>
+            <p>Session Manager lets you open an interactive shell on any EC2 instance with the SSM agent running, without opening port 22, without SSH keys, and with a full audit log of every session.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Connect via Session Manager</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Install Session Manager plugin (once on your laptop)</span>
+sudo dnf install -y session-manager-plugin
+
+<span class="cm"># Start a session (no port 22 needed, no SSH key needed)</span>
+aws ssm start-session --target i-0123456789abcdef0
+
+<span class="cm"># Port forwarding through SSM (access RDS from your laptop)</span>
+aws ssm start-session \
+    --target i-0123456789abcdef0 \
+    --document-name AWS-StartPortForwardingSessionToRemoteHost \
+    --parameters <span class="str">'{"host":["mydb.cluster-xyz.us-east-1.rds.amazonaws.com"],"portNumber":["5432"],"localPortNumber":["5432"]}'</span>
+<span class="cm"># Now connect: psql -h localhost -p 5432 -U myuser mydb</span>
+
+<span class="cm"># SSH over SSM (if you must use SSH-based tools)</span>
+<span class="cm"># Add to ~/.ssh/config:</span>
+<span class="cm"># Host i-* mi-*</span>
+<span class="cm">#   ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Parameter Store — Configuration Management</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — parameters.tf — store config in SSM</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Standard parameter (not encrypted)</span>
+resource <span class="str">"aws_ssm_parameter"</span> <span class="str">"app_env"</span> {
+  name  = <span class="str">"/${var.environment}/myapp/environment"</span>
+  type  = <span class="str">"String"</span>
+  value = var.environment
+}
+
+<span class="cm"># SecureString parameter (encrypted with KMS)</span>
+resource <span class="str">"aws_ssm_parameter"</span> <span class="str">"db_url"</span> {
+  name   = <span class="str">"/${var.environment}/myapp/database_url"</span>
+  type   = <span class="str">"SecureString"</span>
+  value  = <span class="str">"postgresql://appuser:${random_password.db.result}@${aws_db_instance.main.endpoint}/myapp"</span>
+  key_id = aws_kms_key.app.id
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — Read parameters in your app</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">import boto3
+import os
+
+def get_config(env: str) -> dict:
+    """Fetch all app config from SSM Parameter Store."""
+    ssm = boto3.client('ssm', region_name='us-east-1')
+    
+    response = ssm.get_parameters_by_path(
+        Path=f'/{env}/myapp/',
+        Recursive=True,
+        WithDecryption=True    <span class="cm"># decrypt SecureString params</span>
+    )
+    
+    config = {}
+    for param in response['Parameters']:
+        key = param['Name'].split('/')[-1].upper()
+        config[key] = param['Value']
+    
+    return config
+
+<span class="cm"># On app startup:</span>
+config = get_config(os.environ.get('ENVIRONMENT', 'dev'))
+DATABASE_URL = config['DATABASE_URL']</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">15</div><div class="pmeta"><h3>Lambda &amp; API Gateway — Serverless Functions</h3><p>Deploy Python Lambda functions behind API Gateway. Build a real use case: a webhook receiver that processes events, writes to DynamoDB, and sends Slack notifications. Lambda Layers for shared dependencies.</p><div class="pmeta-foot"><span class="ptag s">Lambda</span><span class="ptag g">Terraform</span><span class="ptag c">API Gateway</span><span class="ptag n">DynamoDB</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Lambda Function in Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — lambda.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Package the Lambda function</span>
+data <span class="str">"archive_file"</span> <span class="str">"webhook"</span> {
+  type        = <span class="str">"zip"</span>
+  source_dir  = <span class="str">"${path.module}/lambda/webhook"</span>
+  output_path = <span class="str">"${path.module}/.build/webhook.zip"</span>
+  excludes    = [<span class="str">"__pycache__"</span>, <span class="str">"*.pyc"</span>, <span class="str">"tests"</span>]
+}
+
+resource <span class="str">"aws_lambda_function"</span> <span class="str">"webhook"</span> {
+  function_name    = <span class="str">"${var.environment}-webhook-processor"</span>
+  description      = <span class="str">"Process incoming webhooks"</span>
+  runtime          = <span class="str">"python3.12"</span>
+  handler          = <span class="str">"main.handler"</span>
+  role             = aws_iam_role.lambda_webhook.arn
+  filename         = data.archive_file.webhook.output_path
+  source_code_hash = data.archive_file.webhook.output_base64sha256
+
+  timeout     = 30      <span class="cm"># max 15 minutes, but keep short</span>
+  memory_size = 256     <span class="cm"># MB — also controls CPU allocation</span>
+
+  environment {
+    variables = {
+      ENVIRONMENT    = var.environment
+      TABLE_NAME     = aws_dynamodb_table.events.name
+      SLACK_SECRET   = aws_secretsmanager_secret.slack.arn
+    }
+  }
+
+  vpc_config {
+    subnet_ids         = var.private_subnet_ids
+    security_group_ids = [aws_security_group.lambda.id]
+  }
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.dlq.arn   <span class="cm"># failed invocations go here</span>
+  }
+
+  tracing_config { mode = <span class="str">"Active"</span> }   <span class="cm"># X-Ray tracing</span>
+
+  tags = { Name = <span class="str">"webhook-processor"</span> }
+}
+
+<span class="cm"># API Gateway HTTP API (v2 — cheaper, simpler than v1)</span>
+resource <span class="str">"aws_apigatewayv2_api"</span> <span class="str">"main"</span> {
+  name          = <span class="str">"${var.environment}-api"</span>
+  protocol_type = <span class="str">"HTTP"</span>
+  
+  cors_configuration {
+    allow_origins = [<span class="str">"https://${var.domain_name}"</span>]
+    allow_methods = [<span class="str">"GET"</span>, <span class="str">"POST"</span>, <span class="str">"PUT"</span>]
+    allow_headers = [<span class="str">"content-type"</span>, <span class="str">"authorization"</span>]
+  }
+}
+
+resource <span class="str">"aws_apigatewayv2_integration"</span> <span class="str">"webhook"</span> {
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = <span class="str">"AWS_PROXY"</span>
+  integration_uri        = aws_lambda_function.webhook.invoke_arn
+  payload_format_version = <span class="str">"2.0"</span>
+}
+
+resource <span class="str">"aws_apigatewayv2_route"</span> <span class="str">"webhook"</span> {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = <span class="str">"POST /webhooks/{source}"</span>
+  target    = <span class="str">"integrations/${aws_apigatewayv2_integration.webhook.id}"</span>
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     P16-P20 DATA & SECURITY
+════════════════════════════════════════ -->
+<div id="tab-p16p20" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 16–20 · Data &amp; Security</div><h2>Databases, Caching, Secrets &amp; Security Services</h2></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">16</div><div class="pmeta"><h3>RDS — Production PostgreSQL on AWS</h3><p>Deploy a production-grade RDS PostgreSQL cluster: Multi-AZ for HA, read replica, encrypted with KMS, automated backups, enhanced monitoring, RDS Proxy for connection pooling, and parameter groups tuned for performance.</p><div class="pmeta-foot"><span class="ptag k">RDS</span><span class="ptag g">Terraform</span><span class="ptag c">Multi-AZ</span><span class="ptag n">RDS Proxy</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>RDS PostgreSQL with Multi-AZ and Encryption</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — rds.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># DB Subnet Group (spans multiple AZs)</span>
+resource <span class="str">"aws_db_subnet_group"</span> <span class="str">"main"</span> {
+  name       = <span class="str">"${var.environment}-db-subnet-group"</span>
+  subnet_ids = var.db_subnet_ids
+  tags       = { Name = <span class="str">"${var.environment} DB Subnet Group"</span> }
+}
+
+<span class="cm"># Parameter Group — tune PostgreSQL settings</span>
+resource <span class="str">"aws_db_parameter_group"</span> <span class="str">"postgres15"</span> {
+  name   = <span class="str">"${var.environment}-pg15-params"</span>
+  family = <span class="str">"postgres15"</span>
+
+  parameter { name = <span class="str">"log_statement"</span>;             value = <span class="str">"ddl"</span> }
+  parameter { name = <span class="str">"log_min_duration_statement"</span>; value = <span class="str">"1000"</span> }   <span class="cm"># log slow queries >1s</span>
+  parameter { name = <span class="str">"shared_buffers"</span>;             value = <span class="str">"256MB"</span> }
+  parameter { name = <span class="str">"max_connections"</span>;             value = <span class="str">"100"</span> }
+}
+
+<span class="cm"># KMS key for RDS encryption</span>
+resource <span class="str">"aws_kms_key"</span> <span class="str">"rds"</span> {
+  description             = <span class="str">"RDS encryption key - ${var.environment}"</span>
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+}
+
+<span class="cm"># Random password (stored in Secrets Manager)</span>
+resource <span class="str">"random_password"</span> <span class="str">"db_master"</span> {
+  length  = 32
+  special = false   <span class="cm"># avoid chars that cause connection string issues</span>
+}
+
+resource <span class="str">"aws_secretsmanager_secret"</span> <span class="str">"db_credentials"</span> {
+  name                    = <span class="str">"${var.environment}/rds/master-credentials"</span>
+  recovery_window_in_days = 7
+}
+
+resource <span class="str">"aws_secretsmanager_secret_version"</span> <span class="str">"db_credentials"</span> {
+  secret_id = aws_secretsmanager_secret.db_credentials.id
+  secret_string = jsonencode({
+    username = <span class="str">"dbadmin"</span>
+    password = random_password.db_master.result
+    host     = aws_db_instance.main.address
+    port     = aws_db_instance.main.port
+    dbname   = <span class="str">"myapp"</span>
+  })
+}
+
+<span class="cm"># RDS Instance</span>
+resource <span class="str">"aws_db_instance"</span> <span class="str">"main"</span> {
+  identifier        = <span class="str">"${var.environment}-postgres"</span>
+  engine            = <span class="str">"postgres"</span>
+  engine_version    = <span class="str">"15.4"</span>
+  instance_class    = var.db_instance_class   <span class="cm"># db.t3.medium for dev, db.r6g.large for prod</span>
+  
+  db_name  = <span class="str">"myapp"</span>
+  username = <span class="str">"dbadmin"</span>
+  password = random_password.db_master.result
+
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [var.db_sg_id]
+  parameter_group_name   = aws_db_parameter_group.postgres15.name
+
+  storage_type      = <span class="str">"gp3"</span>
+  allocated_storage = 100
+  max_allocated_storage = 1000   <span class="cm"># auto-scale storage up to 1TB</span>
+  
+  storage_encrypted = true
+  kms_key_id        = aws_kms_key.rds.arn
+
+  multi_az               = var.environment == <span class="str">"production"</span>
+  publicly_accessible    = false
+
+  backup_retention_period   = 14      <span class="cm"># 14 days of automated backups</span>
+  backup_window             = <span class="str">"03:00-04:00"</span>
+  maintenance_window        = <span class="str">"Mon:04:00-Mon:05:00"</span>
+  auto_minor_version_upgrade = true
+
+  performance_insights_enabled          = true
+  performance_insights_retention_period = 7
+  monitoring_interval                   = 60
+  monitoring_role_arn                   = aws_iam_role.rds_monitoring.arn
+
+  enabled_cloudwatch_logs_exports = [<span class="str">"postgresql"</span>, <span class="str">"upgrade"</span>]
+
+  deletion_protection = var.environment == <span class="str">"production"</span>
+  skip_final_snapshot = var.environment != <span class="str">"production"</span>
+  final_snapshot_identifier = var.environment == <span class="str">"production"</span> ? <span class="str">"${var.environment}-final-$(timestamp())"</span> : null
+}
+
+<span class="cm"># Read Replica (for production)</span>
+resource <span class="str">"aws_db_instance"</span> <span class="str">"replica"</span> {
+  count               = var.environment == <span class="str">"production"</span> ? 1 : 0
+  identifier          = <span class="str">"${var.environment}-postgres-replica"</span>
+  replicate_source_db = aws_db_instance.main.identifier
+  instance_class      = var.db_instance_class
+  publicly_accessible = false
+  skip_final_snapshot = true
+  
+  vpc_security_group_ids = [var.db_sg_id]
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">17</div><div class="pmeta"><h3>ElastiCache Redis — Caching &amp; Session Storage</h3><p>Deploy a Redis cluster for application caching and session storage. Multi-AZ with automatic failover, encryption in transit and at rest, CloudWatch alarms for memory and connection limits.</p><div class="pmeta-foot"><span class="ptag k">ElastiCache</span><span class="ptag g">Terraform</span><span class="ptag c">Redis</span><span class="ptag n">Caching</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Redis Cluster with Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — elasticache.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">resource <span class="str">"aws_elasticache_subnet_group"</span> <span class="str">"main"</span> {
+  name       = <span class="str">"${var.environment}-redis-subnet-group"</span>
+  subnet_ids = var.private_subnet_ids
+}
+
+resource <span class="str">"aws_elasticache_replication_group"</span> <span class="str">"redis"</span> {
+  replication_group_id = <span class="str">"${var.environment}-redis"</span>
+  description          = <span class="str">"Redis cluster for ${var.environment}"</span>
+
+  node_type            = var.redis_node_type   <span class="cm"># cache.t3.small for dev</span>
+  num_cache_clusters   = var.environment == <span class="str">"production"</span> ? 2 : 1
+  
+  engine_version       = <span class="str">"7.2"</span>
+  port                 = 6379
+  parameter_group_name = <span class="str">"default.redis7"</span>
+
+  subnet_group_name  = aws_elasticache_subnet_group.main.name
+  security_group_ids = [var.redis_sg_id]
+
+  at_rest_encryption_enabled  = true
+  transit_encryption_enabled  = true
+  auth_token                  = random_password.redis_auth.result
+
+  automatic_failover_enabled = var.environment == <span class="str">"production"</span>
+  multi_az_enabled           = var.environment == <span class="str">"production"</span>
+
+  snapshot_retention_limit = 3
+  snapshot_window          = <span class="str">"05:00-06:00"</span>
+
+  log_delivery_configuration {
+    destination      = aws_cloudwatch_log_group.redis.name
+    destination_type = <span class="str">"cloudwatch-logs"</span>
+    log_format       = <span class="str">"text"</span>
+    log_type         = <span class="str">"slow-log"</span>
+  }
+}
+
+<span class="cm"># Store the auth token in Secrets Manager</span>
+resource <span class="str">"aws_secretsmanager_secret_version"</span> <span class="str">"redis"</span> {
+  secret_id = aws_secretsmanager_secret.redis.id
+  secret_string = jsonencode({
+    host     = aws_elasticache_replication_group.redis.primary_endpoint_address
+    port     = 6379
+    password = random_password.redis_auth.result
+  })
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">18</div><div class="pmeta"><h3>Secrets Manager &amp; KMS — Secure Secret Management</h3><p>Replace all environment variable secrets with Secrets Manager. Automatic rotation for RDS credentials. Envelope encryption with KMS CMKs. Cross-service access policies. The complete secrets lifecycle.</p><div class="pmeta-foot"><span class="ptag k">Secrets Manager</span><span class="ptag g">Terraform</span><span class="ptag c">KMS</span><span class="ptag n">Rotation</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>KMS Customer Managed Key + Automatic Secret Rotation</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — kms_secrets.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Customer Managed KMS Key for application secrets</span>
+resource <span class="str">"aws_kms_key"</span> <span class="str">"app_secrets"</span> {
+  description             = <span class="str">"App secrets encryption key"</span>
+  deletion_window_in_days = 30
+  enable_key_rotation     = true   <span class="cm"># AWS auto-rotates every 365 days</span>
+  
+  policy = data.aws_iam_policy_document.kms_policy.json
+  tags   = { Name = <span class="str">"app-secrets-${var.environment}"</span> }
+}
+
+resource <span class="str">"aws_kms_alias"</span> <span class="str">"app_secrets"</span> {
+  name          = <span class="str">"alias/${var.environment}/app-secrets"</span>
+  target_key_id = aws_kms_key.app_secrets.key_id
+}
+
+<span class="cm"># Enable automatic rotation for RDS credentials</span>
+resource <span class="str">"aws_secretsmanager_secret_rotation"</span> <span class="str">"db"</span> {
+  secret_id           = aws_secretsmanager_secret.db_credentials.id
+  rotation_lambda_arn = aws_lambda_function.rotate_db.arn
+  
+  rotation_rules {
+    automatically_after_days = 30   <span class="cm"># rotate every 30 days</span>
+    duration                 = <span class="str">"2h"</span>
+  }
+}
+
+output <span class="str">"secrets_manager_arns"</span> {
+  description = <span class="str">"ARNs for all managed secrets"</span>
+  value = {
+    db_credentials = aws_secretsmanager_secret.db_credentials.arn
+    redis          = aws_secretsmanager_secret.redis.arn
+    slack          = aws_secretsmanager_secret.slack.arn
+  }
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — Fetch secrets in your application</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">import boto3, json
+from functools import lru_cache
+
+@lru_cache(maxsize=32)
+def get_secret(secret_arn: str) -> dict:
+    """Fetch and cache a secret from Secrets Manager."""
+    sm = boto3.client('secretsmanager', region_name='us-east-1')
+    response = sm.get_secret_value(SecretId=secret_arn)
+    return json.loads(response['SecretString'])
+
+<span class="cm"># In your database connection code:</span>
+import os
+db_secret = get_secret(os.environ['DB_SECRET_ARN'])
+
+DATABASE_URL = (
+    f"postgresql://{db_secret['username']}:{db_secret['password']}"
+    f"@{db_secret['host']}:{db_secret['port']}/{db_secret['dbname']}"
+)
+
+<span class="cm"># Important: refresh the cache periodically in long-running apps</span>
+<span class="cm"># so rotated credentials are picked up automatically</span>
+get_secret.cache_clear()  <span class="cm"># call this on rotation event or every hour</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">19</div><div class="pmeta"><h3>Security Hardening — GuardDuty, WAF, Security Hub</h3><p>Enable GuardDuty (threat detection), Security Hub (centralised security findings), AWS Config (compliance rules), WAF v2 (web application firewall), and Inspector (vulnerability scanning). Build a security baseline you can audit against.</p><div class="pmeta-foot"><span class="ptag k">GuardDuty</span><span class="ptag g">Terraform</span><span class="ptag r">WAF</span><span class="ptag n">Security Hub</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>GuardDuty + Security Hub in Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — security.tf</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># GuardDuty — ML-powered threat detection</span>
+resource <span class="str">"aws_guardduty_detector"</span> <span class="str">"main"</span> {
+  enable                       = true
+  finding_publishing_frequency = <span class="str">"ONE_HOUR"</span>
+  
+  datasources {
+    s3_logs                   { enable = true }
+    kubernetes { audit_logs   { enable = true } }
+    malware_protection {
+      scan_ec2_instance_with_findings { ebs_volumes { enable = true } }
+    }
+  }
+}
+
+<span class="cm"># Security Hub — aggregate all security findings</span>
+resource <span class="str">"aws_securityhub_account"</span> <span class="str">"main"</span> {}
+
+resource <span class="str">"aws_securityhub_standards_subscription"</span> <span class="str">"cis"</span> {
+  standards_arn = <span class="str">"arn:aws:securityhub:::ruleset/cis-aws-foundations-benchmark/v/1.4.0"</span>
+  depends_on    = [aws_securityhub_account.main]
+}
+
+resource <span class="str">"aws_securityhub_standards_subscription"</span> <span class="str">"aws_best_practices"</span> {
+  standards_arn = <span class="str">"arn:aws:securityhub:us-east-1::standards/aws-foundational-security-best-practices/v/1.0.0"</span>
+  depends_on    = [aws_securityhub_account.main]
+}
+
+<span class="cm"># WAF Web ACL for CloudFront</span>
+resource <span class="str">"aws_wafv2_web_acl"</span> <span class="str">"cloudfront"</span> {
+  provider    = aws.us_east_1
+  name        = <span class="str">"${var.environment}-cloudfront-waf"</span>
+  scope       = <span class="str">"CLOUDFRONT"</span>
+  description = <span class="str">"WAF for CloudFront distribution"</span>
+
+  default_action { allow {} }
+
+  <span class="cm"># AWS Managed Rules — common threats</span>
+  rule {
+    name     = <span class="str">"AWSManagedRulesCommonRuleSet"</span>
+    priority = 10
+    override_action { none {} }
+    statement {
+      managed_rule_group_statement {
+        name        = <span class="str">"AWSManagedRulesCommonRuleSet"</span>
+        vendor_name = <span class="str">"AWS"</span>
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = <span class="str">"CommonRuleSetMetric"</span>
+      sampled_requests_enabled   = true
+    }
+  }
+
+  <span class="cm"># Rate limiting — block IPs that send >2000 req/5min</span>
+  rule {
+    name     = <span class="str">"RateLimitRule"</span>
+    priority = 20
+    action { block {} }
+    statement {
+      rate_based_statement {
+        limit              = 2000
+        aggregate_key_type = <span class="str">"IP"</span>
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = <span class="str">"RateLimitMetric"</span>
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = <span class="str">"WAFMetric"</span>
+    sampled_requests_enabled   = true
+  }
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">20</div><div class="pmeta"><h3>CloudWatch — Full Observability Stack</h3><p>Custom metrics, structured logging, dashboards, alarms with SNS, CloudWatch Logs Insights queries, and EventBridge rules for automated remediation. The observability foundation Phase 5 builds on.</p><div class="pmeta-foot"><span class="ptag k">CloudWatch</span><span class="ptag g">Terraform</span><span class="ptag c">Alarms</span><span class="ptag n">Dashboards</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>CloudWatch Alarms and Dashboard</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — cloudwatch.tf — production alarms</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">locals {
+  alarm_actions = [aws_sns_topic.alerts.arn]
+}
+
+<span class="cm"># ── EC2 / ASG Alarms ─────────────────────────────────</span>
+resource <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"high_cpu"</span> {
+  alarm_name          = <span class="str">"${var.environment}-high-cpu"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = 2
+  metric_name         = <span class="str">"CPUUtilization"</span>
+  namespace           = <span class="str">"AWS/EC2"</span>
+  period              = 300
+  statistic           = <span class="str">"Average"</span>
+  threshold           = 80
+  alarm_description   = <span class="str">"EC2 CPU > 80% for 10 minutes"</span>
+  alarm_actions       = local.alarm_actions
+  ok_actions          = local.alarm_actions
+  dimensions          = { AutoScalingGroupName = aws_autoscaling_group.app.name }
+}
+
+<span class="cm"># ── RDS Alarms ───────────────────────────────────────</span>
+resource <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"rds_cpu"</span> {
+  alarm_name          = <span class="str">"${var.environment}-rds-high-cpu"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = 3
+  metric_name         = <span class="str">"CPUUtilization"</span>
+  namespace           = <span class="str">"AWS/RDS"</span>
+  period              = 300
+  statistic           = <span class="str">"Average"</span>
+  threshold           = 75
+  alarm_actions       = local.alarm_actions
+  dimensions          = { DBInstanceIdentifier = aws_db_instance.main.id }
+}
+
+resource <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"rds_storage"</span> {
+  alarm_name          = <span class="str">"${var.environment}-rds-low-storage"</span>
+  comparison_operator = <span class="str">"LessThanThreshold"</span>
+  evaluation_periods  = 1
+  metric_name         = <span class="str">"FreeStorageSpace"</span>
+  namespace           = <span class="str">"AWS/RDS"</span>
+  period              = 300
+  statistic           = <span class="str">"Average"</span>
+  threshold           = 10737418240   <span class="cm"># 10GB in bytes</span>
+  alarm_actions       = local.alarm_actions
+  dimensions          = { DBInstanceIdentifier = aws_db_instance.main.id }
+}
+
+<span class="cm"># ── ALB Alarms ───────────────────────────────────────</span>
+resource <span class="str">"aws_cloudwatch_metric_alarm"</span> <span class="str">"alb_5xx"</span> {
+  alarm_name          = <span class="str">"${var.environment}-alb-5xx-errors"</span>
+  comparison_operator = <span class="str">"GreaterThanThreshold"</span>
+  evaluation_periods  = 1
+  metric_name         = <span class="str">"HTTPCode_ELB_5XX_Count"</span>
+  namespace           = <span class="str">"AWS/ApplicationELB"</span>
+  period              = 300
+  statistic           = <span class="str">"Sum"</span>
+  threshold           = 50
+  treat_missing_data  = <span class="str">"notBreaching"</span>
+  alarm_actions       = local.alarm_actions
+  dimensions          = { LoadBalancer = aws_lb.main.arn_suffix }
+}
+
+<span class="cm"># ── Dashboard ────────────────────────────────────────</span>
+resource <span class="str">"aws_cloudwatch_dashboard"</span> <span class="str">"main"</span> {
+  dashboard_name = <span class="str">"${var.environment}-overview"</span>
+  dashboard_body = templatefile(<span class="str">"templates/dashboard.json.tpl"</span>, {
+    region         = var.region
+    environment    = var.environment
+    asg_name       = aws_autoscaling_group.app.name
+    db_identifier  = aws_db_instance.main.id
+    alb_arn_suffix = aws_lb.main.arn_suffix
+  })
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     P21-P25 TERRAFORM ADVANCED
+════════════════════════════════════════ -->
+<div id="tab-p21p25" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 21–25 · Terraform Advanced</div><h2>Modules, Remote State, Terragrunt &amp; IaC CI/CD</h2></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">21</div><div class="pmeta"><h3>Terraform Modules — Reusable Infrastructure Components</h3><p>Refactor your VPC, EC2 ASG, and RDS Terraform into proper modules with inputs, outputs, and documentation. Publish to a local module registry. Consume the same module in dev, staging, and production with different variables.</p><div class="pmeta-foot"><span class="ptag g">Modules</span><span class="ptag g">Terraform</span><span class="ptag c">Registry</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Module Structure</h4>
+            <div class="ftree">
+<span class="dir">terraform/</span>
+├── <span class="dir">modules/</span>
+│   ├── <span class="dir">vpc/</span>
+│   │   ├── <span class="file">main.tf</span>         <span class="cmt"># resources</span>
+│   │   ├── <span class="file">variables.tf</span>    <span class="cmt"># input variables</span>
+│   │   ├── <span class="file">outputs.tf</span>      <span class="cmt"># return values</span>
+│   │   └── <span class="file">README.md</span>       <span class="cmt"># required documentation</span>
+│   ├── <span class="dir">asg/</span>
+│   │   ├── <span class="file">main.tf</span>
+│   │   ├── <span class="file">variables.tf</span>
+│   │   └── <span class="file">outputs.tf</span>
+│   └── <span class="dir">rds/</span>
+│       ├── <span class="file">main.tf</span>
+│       ├── <span class="file">variables.tf</span>
+│       └── <span class="file">outputs.tf</span>
+└── <span class="dir">environments/</span>
+    ├── <span class="dir">dev/</span>
+    │   └── <span class="file">main.tf</span>        <span class="cmt"># calls modules with dev vars</span>
+    ├── <span class="dir">staging/</span>
+    │   └── <span class="file">main.tf</span>
+    └── <span class="dir">production/</span>
+        └── <span class="file">main.tf</span></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — environments/production/main.tf — consuming your modules</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">module <span class="str">"vpc"</span> {
+  source = <span class="str">"../../modules/vpc"</span>
+  
+  environment         = <span class="str">"production"</span>
+  cidr_block          = <span class="str">"10.0.0.0/16"</span>
+  availability_zones  = [<span class="str">"us-east-1a"</span>, <span class="str">"us-east-1b"</span>, <span class="str">"us-east-1c"</span>]
+  enable_nat_gateway  = true
+  single_nat_gateway  = false   <span class="cm"># one per AZ for HA</span>
+}
+
+module <span class="str">"asg"</span> {
+  source = <span class="str">"../../modules/asg"</span>
+  
+  environment       = <span class="str">"production"</span>
+  vpc_id            = module.vpc.vpc_id
+  subnet_ids        = module.vpc.private_subnet_ids
+  instance_type     = <span class="str">"t3.large"</span>
+  min_size          = 3
+  max_size          = 20
+  desired_capacity  = 5
+  target_group_arns = [module.alb.target_group_arn]
+  
+  depends_on = [module.vpc]
+}
+
+module <span class="str">"rds"</span> {
+  source = <span class="str">"../../modules/rds"</span>
+  
+  environment      = <span class="str">"production"</span>
+  vpc_id           = module.vpc.vpc_id
+  subnet_ids       = module.vpc.db_subnet_ids
+  instance_class   = <span class="str">"db.r6g.large"</span>
+  multi_az         = true
+  app_sg_id        = module.asg.app_security_group_id
+
+  depends_on = [module.vpc]
+}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">22</div><div class="pmeta"><h3>Remote State — S3 Backend with DynamoDB Locking</h3><p>Move from local state to a remote S3 backend with DynamoDB state locking. Import existing manually-created resources. Use terraform workspace for environment isolation. State operations: mv, rm, import, taint.</p><div class="pmeta-foot"><span class="ptag g">Remote State</span><span class="ptag g">Terraform</span><span class="ptag c">S3 Backend</span><span class="ptag n">DynamoDB</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Bootstrap the S3 Backend (chicken-and-egg problem)</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create backend infrastructure with AWS CLI first</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="var">ACCOUNT_ID</span>=$(aws sts get-caller-identity --query Account --output text)
+<span class="var">REGION</span>=<span class="str">"us-east-1"</span>
+<span class="var">BUCKET</span>=<span class="str">"terraform-state-${ACCOUNT_ID}"</span>
+<span class="var">TABLE</span>=<span class="str">"terraform-state-locks"</span>
+
+<span class="cm"># Create state bucket</span>
+aws s3api create-bucket --bucket <span class="str">"$BUCKET"</span> --region <span class="str">"$REGION"</span>
+aws s3api put-bucket-versioning --bucket <span class="str">"$BUCKET"</span> --versioning-configuration Status=Enabled
+aws s3api put-bucket-encryption --bucket <span class="str">"$BUCKET"</span> \
+    --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+aws s3api put-public-access-block --bucket <span class="str">"$BUCKET"</span> \
+    --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+
+<span class="cm"># Create DynamoDB table for state locking</span>
+aws dynamodb create-table \
+    --table-name <span class="str">"$TABLE"</span> \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --billing-mode PAY_PER_REQUEST \
+    --region <span class="str">"$REGION"</span>
+
+echo <span class="str">"✅ Backend infrastructure created"</span>
+echo <span class="str">"Add this to your Terraform:"</span>
+cat <<EOF
+terraform {
+  backend "s3" {
+    bucket         = "$BUCKET"
+    key            = "production/terraform.tfstate"
+    region         = "$REGION"
+    dynamodb_table = "$TABLE"
+    encrypt        = true
+  }
+}
+EOF</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — State surgery commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Import existing resource into state</span>
+terraform import aws_s3_bucket.assets existing-bucket-name
+
+<span class="cm"># Move resource in state (when renaming a resource in code)</span>
+terraform state mv aws_instance.web aws_instance.app_server
+
+<span class="cm"># Remove from state (stop managing without deleting)</span>
+terraform state rm aws_iam_role.old_role
+
+<span class="cm"># Force replacement on next apply</span>
+terraform taint aws_instance.web
+
+<span class="cm"># Pull remote state locally for inspection</span>
+terraform state pull > local_state_backup.json
+
+<span class="cm"># List all resources in state</span>
+terraform state list
+
+<span class="cm"># Show details of a specific resource</span>
+terraform state show aws_db_instance.main</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">23</div><div class="pmeta"><h3>Terragrunt — DRY Multi-Environment Terraform</h3><p>Eliminate Terraform boilerplate with Terragrunt. Single terragrunt.hcl per environment, auto-generated backend config, dependency management between modules, run-all for deploying entire environments in one command.</p><div class="pmeta-foot"><span class="ptag g">Terragrunt</span><span class="ptag g">Terraform</span><span class="ptag c">DRY</span><span class="ptag n">Multi-env</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Terragrunt Structure</h4>
+            <div class="ftree">
+<span class="dir">infrastructure/</span>
+├── <span class="file">terragrunt.hcl</span>         <span class="cmt"># root config (backend, providers)</span>
+└── <span class="dir">environments/</span>
+    ├── <span class="dir">_global/</span>             <span class="cmt"># cross-env vars</span>
+    │   └── <span class="file">env.yaml</span>
+    ├── <span class="dir">dev/</span>
+    │   ├── <span class="file">env.yaml</span>         <span class="cmt"># dev-specific vars</span>
+    │   ├── <span class="dir">vpc/</span>
+    │   │   └── <span class="file">terragrunt.hcl</span>
+    │   ├── <span class="dir">asg/</span>
+    │   │   └── <span class="file">terragrunt.hcl</span>
+    │   └── <span class="dir">rds/</span>
+    │       └── <span class="file">terragrunt.hcl</span>
+    └── <span class="dir">production/</span>
+        ├── <span class="file">env.yaml</span>
+        ├── <span class="dir">vpc/</span>
+        │   └── <span class="file">terragrunt.hcl</span>
+        ├── <span class="dir">asg/</span>
+        │   └── <span class="file">terragrunt.hcl</span>
+        └── <span class="dir">rds/</span>
+            └── <span class="file">terragrunt.hcl</span></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — root terragrunt.hcl — auto-configure S3 backend per environment</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">locals {
+  env_vars    = read_terragrunt_config(find_in_parent_folders(<span class="str">"env.yaml"</span>))
+  account_id  = get_aws_account_id()
+  region      = <span class="str">"us-east-1"</span>
+  environment = local.env_vars.locals.environment
+}
+
+<span class="cm"># Auto-generate backend config — no boilerplate in each module!</span>
+generate <span class="str">"backend"</span> {
+  path      = <span class="str">"backend.tf"</span>
+  if_exists = <span class="str">"overwrite_terragrunt"</span>
+  contents  = <<EOF
+terraform {
+  backend "s3" {
+    bucket         = "terraform-state-${local.account_id}"
+    key            = "${local.environment}/${path_relative_to_include()}/terraform.tfstate"
+    region         = "${local.region}"
+    dynamodb_table = "terraform-state-locks"
+    encrypt        = true
+  }
+}
+EOF
+}
+
+<span class="cm"># Auto-generate provider config</span>
+generate <span class="str">"provider"</span> {
+  path      = <span class="str">"provider.tf"</span>
+  if_exists = <span class="str">"overwrite_terragrunt"</span>
+  contents  = <<EOF
+provider "aws" {
+  region = "${local.region}"
+  default_tags {
+    tags = {
+      Environment = "${local.environment}"
+      ManagedBy   = "terragrunt"
+    }
+  }
+}
+EOF
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">hcl</span> — environments/production/rds/terragrunt.hcl — module call with dependency</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">include <span class="str">"root"</span> { path = find_in_parent_folders() }
+
+terraform { source = <span class="str">"../../../../modules/rds"</span> }
+
+<span class="cm"># Declare dependency on VPC module</span>
+dependency <span class="str">"vpc"</span> {
+  config_path = <span class="str">"../vpc"</span>
+  mock_outputs = {
+    vpc_id          = <span class="str">"vpc-mock"</span>
+    db_subnet_ids   = [<span class="str">"subnet-mock"</span>]
+  }
+}
+
+inputs = {
+  environment    = <span class="str">"production"</span>
+  instance_class = <span class="str">"db.r6g.large"</span>
+  multi_az       = true
+  vpc_id         = dependency.vpc.outputs.vpc_id
+  subnet_ids     = dependency.vpc.outputs.db_subnet_ids
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Terragrunt commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Plan/apply a single module</span>
+cd environments/production/rds
+terragrunt plan
+terragrunt apply
+
+<span class="cm"># Deploy entire environment in dependency order</span>
+cd environments/production
+terragrunt run-all plan
+terragrunt run-all apply   <span class="cm"># VPC → SGs → ASG + RDS (in correct order)</span>
+
+<span class="cm"># Destroy entire environment (careful!)</span>
+terragrunt run-all destroy --terragrunt-reverse-order</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">24</div><div class="pmeta"><h3>Terraform Testing &amp; Policy as Code</h3><p>Scan your Terraform with Checkov, tfsec, and Terrascan before it reaches AWS. Write custom OPA/Conftest policies. Build a pre-commit hook and CI quality gate that fails if any security policy is violated.</p><div class="pmeta-foot"><span class="ptag g">Checkov</span><span class="ptag g">tfsec</span><span class="ptag c">OPA</span><span class="ptag n">Conftest</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Install and Run IaC Scanners</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install and run Checkov, tfsec, Terrascan</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Checkov — 1000+ built-in checks</span>
+pip install checkov --break-system-packages
+
+checkov -d . \
+    --framework terraform \
+    --check CKV_AWS_18,CKV_AWS_21,CKV2_AWS_6 \   <span class="cm"># specific checks</span>
+    --output sarif \
+    --output-file results.sarif
+
+<span class="cm"># Or check everything and show only failures</span>
+checkov -d . --framework terraform --compact --quiet
+
+<span class="cm"># tfsec — fast, lightweight Terraform scanner</span>
+curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
+
+tfsec . \
+    --minimum-severity HIGH \
+    --format sarif \
+    --out tfsec-results.sarif
+
+<span class="cm"># Terrascan — NIST/PCI/GDPR compliance checks</span>
+curl -L "$(curl -s https://api.github.com/repos/tenable/terrascan/releases/latest | \
+    grep -o 'https://github.com[^"]*Linux_x86_64.tar.gz')" | tar -xz terrascan
+
+terrascan scan -t aws -i terraform -d . \
+    --severity HIGH \
+    --output json | jq .results.violations</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Custom OPA Policy — Enforce Tagging in Terraform</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">rego</span> — policies/aws_tagging.rego</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">package aws.tagging
+
+import future.keywords
+
+<span class="cm"># Required tags for all taggable resources</span>
+required_tags := {<span class="str">"Environment"</span>, <span class="str">"Service"</span>, <span class="str">"Team"</span>, <span class="str">"ManagedBy"</span>}
+
+<span class="cm"># Deny resources missing required tags</span>
+deny contains msg if {
+  resource := input.resource_changes[_]
+  resource.change.actions[_] in [<span class="str">"create"</span>, <span class="str">"update"</span>]
+  
+  <span class="cm"># Check if resource type supports tagging</span>
+  startswith(resource.type, <span class="str">"aws_"</span>)
+  
+  actual_tags := {k | resource.change.after.tags[k]}
+  missing := required_tags - actual_tags
+  count(missing) > 0
+  
+  msg := sprintf(
+    <span class="str">"Resource %s (%s) is missing required tags: %v"</span>,
+    [resource.address, resource.type, missing]
+  )
+}
+
+<span class="cm"># Deny production without deletion_protection</span>
+deny contains msg if {
+  resource := input.resource_changes[_]
+  resource.type == <span class="str">"aws_db_instance"</span>
+  resource.change.after.tags.Environment == <span class="str">"production"</span>
+  not resource.change.after.deletion_protection
+  
+  msg := sprintf(
+    <span class="str">"Production RDS %s must have deletion_protection = true"</span>,
+    [resource.address]
+  )
+}</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Run Conftest against Terraform plan</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Install Conftest</span>
+curl -L https://github.com/open-policy-agent/conftest/releases/latest/download/conftest_Linux_x86_64.tar.gz | tar xz
+
+<span class="cm"># Create Terraform plan JSON</span>
+terraform plan -out=tfplan
+terraform show -json tfplan > tfplan.json
+
+<span class="cm"># Test against OPA policies</span>
+conftest test tfplan.json \
+    --policy policies/ \
+    --namespace aws
+
+<span class="cm"># In CI — fail if any violations</span>
+conftest test tfplan.json --policy policies/ --namespace aws
+<span class="cm"># Exit code 1 if failures found</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">25</div><div class="pmeta"><h3>🏆 Capstone — Full Production AWS Stack via IaC CI/CD</h3><p>Bring everything together: complete multi-tier AWS infrastructure (VPC + EC2 ASG + ALB + CloudFront + WAF + RDS + ElastiCache + Secrets Manager + GuardDuty) — all Terraform, scanned with Checkov+tfsec, deployed via GitHub Actions CI/CD. One git push provisions or updates your entire production stack.</p><div class="pmeta-foot"><span class="ptag c">Full Capstone</span><span class="ptag g">All Tools</span><span class="ptag k">Production</span><span class="diff cap">Capstone</span><span class="ptime">⏱ 10–14 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="note info"><div class="note-i">🎯</div><p><strong>Capstone Goal:</strong> A single <code>git push</code> to main runs a CI/CD pipeline that: lints HCL → validates Terraform → runs Checkov+tfsec → generates a Terraform plan → posts plan as a PR comment → waits for approval → applies the plan → runs smoke tests against the new infrastructure → posts a Slack notification of the outcome. The entire AWS stack is reproducible from code.</p></div>
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Complete Repository Structure</h4>
+            <div class="ftree">
+<span class="dir">devops-phase3-capstone/</span>
+├── <span class="dir">infrastructure/</span>
+│   ├── <span class="file">terragrunt.hcl</span>        <span class="cmt"># root config</span>
+│   ├── <span class="dir">modules/</span>
+│   │   ├── <span class="dir">vpc/</span>
+│   │   ├── <span class="dir">security-groups/</span>
+│   │   ├── <span class="dir">ec2-asg/</span>
+│   │   ├── <span class="dir">alb/</span>
+│   │   ├── <span class="dir">rds/</span>
+│   │   ├── <span class="dir">elasticache/</span>
+│   │   ├── <span class="dir">cloudfront/</span>
+│   │   └── <span class="dir">security/</span>
+│   └── <span class="dir">environments/</span>
+│       ├── <span class="dir">dev/</span>
+│       └── <span class="dir">production/</span>
+├── <span class="dir">policies/</span>
+│   ├── <span class="file">aws_tagging.rego</span>
+│   ├── <span class="file">aws_security.rego</span>
+│   └── <span class="file">aws_cost.rego</span>
+├── <span class="dir">tests/</span>
+│   └── <span class="file">infra_smoke_test.sh</span>
+└── <span class="dir">.github/workflows/</span>
+    └── <span class="file">terraform-ci.yml</span></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Terraform CI/CD Pipeline</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — .github/workflows/terraform-ci.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">name: 🏗️ Terraform Infrastructure Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths: ['infrastructure/**']
+  pull_request:
+    paths: ['infrastructure/**']
+
+env:
+  TF_VERSION: 1.7.0
+  TG_VERSION: 0.55.0
+
+jobs:
+  validate:
+    name: Validate &amp; Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: {terraform_version: ${{ env.TF_VERSION }}}
+
+      - name: Terraform Format Check
+        run: terraform fmt -recursive -check infrastructure/
+
+      - name: Terraform Validate
+        run: |
+          cd infrastructure/environments/production
+          terraform init -backend=false
+          terraform validate
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov IaC scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: infrastructure/
+          framework: terraform
+          soft_fail: false
+          output_format: sarif
+          output_file_path: checkov.sarif
+
+      - name: tfsec scan
+        uses: aquasecurity/tfsec-action@v1
+        with:
+          working_directory: infrastructure/
+          minimum_severity: HIGH
+
+      - name: Upload SARIF results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with: {sarif_file: checkov.sarif}
+
+  plan:
+    name: Terraform Plan
+    needs: [validate, security-scan]
+    runs-on: ubuntu-latest
+    outputs:
+      plan-exitcode: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: {terraform_version: ${{ env.TF_VERSION }}}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install Terragrunt
+        run: |
+          curl -Lo terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${{ env.TG_VERSION }}/terragrunt_linux_amd64"
+          chmod +x terragrunt && sudo mv terragrunt /usr/local/bin/
+
+      - name: Terragrunt Plan
+        id: plan
+        working-directory: infrastructure/environments/production
+        run: |
+          terragrunt run-all plan -no-color 2>&amp;1 | tee plan.txt
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Post plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('infrastructure/environments/production/plan.txt', 'utf8');
+            const truncated = plan.length > 50000 ? plan.substring(0, 50000) + '\n... truncated ...' : plan;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## Terraform Plan\n```hcl\n' + truncated + '\n```'
+            });
+
+  apply:
+    name: Apply to Production
+    needs: plan
+    if: github.ref == 'refs/heads/main' && needs.plan.outputs.plan-exitcode == '2'
+    runs-on: ubuntu-latest
+    environment: production   <span class="cm"># requires manual approval</span>
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: {terraform_version: ${{ env.TF_VERSION }}}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install Terragrunt
+        run: |
+          curl -Lo terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${{ env.TG_VERSION }}/terragrunt_linux_amd64"
+          chmod +x terragrunt && sudo mv terragrunt /usr/local/bin/
+
+      - name: Terragrunt Apply
+        working-directory: infrastructure/environments/production
+        run: terragrunt run-all apply --terragrunt-non-interactive
+
+      - name: Run infrastructure smoke tests
+        run: bash tests/infra_smoke_test.sh
+
+      - name: Notify Slack
+        if: always()
+        env: {SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}}
+        run: |
+          python automation/notifications/slack_notifier.py \
+            --env production \
+            --version "infra-$(git rev-parse --short HEAD)" \
+            --status ${{ job.status == 'success' && 'success' || 'failure' }}</pre></div>
+            <div class="note ok"><div class="note-i">✅</div><p><strong>Phase 3 Complete.</strong> You have a complete production AWS environment defined entirely as code, scanned for security issues before every apply, and deployed via a reviewable CI/CD pipeline. The same infrastructure that costs AWS $50k/month for enterprise clients is now yours to run on a learning budget. Phase 4 (Kubernetes) deploys your Phase 2 containers onto this infrastructure.</p></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     CHEAT SHEET
+════════════════════════════════════════ -->
+<div id="tab-cheatsheet" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Quick Reference</div><h2>Phase 3 Command Reference</h2></div>
+
+  <div class="cs-grid">
+    <div class="cs-card"><h5>🏗️ Terraform Core</h5>
+      <div class="cs-row"><span class="cs-cmd">terraform init</span><span class="cs-desc">initialise, download providers</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform fmt -recursive</span><span class="cs-desc">format all .tf files</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform validate</span><span class="cs-desc">check syntax</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform plan -out=tfplan</span><span class="cs-desc">save plan to file</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform apply tfplan</span><span class="cs-desc">apply saved plan only</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform destroy -target x</span><span class="cs-desc">destroy one resource</span></div>
+    </div>
+    <div class="cs-card"><h5>🗃️ Terraform State</h5>
+      <div class="cs-row"><span class="cs-cmd">terraform state list</span><span class="cs-desc">list all managed resources</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform state show res</span><span class="cs-desc">show resource details</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform import res id</span><span class="cs-desc">import existing resource</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform state mv a b</span><span class="cs-desc">rename in state</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform state rm res</span><span class="cs-desc">stop managing resource</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform taint res</span><span class="cs-desc">force recreation</span></div>
+    </div>
+    <div class="cs-card"><h5>🌿 Terragrunt</h5>
+      <div class="cs-row"><span class="cs-cmd">terragrunt plan</span><span class="cs-desc">plan single module</span></div>
+      <div class="cs-row"><span class="cs-cmd">terragrunt run-all plan</span><span class="cs-desc">plan all modules in order</span></div>
+      <div class="cs-row"><span class="cs-cmd">terragrunt run-all apply</span><span class="cs-desc">apply all modules</span></div>
+      <div class="cs-row"><span class="cs-cmd">terragrunt graph-dependencies</span><span class="cs-desc">show module dep graph</span></div>
+      <div class="cs-row"><span class="cs-cmd">terragrunt validate-inputs</span><span class="cs-desc">check required inputs</span></div>
+    </div>
+    <div class="cs-card"><h5>🔐 IAM &amp; STS</h5>
+      <div class="cs-row"><span class="cs-cmd">aws sts get-caller-identity</span><span class="cs-desc">who am I</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws sts assume-role --role-arn x</span><span class="cs-desc">assume a role</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws iam simulate-principal-policy</span><span class="cs-desc">test permissions</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws iam get-policy-version</span><span class="cs-desc">read policy JSON</span></div>
+    </div>
+    <div class="cs-card"><h5>🌐 VPC &amp; Networking</h5>
+      <div class="cs-row"><span class="cs-cmd">aws ec2 describe-vpcs</span><span class="cs-desc">list VPCs</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ec2 describe-subnets</span><span class="cs-desc">list subnets</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ec2 describe-route-tables</span><span class="cs-desc">list route tables</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ec2 describe-security-groups</span><span class="cs-desc">list SGs</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ec2 describe-flow-logs</span><span class="cs-desc">check flow log status</span></div>
+    </div>
+    <div class="cs-card"><h5>🖥️ EC2 &amp; ASG</h5>
+      <div class="cs-row"><span class="cs-cmd">aws ec2 describe-instances</span><span class="cs-desc">list instances</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ssm start-session --target i-x</span><span class="cs-desc">shell via SSM</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws autoscaling describe-asg</span><span class="cs-desc">ASG details</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws autoscaling start-instance-refresh</span><span class="cs-desc">rolling deploy</span></div>
+    </div>
+    <div class="cs-card"><h5>🛡️ Security Scanning</h5>
+      <div class="cs-row"><span class="cs-cmd">checkov -d . --framework terraform</span><span class="cs-desc">scan Terraform</span></div>
+      <div class="cs-row"><span class="cs-cmd">tfsec . --minimum-severity HIGH</span><span class="cs-desc">scan for HIGH+ issues</span></div>
+      <div class="cs-row"><span class="cs-cmd">conftest test tfplan.json</span><span class="cs-desc">OPA policy check</span></div>
+      <div class="cs-row"><span class="cs-cmd">terraform validate</span><span class="cs-desc">syntax check before scan</span></div>
+    </div>
+    <div class="cs-card"><h5>💡 Key Principles</h5>
+      <div class="cs-row"><span class="cs-cmd">Multi-AZ always</span><span class="cs-desc">RDS, ASG, ELB across AZs</span></div>
+      <div class="cs-row"><span class="cs-cmd">No public IPs in private</span><span class="cs-desc">use NAT GW for egress</span></div>
+      <div class="cs-row"><span class="cs-cmd">SG references over CIDRs</span><span class="cs-desc">for internal traffic</span></div>
+      <div class="cs-row"><span class="cs-cmd">IMDSv2 required</span><span class="cs-desc">http_tokens = required</span></div>
+      <div class="cs-row"><span class="cs-cmd">S3 VPC endpoint (free)</span><span class="cs-desc">saves huge NAT costs</span></div>
+    </div>
+  </div>
+
+  <div class="concept" style="margin-top:28px;">
+    <h3>🎓 What's Next — Phase 4: Kubernetes</h3>
+    <p>Phase 3 is complete. You now have real AWS infrastructure defined as code, scanned for security violations, and deployed via a reviewable pipeline. <strong>Phase 4 (Kubernetes)</strong> takes your Phase 2 Docker containers and runs them on Kubernetes — first locally with k3s/kind, then on AWS EKS using the Terraform from Phase 3. The VPC you built in P06, the IAM roles from P02, the RDS from P16 — all of it becomes the foundation for your Kubernetes cluster. Everything stacks.</p>
+  </div>
+</div>
+
+</div>
+</div>
+
+<footer>
+<div class="wrap">
+  DevOps Mastery · <span>Phase 3 of 6</span> · AWS Core Infrastructure · Terraform IaC · 25 Projects
+</div>
+</footer>
+
+<script>
+function st(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function tp(card) {
+  const wasOpen = card.classList.contains('open');
+  card.closest('.proj-list').querySelectorAll('.pc').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) {
+    card.classList.add('open');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  }
+}
+function cp(btn) {
+  const code = btn.closest('.cb').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('#tab-all .pc');
+  if (first) first.classList.add('open');
+});
+</script>
+</body>
+</html>

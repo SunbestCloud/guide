@@ -1,0 +1,2847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps Phase 2 — Docker, CI/CD & Python Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0a0e0f;
+  --bg2:       #0d1214;
+  --bg3:       #101618;
+  --panel:     #131a1c;
+  --panel2:    #182022;
+  --border:    #1e2a2d;
+  --border2:   #243438;
+  --border3:   #2e4248;
+
+  --teal:      #14b8a6;
+  --teal2:     #2dd4bf;
+  --teal3:     #99f6e4;
+  --teal-dim:  rgba(20,184,166,0.1);
+
+  --steel:     #94a3b8;
+  --steel2:    #cbd5e1;
+  --orange:    #fb923c;
+  --orange2:   #fed7aa;
+  --green:     #4ade80;
+  --green2:    #bbf7d0;
+  --yellow:    #facc15;
+  --yellow2:   #fef08a;
+  --red:       #f87171;
+  --red2:      #fecaca;
+  --violet:    #a78bfa;
+  --violet2:   #ddd6fe;
+
+  --text:      #e2eaec;
+  --text2:     #607880;
+  --text3:     #334550;
+
+  --code-bg:   #070b0c;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  font-size:15px;
+  line-height:1.7;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* grid texture */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(20,184,166,0.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(20,184,166,0.015) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+}
+
+.wrap{max-width:1140px;margin:0 auto;padding:0 28px;position:relative;z-index:1;}
+
+/* ── TOPBAR ── */
+.topbar{
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  padding:9px 0;
+  position:relative;z-index:10;
+}
+.tb-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;letter-spacing:0.1em;text-transform:uppercase;
+}
+.tb-left{display:flex;align-items:center;gap:18px;color:var(--text3);}
+.tb-brand{color:var(--teal2);font-weight:600;}
+.tb-right{display:flex;gap:16px;}
+.tb-s .l{color:var(--text3);}
+.tb-s .v{color:var(--teal2);font-weight:600;}
+
+/* ── HEADER ── */
+header{
+  padding:56px 0 52px;
+  border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+header::after{
+  content:'';position:absolute;
+  bottom:-1px;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+}
+
+/* decorative container graphic */
+.hdr-deco{
+  position:absolute;right:-40px;top:0;bottom:0;
+  display:flex;align-items:center;
+  gap:3px;opacity:0.04;pointer-events:none;
+}
+.hdr-deco-col{
+  display:flex;flex-direction:column;gap:3px;
+}
+.hdr-deco-box{
+  width:32px;height:32px;
+  border:1px solid var(--teal);
+}
+
+.p-badge{
+  display:inline-flex;align-items:center;gap:10px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--teal2);margin-bottom:18px;
+}
+.p-badge::before{
+  content:'';width:24px;height:1px;background:var(--teal);
+}
+.p-badge::after{
+  content:'';width:6px;height:6px;
+  border:1px solid var(--teal);
+  transform:rotate(45deg);
+}
+
+h1{
+  font-family:'Syne',sans-serif;
+  font-size:clamp(36px,6vw,78px);
+  font-weight:800;
+  line-height:0.95;
+  letter-spacing:-0.03em;
+  color:var(--text);
+  margin-bottom:8px;
+}
+h1 .accent{
+  color:var(--teal2);
+  display:block;
+}
+h1 .sub-title{
+  font-family:'Lora',serif;
+  font-weight:400;
+  font-style:italic;
+  font-size:0.45em;
+  color:var(--text2);
+  letter-spacing:0;
+  display:block;
+  margin-top:10px;
+}
+
+.hdr-lead{
+  max-width:640px;color:var(--text2);
+  font-size:14.5px;line-height:1.85;
+  margin:22px 0 30px;
+  font-weight:400;
+}
+
+.badge-row{display:flex;flex-wrap:wrap;gap:8px;}
+.badge{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;font-weight:500;letter-spacing:0.08em;
+  padding:5px 13px;
+  border:1px solid var(--border2);
+  background:var(--panel);
+  color:var(--text2);
+  display:flex;align-items:center;gap:7px;
+}
+.badge .bd{width:6px;height:6px;border-radius:1px;}
+.badge.t .bd{background:var(--teal);}
+.badge.o .bd{background:var(--orange);}
+.badge.g .bd{background:var(--green);}
+.badge.y .bd{background:var(--yellow);}
+.badge.v .bd{background:var(--violet);}
+
+/* ── NAV ── */
+.nav-bar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(10,14,15,0.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-scroll{display:flex;overflow-x:auto;scrollbar-width:none;}
+.nav-scroll::-webkit-scrollbar{display:none;}
+.nb{
+  flex-shrink:0;background:none;border:none;
+  border-bottom:2px solid transparent;
+  color:var(--text3);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;
+  padding:13px 16px 11px;cursor:pointer;white-space:nowrap;
+  transition:all 0.2s;
+}
+.nb:hover{color:var(--text2);}
+.nb.active{color:var(--teal2);border-bottom-color:var(--teal);}
+
+/* ── CONTENT ── */
+.content{padding:50px 0 120px;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;animation:fu 0.3s ease;}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── SECTION HEAD ── */
+.sh{margin-bottom:34px;padding-bottom:18px;border-bottom:1px solid var(--border);}
+.sh-eye{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+  letter-spacing:0.2em;text-transform:uppercase;color:var(--teal);margin-bottom:10px;
+}
+.sh h2{
+  font-family:'Syne',sans-serif;font-size:clamp(22px,4vw,40px);font-weight:800;
+  color:var(--text);letter-spacing:-0.02em;line-height:1.05;margin-bottom:8px;
+}
+.sh p{color:var(--text2);font-size:14.5px;line-height:1.75;max-width:680px;}
+
+/* ── CONCEPT ── */
+.concept{
+  background:var(--panel);border:1px solid var(--border);
+  padding:26px 28px;margin-bottom:20px;position:relative;overflow:hidden;
+}
+.concept::before{
+  content:'';position:absolute;top:0;left:0;bottom:0;
+  width:3px;background:var(--teal);
+}
+.concept.o::before{background:var(--orange);}
+.concept.g::before{background:var(--green);}
+.concept.y::before{background:var(--yellow);}
+.concept.v::before{background:var(--violet);}
+.concept h3{
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:700;
+  color:var(--text);margin-bottom:10px;
+}
+.concept p{color:var(--text2);font-size:13.5px;line-height:1.85;margin-bottom:8px;}
+.concept p:last-child{margin-bottom:0;}
+.concept strong{color:var(--text);font-weight:700;}
+.concept code{
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--teal2);padding:2px 6px;
+}
+
+/* ── ANALOGY ── */
+.analogy{
+  background:var(--bg3);border:1px solid var(--border2);
+  border-left:3px solid var(--teal);
+  padding:14px 18px;margin:12px 0;
+  display:flex;gap:12px;font-size:13.5px;color:var(--text2);line-height:1.7;
+}
+.ai{font-size:18px;flex-shrink:0;margin-top:2px;}
+.analogy strong{color:var(--teal2);font-weight:600;}
+
+/* ── PROJECT LIST ── */
+.proj-list{border:1px solid var(--border);}
+.pc{border-bottom:1px solid var(--border);transition:background 0.15s;}
+.pc:last-child{border-bottom:none;}
+
+.pc-head{
+  display:flex;align-items:flex-start;gap:18px;
+  padding:20px 26px 16px;cursor:pointer;user-select:none;
+}
+.pc-head:hover{background:var(--panel);}
+.pc.open .pc-head{background:var(--panel2);}
+
+.pnum{
+  flex-shrink:0;
+  font-family:'Syne',sans-serif;font-size:28px;font-weight:800;
+  color:var(--teal);line-height:1;width:40px;margin-top:4px;
+  opacity:0.3;transition:opacity 0.2s;
+}
+.pc.open .pnum,.pc-head:hover .pnum{opacity:1;}
+
+.pmeta{flex:1;min-width:0;}
+.pmeta h3{
+  font-family:'Syne',sans-serif;font-size:17px;font-weight:700;
+  color:var(--text);margin-bottom:5px;line-height:1.25;
+}
+.pmeta p{color:var(--text2);font-size:13px;line-height:1.6;}
+.pmeta-foot{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap;}
+
+.ptag{
+  font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+  letter-spacing:0.08em;padding:3px 8px;border:1px solid;
+}
+.ptag.t{color:var(--teal2);border-color:rgba(20,184,166,0.3);background:rgba(20,184,166,0.05);}
+.ptag.o{color:var(--orange);border-color:rgba(251,146,60,0.3);background:rgba(251,146,60,0.05);}
+.ptag.g{color:var(--green);border-color:rgba(74,222,128,0.3);background:rgba(74,222,128,0.05);}
+.ptag.y{color:var(--yellow);border-color:rgba(250,204,21,0.3);background:rgba(250,204,21,0.05);}
+.ptag.v{color:var(--violet);border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.05);}
+.ptag.n{color:var(--text3);border-color:var(--border);}
+
+.diff{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:3px 8px;border:1px solid;}
+.diff.easy{color:var(--green);border-color:rgba(74,222,128,0.35);}
+.diff.med{color:var(--yellow);border-color:rgba(250,204,21,0.35);}
+.diff.hard{color:var(--red);border-color:rgba(248,113,113,0.35);}
+.diff.cap{color:var(--teal2);border-color:rgba(20,184,166,0.35);}
+.ptime{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);}
+
+.parrow{
+  flex-shrink:0;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--text3);
+  transition:transform 0.3s,color 0.2s;margin-top:4px;
+}
+.pc.open .parrow{transform:rotate(90deg);color:var(--teal2);}
+
+.pc-body{
+  display:none;padding:8px 26px 34px 84px;
+  background:var(--panel);border-top:1px solid var(--border);
+}
+.pc.open .pc-body{display:block;animation:fu 0.3s ease;}
+
+/* ── STEPS ── */
+.steps{margin-top:20px;}
+.step{display:flex;gap:16px;padding-bottom:24px;position:relative;}
+.step:not(:last-child)::before{
+  content:'';position:absolute;left:11px;top:25px;bottom:0;
+  width:1px;background:var(--border);
+}
+.sn{
+  flex-shrink:0;width:24px;height:24px;
+  border:1px solid var(--border2);background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;
+  color:var(--teal);z-index:1;
+}
+.sb{flex:1;min-width:0;}
+.sb h4{
+  font-family:'Syne',sans-serif;font-size:14.5px;font-weight:700;
+  color:var(--text);margin-bottom:7px;
+}
+.sb p{color:var(--text2);font-size:13.5px;line-height:1.8;margin-bottom:10px;}
+.sb p:last-child{margin-bottom:0;}
+.sb p strong{color:var(--text);font-weight:700;}
+
+/* ── CODE ── */
+.cb{background:var(--code-bg);border:1px solid var(--border);margin:12px 0;overflow:hidden;}
+.cb-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 13px;border-bottom:1px solid var(--border);
+  background:rgba(20,184,166,0.03);
+}
+.cb-lang{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:0.12em;text-transform:uppercase;}
+.cb-lang .hl{color:var(--teal2);}
+.cpbtn{
+  background:none;border:1px solid var(--border2);color:var(--text3);
+  font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 9px;
+  cursor:pointer;transition:all 0.2s;
+}
+.cpbtn:hover{color:var(--text2);border-color:var(--text3);}
+.cpbtn.ok{color:var(--green);border-color:var(--green);}
+pre{
+  padding:16px 18px;overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.8;
+  color:#a8c5c8;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;
+}
+.kw{color:#5eead4;}
+.str{color:#86efac;}
+.cm{color:#264850;font-style:italic;}
+.fn{color:#fcd34d;}
+.num{color:#93c5fd;}
+.var{color:#c4b5fd;}
+code{
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+  background:var(--bg3);border:1px solid var(--border2);
+  color:var(--teal2);padding:2px 6px;
+}
+
+/* ── CALLOUTS ── */
+.note{display:flex;gap:11px;padding:13px 15px;margin:12px 0;font-size:13px;line-height:1.7;border-left:3px solid;}
+.note p{margin:0;}
+.note-i{flex-shrink:0;font-size:15px;}
+.note.info{background:rgba(20,184,166,0.06);border-color:var(--teal);color:var(--teal3);}
+.note.warn{background:rgba(250,204,21,0.06);border-color:var(--yellow);color:var(--yellow2);}
+.note.ok{background:rgba(74,222,128,0.06);border-color:var(--green);color:var(--green2);}
+.note.tip{background:rgba(167,139,250,0.06);border-color:var(--violet);color:var(--violet2);}
+.note.err{background:rgba(248,113,113,0.06);border-color:var(--red);color:var(--red2);}
+
+/* ── TABLE ── */
+.dt{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0;border:1px solid var(--border);}
+.dt th{
+  text-align:left;font-family:'IBM Plex Mono',monospace;
+  font-size:9px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--text3);padding:10px 13px;border-bottom:1px solid var(--border2);
+  background:var(--panel);
+}
+.dt td{padding:10px 13px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);vertical-align:top;line-height:1.6;}
+.dt tr:last-child td{border-bottom:none;}
+.dt tr:hover td{background:rgba(20,184,166,0.03);}
+.dt td:first-child{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--teal2);font-weight:600;}
+
+/* ── OV GRID ── */
+.ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin:22px 0;}
+.ov-card{background:var(--panel);padding:20px 20px 18px;transition:background 0.2s;}
+.ov-card:hover{background:var(--panel2);}
+.oc-num{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.18em;color:var(--text3);margin-bottom:7px;}
+.oc-icon{font-size:20px;margin-bottom:7px;}
+.oc-title{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:700;color:var(--text);margin-bottom:4px;line-height:1.3;}
+.ov-card p{font-size:11.5px;color:var(--text3);line-height:1.55;}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+@media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+.mini-panel{background:var(--bg3);border:1px solid var(--border);padding:15px;}
+.mini-panel h5{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:7px;}
+.mini-panel p{font-size:13px;color:var(--text2);line-height:1.7;}
+
+/* ── TIMELINE ── */
+.tl-row{display:flex;gap:1px;margin:20px 0;}
+.tl-blk{
+  flex:1;padding:14px 12px;background:var(--panel);border:1px solid var(--border);
+  position:relative;transition:background 0.2s;
+}
+.tl-blk:hover{background:var(--panel2);}
+.tl-blk::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--tc,var(--teal));
+}
+.tl-wk{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.15em;margin-bottom:5px;}
+.tl-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.tl-items{font-size:11px;color:var(--text3);line-height:1.6;}
+@media(max-width:700px){.tl-row{flex-direction:column;}}
+
+/* ── CS GRID ── */
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin:20px 0;}
+.cs-card{background:var(--panel);padding:18px 20px;}
+.cs-card h5{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--teal2);margin-bottom:10px;}
+.cs-row{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:11.5px;}
+.cs-row:last-child{border-bottom:none;}
+.cs-cmd{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--teal2);font-weight:600;white-space:nowrap;flex-shrink:0;min-width:160px;}
+.cs-desc{color:var(--text3);font-size:11px;line-height:1.4;}
+
+/* ── FILE TREE ── */
+.ftree{background:var(--code-bg);border:1px solid var(--border);padding:16px 18px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.85;color:#a8c5c8;margin:12px 0;overflow-x:auto;}
+.ftree .dir{color:var(--teal2);font-weight:600;}
+.ftree .file{color:#a8c5c8;}
+.ftree .cmt{color:#264850;font-style:italic;}
+
+hr{border:none;border-top:1px solid var(--border);margin:22px 0;}
+
+footer{
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:20px 0;text-align:center;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--text3);
+}
+footer span{color:var(--teal2);}
+</style>
+</head>
+<body>
+
+<!-- Container decoration -->
+<div style="position:fixed;right:0;top:0;bottom:0;width:200px;overflow:hidden;pointer-events:none;z-index:0;opacity:0.025;">
+  <div style="display:flex;gap:3px;height:100%;padding:20px;">
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+      <div style="flex:1;border:1px solid #14b8a6;"></div>
+      <div style="flex:2;border:1px solid #14b8a6;"></div>
+      <div style="flex:1;border:1px solid #14b8a6;"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+      <div style="flex:2;border:1px solid #14b8a6;"></div>
+      <div style="flex:1;border:1px solid #14b8a6;"></div>
+      <div style="flex:2;border:1px solid #14b8a6;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="topbar">
+<div class="wrap">
+<div class="tb-inner">
+  <div class="tb-left">
+    <span class="tb-brand">DevOps Mastery</span>
+    <span>Phase 2 of 6</span>
+    <span>Docker · CI/CD · Ansible · Python Automation</span>
+  </div>
+  <div class="tb-right">
+    <span class="tb-s"><span class="l">PROJECTS: </span><span class="v">20</span></span>
+    <span class="tb-s"><span class="l">DURATION: </span><span class="v">5–6 weeks</span></span>
+    <span class="tb-s"><span class="l">LEVEL: </span><span class="v">Intermediate</span></span>
+  </div>
+</div>
+</div>
+</div>
+
+<header>
+<div class="wrap">
+  <div class="p-badge">Phase Two — Containers &amp; Pipelines</div>
+  <h1>Docker, CI/CD<br><span class="accent">&amp; Python</span>
+    <span class="sub-title">// Ship code like a professional. Automate everything.</span>
+  </h1>
+  <p class="hdr-lead">Phase 1 gave you the foundation. Now you containerise everything, automate your deployment pipeline end-to-end, configure servers with Ansible, and build a deep Python automation toolkit that makes you genuinely 10× faster. 20 projects. Zero hand-waving. Full code throughout.</p>
+  <div class="badge-row">
+    <div class="badge t"><div class="bd"></div>20 Projects</div>
+    <div class="badge o"><div class="bd"></div>5–6 Weeks</div>
+    <div class="badge g"><div class="bd"></div>Docker Cert Path</div>
+    <div class="badge y"><div class="bd"></div>AWS DOP-C02 Foundation</div>
+    <div class="badge v"><div class="bd"></div>Phase 1 required</div>
+  </div>
+</div>
+</header>
+
+<div class="nav-bar">
+<div class="wrap">
+<div class="nav-scroll">
+  <button class="nb active" onclick="st('overview',this)">Overview</button>
+  <button class="nb" onclick="st('docker101',this)">Docker 101</button>
+  <button class="nb" onclick="st('cicd101',this)">CI/CD 101</button>
+  <button class="nb" onclick="st('ansible101',this)">Ansible 101</button>
+  <button class="nb" onclick="st('python101',this)">Python Automation 101</button>
+  <button class="nb" onclick="st('all',this)">All 20 Projects</button>
+  <button class="nb" onclick="st('p1p5',this)">P1–P5 Docker</button>
+  <button class="nb" onclick="st('p6p10',this)">P6–P10 CI/CD</button>
+  <button class="nb" onclick="st('p11p15',this)">P11–P15 Ansible</button>
+  <button class="nb" onclick="st('p16p20',this)">P16–P20 Python</button>
+  <button class="nb" onclick="st('cheatsheet',this)">Cheat Sheet</button>
+</div>
+</div>
+</div>
+
+<div class="wrap">
+<div class="content">
+
+<!-- ══════════ OVERVIEW ══════════ -->
+<div id="tab-overview" class="tab-pane active">
+  <div class="sh">
+    <div class="sh-eye">Start Here</div>
+    <h2>20 Projects. Four Pillars.</h2>
+    <p>Phase 2 is built around four interconnected skills. By the end, every project you build will be containerised, tested automatically, deployed by a pipeline, and configurable via Ansible. Your Python toolkit will automate everything in between.</p>
+  </div>
+
+  <div class="tl-row">
+    <div class="tl-blk" style="--tc:var(--teal)">
+      <div class="tl-wk">WEEK 1–2 · P1–P5</div>
+      <div class="tl-title">Docker Mastery</div>
+      <div class="tl-items">Containers · Compose · Registries · Multi-stage · Security</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--orange)">
+      <div class="tl-wk">WEEK 2–3 · P6–P10</div>
+      <div class="tl-title">CI/CD Pipelines</div>
+      <div class="tl-items">GitHub Actions · GitLab CI · Test gates · Deploy automation</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--green)">
+      <div class="tl-wk">WEEK 3–4 · P11–P15</div>
+      <div class="tl-title">Ansible</div>
+      <div class="tl-items">Playbooks · Roles · Vault · Dynamic inventory · AWX</div>
+    </div>
+    <div class="tl-blk" style="--tc:var(--violet)">
+      <div class="tl-wk">WEEK 4–6 · P16–P20</div>
+      <div class="tl-title">Python Automation</div>
+      <div class="tl-items">AWS SDK · REST APIs · Slack bots · Cost reports · Auto-remediation</div>
+    </div>
+  </div>
+
+  <div class="ov-grid">
+    <div class="ov-card"><div class="oc-num">P01</div><div class="oc-icon">📦</div><div class="oc-title">Docker from Zero</div><p>What a container actually is. Your first images, layers, volumes, networks.</p></div>
+    <div class="ov-card"><div class="oc-num">P02</div><div class="oc-icon">🔨</div><div class="oc-title">Multi-Stage Builds & Hardening</div><p>Shrink images from 1GB → 20MB. Non-root users, Trivy scanning.</p></div>
+    <div class="ov-card"><div class="oc-num">P03</div><div class="oc-icon">🧩</div><div class="oc-title">Docker Compose — Full Stack</div><p>Frontend + API + DB + Cache + Reverse proxy in one compose file.</p></div>
+    <div class="ov-card"><div class="oc-num">P04</div><div class="oc-icon">🗂️</div><div class="oc-title">Container Registry (ECR + Harbor)</div><p>Push/pull images, lifecycle policies, vulnerability scanning gates.</p></div>
+    <div class="ov-card"><div class="oc-num">P05</div><div class="oc-icon">🔍</div><div class="oc-title">Docker Networking Deep Dive</div><p>Bridge, host, overlay networks. DNS between containers. Network debugging.</p></div>
+    <div class="ov-card"><div class="oc-num">P06</div><div class="oc-icon">⚡</div><div class="oc-title">First CI/CD Pipeline — GitHub Actions</div><p>Test → build → scan → push → deploy on every git push.</p></div>
+    <div class="ov-card"><div class="oc-num">P07</div><div class="oc-icon">🦊</div><div class="oc-title">GitLab CI/CD Pipeline</div><p>Same pipeline in GitLab. Stages, caching, environments, manual gates.</p></div>
+    <div class="ov-card"><div class="oc-num">P08</div><div class="oc-icon">🌍</div><div class="oc-title">Environment Promotion</div><p>Dev → staging → prod pipeline. Per-environment configs, approval gates.</p></div>
+    <div class="ov-card"><div class="oc-num">P09</div><div class="oc-icon">🔄</div><div class="oc-title">Zero-Downtime Deployments</div><p>Blue/green and rolling deployments. Health checks, automatic rollback.</p></div>
+    <div class="ov-card"><div class="oc-num">P10</div><div class="oc-icon">🧪</div><div class="oc-title">Testing in Pipelines</div><p>Unit tests, integration tests, smoke tests. Fail fast. Quality gates.</p></div>
+    <div class="ov-card"><div class="oc-num">P11</div><div class="oc-icon">🤖</div><div class="oc-title">Ansible from Zero</div><p>Inventory, ad-hoc commands, your first playbook. Idempotency explained.</p></div>
+    <div class="ov-card"><div class="oc-num">P12</div><div class="oc-icon">📋</div><div class="oc-title">Ansible Roles & Galaxy</div><p>Structure playbooks properly. Reusable roles. Use community roles safely.</p></div>
+    <div class="ov-card"><div class="oc-num">P13</div><div class="oc-icon">🔐</div><div class="oc-title">Ansible Vault — Secret Management</div><p>Encrypt secrets in Git. Vault passwords, encrypted vars, CI integration.</p></div>
+    <div class="ov-card"><div class="oc-num">P14</div><div class="oc-icon">🗺️</div><div class="oc-title">Dynamic Inventory — AWS</div><p>Auto-discover EC2 instances. Tag-based targeting. No static hosts files.</p></div>
+    <div class="ov-card"><div class="oc-num">P15</div><div class="oc-icon">🖥️</div><div class="oc-title">AWX / Ansible Tower</div><p>Web UI for Ansible. Job templates, schedules, RBAC, audit logs.</p></div>
+    <div class="ov-card"><div class="oc-num">P16</div><div class="oc-icon">🐍</div><div class="oc-title">Python AWS Automation (boto3)</div><p>EC2, S3, RDS management. Scripts that replace 20-click console workflows.</p></div>
+    <div class="ov-card"><div class="oc-num">P17</div><div class="oc-icon">🔔</div><div class="oc-title">Python Slack Bot</div><p>Alert bot that posts deployments, errors, cost alerts to Slack channels.</p></div>
+    <div class="ov-card"><div class="oc-num">P18</div><div class="oc-icon">💰</div><div class="oc-title">AWS Cost Report Automation</div><p>Daily cost breakdown emailed to your team. Anomaly detection. FinOps basics.</p></div>
+    <div class="ov-card"><div class="oc-num">P19</div><div class="oc-icon">🛠️</div><div class="oc-title">Auto-Remediation Scripts</div><p>Python that detects and fixes problems automatically. Self-healing infra.</p></div>
+    <div class="ov-card"><div class="oc-num">P20</div><div class="oc-icon">🏗️</div><div class="oc-title">Capstone — Full Production Pipeline</div><p>Everything united: Docker + CI/CD + Ansible deploy + Python monitoring bot.</p></div>
+  </div>
+</div>
+
+<!-- ══════════ DOCKER 101 ══════════ -->
+<div id="tab-docker101" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Concepts First</div><h2>Docker 101 — Containers Explained</h2><p>Read this before writing a single Dockerfile. Understanding what's actually happening makes everything else obvious.</p></div>
+
+  <div class="concept">
+    <h3>📦 What Is a Container? (Really)</h3>
+    <p>A container is not a mini virtual machine. It's a <strong>regular Linux process</strong> with three kernel features applied: <strong>namespaces</strong> (isolation — the process can't see other processes, files, or networks outside its namespace), <strong>cgroups</strong> (resource limits — max CPU, max memory), and a <strong>layered filesystem</strong> (the container's root filesystem built from image layers).</p>
+    <p>That's it. There's no hypervisor, no separate kernel, no hardware emulation. A container shares the host's kernel. That's why containers start in milliseconds and use almost no overhead — they're just processes.</p>
+    <div class="analogy"><div class="ai">🏢</div><div><strong>Analogy:</strong> A VM is like renting an entire building — its own structure, plumbing, electricity, everything. A container is like renting a private office inside a shared building — you have your own space and can't access other offices, but you share the building's infrastructure (kernel). Much cheaper, much faster to move in, but you can't install a different electrical system (you can't run a Windows kernel in a Linux container).</div></div>
+  </div>
+
+  <div class="concept o">
+    <h3>🔢 Image Layers — Why Docker Builds Are Fast</h3>
+    <p>A Docker image is built from layers, stacked like transparent sheets. Each instruction in a Dockerfile (<code>RUN</code>, <code>COPY</code>, <code>ADD</code>) creates a new layer. Layers are <strong>content-addressed and cached</strong> — if the layer hasn't changed, Docker reuses the cached version instead of re-running the command.</p>
+    <p>This is why instruction order matters enormously. Put <strong>things that change rarely at the top</strong> (OS packages, dependencies) and <strong>things that change often at the bottom</strong> (your app code). If you copy your code before installing dependencies, every code change invalidates the dependency layer cache and reinstalls everything.</p>
+    <div class="analogy"><div class="ai">🧅</div><div><strong>Analogy:</strong> Think of an image as an onion. Each layer is a ring. When you rebuild, Docker peels from the outside in, only redoing layers from the first changed ring outward. If you change the core (an early layer), everything outside it must be redone. Keep the stable stuff at the core.</div></div>
+  </div>
+
+  <div class="concept g">
+    <h3>🌐 Docker Networking — How Containers Talk</h3>
+    <p>By default, each container gets its own virtual network interface. Docker creates a virtual network bridge (<code>docker0</code>) that containers connect to. Containers on the same user-defined network can reach each other <strong>by container name</strong> — Docker has a built-in DNS resolver. This is why your app container can connect to <code>postgres:5432</code> instead of needing to know the IP.</p>
+    <p>Three key network types: <strong>bridge</strong> (default — containers on same bridge can communicate), <strong>host</strong> (container shares host network — fastest, but no isolation), <strong>none</strong> (no network — maximum isolation). In Docker Compose, every service is on the same user-defined bridge network automatically.</p>
+  </div>
+
+  <div class="concept y">
+    <h3>💾 Volumes — Data That Survives Container Death</h3>
+    <p>Containers are ephemeral — when you remove one, everything written to its filesystem is gone. <strong>Volumes</strong> are the solution: storage that lives outside the container lifecycle. Three types: <strong>named volumes</strong> (managed by Docker, best for production data), <strong>bind mounts</strong> (mount a host directory into the container — perfect for development), and <strong>tmpfs mounts</strong> (in-memory, never written to disk — for sensitive data).</p>
+    <p>The rule: databases always use named volumes. Your source code in development always uses a bind mount (so changes are reflected immediately without rebuilding).</p>
+  </div>
+</div>
+
+<!-- ══════════ CI/CD 101 ══════════ -->
+<div id="tab-cicd101" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Pipelines</div><h2>CI/CD 101 — Automate Your Entire Deploy</h2><p>CI/CD is the single biggest force multiplier in DevOps. Understand it properly and you'll never want to deploy manually again.</p></div>
+
+  <div class="concept">
+    <h3>🔄 CI vs CD — What's the Difference?</h3>
+    <p><strong>Continuous Integration (CI)</strong> means every code change is automatically built, tested, and validated. The goal: catch problems within minutes, not days. Every developer's changes are integrated into the main branch frequently (at least daily), and the pipeline proves the code works before it's merged.</p>
+    <p><strong>Continuous Delivery (CD)</strong> means every passing build is automatically prepared for deployment. A human still clicks "deploy to production." <strong>Continuous Deployment</strong> (also CD) goes further: every passing build is deployed to production automatically with no human intervention. Most teams use Continuous Delivery — automated all the way to staging, manual gate for production.</p>
+    <div class="analogy"><div class="ai">🏭</div><div><strong>Analogy:</strong> Think of a car factory. CI is the assembly line quality check — every car gets tested as it's built, not after 500 cars pile up. CD is the delivery truck — once a car passes QC it's automatically loaded and ready to ship. Continuous Deployment is the self-driving delivery truck — it ships itself. The value is eliminating the "pile of untested work" problem that makes big releases terrifying.</div></div>
+  </div>
+
+  <div class="concept o">
+    <h3>🏗️ GitHub Actions — Anatomy of a Pipeline</h3>
+    <p>A GitHub Actions workflow is a YAML file in <code>.github/workflows/</code>. It has <strong>triggers</strong> (on push, on pull request, on schedule), <strong>jobs</strong> (parallel or sequential work units), and <strong>steps</strong> (individual commands or pre-built actions). Each job runs in a fresh container — jobs don't share state unless you explicitly pass artifacts between them.</p>
+    <p>Key concepts: <strong>Actions</strong> are reusable steps from the marketplace (e.g. <code>actions/checkout</code>, <code>docker/build-push-action</code>). <strong>Secrets</strong> are encrypted variables for API keys, never visible in logs. <strong>Environments</strong> add protection rules — require reviewers before deploying to production. <strong>Matrix builds</strong> run the same job across multiple versions in parallel.</p>
+  </div>
+
+  <div class="concept g">
+    <h3>✅ What Every Good Pipeline Must Have</h3>
+    <p><strong>1. Fast feedback:</strong> Tests should fail within 5 minutes. Run unit tests first (fast), then integration tests (slower), never the reverse. <strong>2. Fail fast:</strong> If tests fail, stop — don't build, don't push, don't deploy. <strong>3. Artifact immutability:</strong> Build once, promote the same artifact through environments. Never rebuild for staging that was built for dev — you'd be deploying untested code. <strong>4. Audit trail:</strong> Every deploy is traceable to a commit, a PR, an author. <strong>5. Rollback:</strong> You must be able to get back to the previous version in under 5 minutes.</p>
+  </div>
+</div>
+
+<!-- ══════════ ANSIBLE 101 ══════════ -->
+<div id="tab-ansible101" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Configuration Management</div><h2>Ansible 101 — Automate Server Config</h2><p>Ansible turns server setup from a manual checklist into repeatable, version-controlled, reviewable code.</p></div>
+
+  <div class="concept">
+    <h3>🤖 What Ansible Actually Does</h3>
+    <p>Ansible connects to servers over SSH and runs tasks on them. No agent required on the target server — just Python (which is on every Linux server by default) and an SSH connection. You write <strong>playbooks</strong> in YAML that describe the desired state of your servers. Ansible figures out how to get there.</p>
+    <p>The killer feature: <strong>idempotency</strong>. Run the same playbook 10 times — you get the same result. If Nginx is already installed, Ansible doesn't reinstall it. If the config file is already correct, it doesn't overwrite it. This makes Ansible safe to run repeatedly, which makes it safe to automate.</p>
+    <div class="analogy"><div class="ai">📐</div><div><strong>Analogy:</strong> Ansible is like an architect's specification document. Instead of telling a builder "first do A, then B, then C," you specify "the result must look like this." Ansible determines what actions are needed to get from the current state to the desired state — and only takes those actions. The specification (playbook) is the source of truth, not the history of commands run.</div></div>
+  </div>
+
+  <div class="concept o">
+    <h3>📁 Ansible's Four Key Concepts</h3>
+    <p><strong>Inventory:</strong> The list of servers Ansible manages. Can be a static file (list of IPs/hostnames) or dynamic (queried from AWS/GCP at runtime). Servers can be in groups: <code>[webservers]</code>, <code>[databases]</code>, <code>[production]</code>.</p>
+    <p><strong>Playbook:</strong> A YAML file describing plays (which hosts get which roles/tasks). The top-level orchestrator. <strong>Role:</strong> A structured bundle of tasks, templates, variables, and handlers for one concern (e.g. a "nginx" role, a "postgresql" role). <strong>Task:</strong> A single action — install a package, copy a file, start a service, run a command.</p>
+  </div>
+
+  <div class="concept g">
+    <h3>🧩 Modules — Ansible's Vocabulary</h3>
+    <p>Every task uses a module. Modules are the verbs: <code>ansible.builtin.dnf</code> (install packages), <code>ansible.builtin.template</code> (copy a Jinja2 template), <code>ansible.builtin.service</code> (manage services), <code>ansible.builtin.user</code> (manage users), <code>ansible.builtin.copy</code> (copy files), <code>ansible.builtin.command</code> / <code>shell</code> (run arbitrary commands — use sparingly, prefer specific modules). There are 3,000+ modules — always check if a specific module exists before using <code>command</code>.</p>
+  </div>
+</div>
+
+<!-- ══════════ PYTHON 101 ══════════ -->
+<div id="tab-python101" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Automation Depth</div><h2>Python Automation 101 — Beyond Basic Scripts</h2><p>Phase 1 introduced Python. Phase 2 goes deep — AWS automation, REST API integration, Slack bots, scheduled reports, and auto-remediation systems.</p></div>
+
+  <div class="concept">
+    <h3>🐍 Why Python for DevOps (Not Just Bash)?</h3>
+    <p>Bash is perfect for orchestrating system commands. Python is better when you need: <strong>complex data structures</strong> (dicts, lists, nested objects — API responses), <strong>error handling</strong> (try/except is far richer than Bash's limited error handling), <strong>libraries</strong> (boto3 for AWS, requests for HTTP, slack_sdk for Slack — thousands of purpose-built libraries), <strong>testing</strong> (pytest makes your automation testable), and <strong>readability</strong> (complex logic is far cleaner in Python).</p>
+    <p>The practical rule: use Bash when you're gluing together CLI tools. Use Python when you're talking to APIs, processing structured data, or building something that needs to be maintained long-term.</p>
+  </div>
+
+  <div class="concept o">
+    <h3>☁️ boto3 — The AWS SDK for Python</h3>
+    <p>boto3 is Amazon's official Python SDK. It lets you control every AWS service programmatically. The key concepts: <strong>client</strong> (low-level, 1:1 with the AWS API, returns raw dicts), <strong>resource</strong> (higher-level, object-oriented, nicer to use for some services), <strong>session</strong> (credentials + region configuration — use this for multi-account automation).</p>
+    <p>Every AWS console workflow you do manually can be scripted with boto3. Launching EC2 instances, creating S3 buckets, querying CloudWatch metrics, sending SNS notifications — all 200+ AWS services are accessible.</p>
+  </div>
+
+  <div class="concept g">
+    <h3>🔔 Building Operational Tooling</h3>
+    <p>The most valuable Python automation in DevOps isn't fancy ML — it's boring, reliable operational tooling. A Slack bot that posts every deployment. A script that emails cost anomalies before your CFO sees them. A function that restarts a service when its health endpoint returns 500. An inventory script that lists every EC2 instance across all accounts. These are the scripts that make you irreplaceable on a team.</p>
+  </div>
+</div>
+
+<!-- ══════════ ALL 20 PROJECTS ══════════ -->
+<div id="tab-all" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Complete List</div><h2>All 20 Projects</h2><p>Click any project to expand the full walkthrough. Do them in order — each builds on the previous.</p></div>
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">01</div><div class="pmeta"><h3>Docker from Zero — Your First Containers</h3><p>What a container actually is vs a VM. Run your first containers, explore layers, understand images, volumes, and networks. Write your first Dockerfile from scratch.</p><div class="pmeta-foot"><span class="ptag t">Docker</span><span class="ptag t">Dockerfile</span><span class="ptag n">Layers</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="note info"><div class="note-i">ℹ️</div><p><strong>Goal:</strong> By the end you'll understand exactly what happens when you run <code>docker run</code>, be able to build images from scratch, and understand why containers are the foundation of modern DevOps.</p></div>
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Install Docker and Run Your First Container</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Docker on Rocky Linux</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Install Docker Engine</span>
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+<span class="cm"># Start and enable Docker</span>
+sudo systemctl enable --now docker
+
+<span class="cm"># Add your user to the docker group (no more sudo for docker)</span>
+sudo usermod -aG docker $USER
+newgrp docker   <span class="cm"># apply group change without logging out</span>
+
+<span class="cm"># Verify</span>
+docker --version
+docker info
+
+<span class="cm"># Run your first container</span>
+docker run hello-world   <span class="cm"># pull image, create container, run, exit</span>
+
+<span class="cm"># Run an interactive container</span>
+docker run -it ubuntu:22.04 bash
+<span class="cm"># You're now INSIDE the container! Try: ls, cat /etc/os-release, exit</span>
+
+<span class="cm"># See what happened</span>
+docker ps -a       <span class="cm"># all containers (including stopped)</span>
+docker images      <span class="cm"># all local images</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Write Your First Dockerfile</h4>
+            <p>Dockerfiles are the recipe for building images. Each instruction creates a new layer.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">dockerfile</span> — Dockerfile (simple Python app)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Base image — always pin a specific version, never use "latest" in production</span>
+FROM python:3.12-slim
+
+<span class="cm"># Set working directory inside the container</span>
+WORKDIR /app
+
+<span class="cm"># COPY requirements first — this layer is cached unless requirements change</span>
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+<span class="cm"># NOW copy your code — this layer only invalidates when code changes</span>
+COPY . .
+
+<span class="cm"># Create a non-root user to run the app (security best practice)</span>
+RUN useradd --create-home appuser
+USER appuser
+
+<span class="cm"># Document which port the app listens on (doesn't actually expose it)</span>
+EXPOSE 8000
+
+<span class="cm"># The command that runs when the container starts</span>
+CMD ["python", "app.py"]</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Build and run</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Build the image (-t = tag with a name:version)</span>
+docker build -t myapp:1.0 .
+
+<span class="cm"># Run it (-d = detached/background, -p = port mapping host:container)</span>
+docker run -d -p 8000:8000 --name myapp myapp:1.0
+
+<span class="cm"># Check it's running</span>
+docker ps
+curl http://localhost:8000
+
+<span class="cm"># See logs</span>
+docker logs myapp
+docker logs -f myapp   <span class="cm"># follow live</span>
+
+<span class="cm"># Exec into running container (for debugging)</span>
+docker exec -it myapp bash
+
+<span class="cm"># Stop and remove</span>
+docker stop myapp
+docker rm myapp</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Volumes and Bind Mounts</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Persistent data</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Named volume — Docker manages it, survives container removal</span>
+docker volume create mydata
+docker run -d -v mydata:/var/lib/postgresql/data postgres:15
+
+<span class="cm"># Bind mount — host directory mounted into container (dev workflow)</span>
+docker run -d \
+  -v $(pwd)/src:/app/src \      <span class="cm"># your code → container</span>
+  -v $(pwd)/logs:/app/logs \    <span class="cm"># container logs → your machine</span>
+  -p 8000:8000 \
+  myapp:1.0
+
+<span class="cm"># List, inspect, remove volumes</span>
+docker volume ls
+docker volume inspect mydata
+docker volume rm mydata   <span class="cm"># only if no container is using it</span>
+docker volume prune        <span class="cm"># remove all unused volumes</span></pre></div>
+          </div></div>
+        </div>
+        <div class="note ok"><div class="note-i">✅</div><p><strong>P1 complete.</strong> You can pull images, build your own, run containers, and manage persistent data with volumes.</p></div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">02</div><div class="pmeta"><h3>Multi-Stage Builds & Image Hardening</h3><p>Reduce image sizes from 1GB+ down to under 50MB with multi-stage builds. Apply security hardening: non-root users, read-only filesystems, no unnecessary packages. Scan with Trivy.</p><div class="pmeta-foot"><span class="ptag t">Multi-stage</span><span class="ptag t">Alpine</span><span class="ptag o">Trivy</span><span class="ptag n">Security</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Multi-Stage Builds — Build vs Runtime</h4>
+            <p>The key insight: the tools you need to <em>build</em> your app (compilers, build dependencies, test frameworks) are not needed to <em>run</em> it. Multi-stage builds let you use a fat build image and copy only the compiled output into a tiny runtime image.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">dockerfile</span> — Go app: 800MB → 12MB</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># ── STAGE 1: Build ──────────────────────────────────────</span>
+FROM golang:1.22 AS builder
+
+WORKDIR /build
+COPY go.mod go.sum ./
+RUN go mod download   <span class="cm"># cache dependencies</span>
+
+COPY . .
+<span class="cm"># Build a statically-linked binary (no external dependencies)</span>
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o myapp .
+
+<span class="cm"># ── STAGE 2: Runtime ────────────────────────────────────</span>
+<span class="cm"># Scratch = completely empty image, no OS, no shell, nothing</span>
+FROM scratch
+
+<span class="cm"># Copy only the compiled binary from the builder stage</span>
+COPY --from=builder /build/myapp /myapp
+
+<span class="cm"># Copy TLS certificates (needed for HTTPS calls)</span>
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+EXPOSE 8080
+ENTRYPOINT ["/myapp"]
+
+<span class="cm"># Result: ~12MB image with ONLY the binary. No shell = no shell injection attacks.</span></pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">dockerfile</span> — Python app: 1.2GB → 48MB</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># ── STAGE 1: Install dependencies ─────────────────────</span>
+FROM python:3.12 AS deps
+WORKDIR /build
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+<span class="cm"># ── STAGE 2: Runtime ──────────────────────────────────</span>
+FROM python:3.12-slim AS runtime
+
+<span class="cm"># Create non-root user</span>
+RUN useradd --uid 1001 --create-home appuser
+
+WORKDIR /app
+<span class="cm"># Copy only installed packages from build stage</span>
+COPY --from=deps /root/.local /home/appuser/.local
+COPY --chown=appuser:appuser . .
+
+USER appuser
+ENV PATH=/home/appuser/.local/bin:$PATH
+
+EXPOSE 8000
+CMD ["python", "-m", "gunicorn", "app:create_app()", "-b", "0.0.0.0:8000"]</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Vulnerability Scanning with Trivy</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install and run Trivy</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Install Trivy</span>
+sudo rpm -ivh https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.rpm
+
+<span class="cm"># Scan your image</span>
+trivy image myapp:1.0
+
+<span class="cm"># Scan with severity filter (only CRITICAL and HIGH)</span>
+trivy image --severity CRITICAL,HIGH myapp:1.0
+
+<span class="cm"># Exit with error code if vulnerabilities found (use in CI)</span>
+trivy image --exit-code 1 --severity CRITICAL myapp:1.0
+
+<span class="cm"># Scan a public image</span>
+trivy image nginx:latest
+
+<span class="cm"># Output as JSON (for processing)</span>
+trivy image -f json -o results.json myapp:1.0</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Dockerfile Security Best Practices</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">dockerfile</span> — Hardened Dockerfile template</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># ✅ Pin exact versions (not :latest)</span>
+FROM python:3.12.3-slim-bookworm
+
+<span class="cm"># ✅ Update packages and remove cache in one RUN layer</span>
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
+       libpq5 \     <span class="cm"># only runtime deps, not -dev packages</span>
+    && rm -rf /var/lib/apt/lists/*   <span class="cm"># delete apt cache</span>
+
+<span class="cm"># ✅ Non-root user with specific UID</span>
+RUN groupadd --gid 1001 appgroup \
+    && useradd --uid 1001 --gid appgroup --shell /bin/sh appuser
+
+WORKDIR /app
+COPY --chown=appuser:appgroup requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=appuser:appgroup . .
+
+<span class="cm"># ✅ Drop to non-root before CMD</span>
+USER appuser
+
+<span class="cm"># ✅ Use ENTRYPOINT + CMD together (ENTRYPOINT can't be overridden accidentally)</span>
+ENTRYPOINT ["python"]
+CMD ["app.py"]
+
+<span class="cm"># ✅ Health check so orchestrators know if the app is working</span>
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">03</div><div class="pmeta"><h3>Docker Compose — Full Stack Application</h3><p>Deploy a complete application stack with Docker Compose: React frontend, Node.js API, PostgreSQL, Redis cache, and Nginx reverse proxy — all with one command.</p><div class="pmeta-foot"><span class="ptag t">Docker Compose</span><span class="ptag o">Nginx</span><span class="ptag g">PostgreSQL</span><span class="ptag n">Redis</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>The Full Stack docker-compose.yml</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — docker-compose.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">services:
+
+  <span class="cm"># ── Nginx reverse proxy ─────────────────────────────</span>
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - frontend
+    restart: unless-stopped
+
+  <span class="cm"># ── React frontend ──────────────────────────────────</span>
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    expose:
+      - "3000"    <span class="cm"># only accessible within Docker network</span>
+    environment:
+      - REACT_APP_API_URL=/api
+    restart: unless-stopped
+
+  <span class="cm"># ── Node.js API ─────────────────────────────────────</span>
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://appuser:${DB_PASSWORD}@postgres:5432/myapp
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy   <span class="cm"># wait for postgres to be ready</span>
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  <span class="cm"># ── PostgreSQL ──────────────────────────────────────</span>
+  postgres:
+    image: postgres:15-alpine
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: myapp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  <span class="cm"># ── Redis cache ─────────────────────────────────────</span>
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — .env file (never commit this!)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">DB_PASSWORD=supersecret123
+REDIS_PASSWORD=anothersecret456</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Compose commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre><span class="cm"># Start everything (build images first if needed)</span>
+docker compose up -d --build
+
+<span class="cm"># See status of all services</span>
+docker compose ps
+
+<span class="cm"># View logs for all services</span>
+docker compose logs -f
+
+<span class="cm"># View logs for just the API</span>
+docker compose logs -f api
+
+<span class="cm"># Scale a service (run 3 API instances)</span>
+docker compose up -d --scale api=3
+
+<span class="cm"># Restart just one service</span>
+docker compose restart api
+
+<span class="cm"># Stop everything (keeps volumes)</span>
+docker compose down
+
+<span class="cm"># Stop AND delete volumes (careful — destroys data!)</span>
+docker compose down -v</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Development Overrides — Different Config for Dev vs Prod</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — docker-compose.override.yml (dev only, not for prod)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># This file is automatically applied on top of docker-compose.yml in dev</span>
+<span class="cm"># Do NOT use in production</span>
+services:
+  api:
+    build:
+      target: development   <span class="cm"># use dev stage of multi-stage build</span>
+    volumes:
+      - ./api:/app         <span class="cm"># bind mount source for hot reload</span>
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+    command: npm run dev   <span class="cm"># override prod command with dev server</span>
+
+  postgres:
+    ports:
+      - "5432:5432"   <span class="cm"># expose to host for local DB tools (TablePlus, etc)</span>
+
+  redis:
+    ports:
+      - "6379:6379"   <span class="cm"># expose for Redis CLI access</span></pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Use different compose files for prod</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Dev (auto-merges override file)</span>
+docker compose up -d
+
+<span class="cm"># Production (explicit — no override file)</span>
+docker compose -f docker-compose.yml up -d</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">04</div><div class="pmeta"><h3>Container Registry — ECR and Self-Hosted Harbor</h3><p>Set up AWS ECR for production image storage and a self-hosted Harbor registry for your homelab. Lifecycle policies to auto-clean old images, vulnerability scanning gates, image signing.</p><div class="pmeta-foot"><span class="ptag t">AWS ECR</span><span class="ptag o">Harbor</span><span class="ptag g">Image Lifecycle</span><span class="ptag n">Semver</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Set Up AWS ECR</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create ECR repository and push an image</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Set your AWS account ID and region</span>
+<span class="var">ACCOUNT_ID</span>=$(aws sts get-caller-identity --query Account --output text)
+<span class="var">REGION</span>=us-east-1
+<span class="var">REGISTRY</span>=<span class="str">"${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"</span>
+
+<span class="cm"># Create the repository</span>
+aws ecr create-repository \
+    --repository-name myapp \
+    --image-scanning-configuration scanOnPush=true \
+    --region <span class="str">"$REGION"</span>
+
+<span class="cm"># Authenticate Docker to ECR</span>
+aws ecr get-login-password --region <span class="str">"$REGION"</span> | \
+    docker login --username AWS --password-stdin <span class="str">"$REGISTRY"</span>
+
+<span class="cm"># Tag image for ECR</span>
+<span class="var">VERSION</span>=$(git describe --tags --abbrev=0 2>/dev/null || echo <span class="str">"0.1.0"</span>)
+docker tag myapp:latest <span class="str">"${REGISTRY}/myapp:${VERSION}"</span>
+docker tag myapp:latest <span class="str">"${REGISTRY}/myapp:latest"</span>
+
+<span class="cm"># Push</span>
+docker push <span class="str">"${REGISTRY}/myapp:${VERSION}"</span>
+docker push <span class="str">"${REGISTRY}/myapp:latest"</span>
+
+<span class="cm"># List images in repository</span>
+aws ecr list-images --repository-name myapp --region <span class="str">"$REGION"</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>ECR Lifecycle Policy — Auto-Clean Old Images</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Apply a lifecycle policy</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Keep last 10 tagged images, delete untagged after 1 day</span>
+aws ecr put-lifecycle-policy \
+    --repository-name myapp \
+    --lifecycle-policy-text <span class="str">'{
+      "rules": [
+        {
+          "rulePriority": 1,
+          "description": "Keep last 10 tagged images",
+          "selection": {
+            "tagStatus": "tagged",
+            "tagPrefixList": ["v"],
+            "countType": "imageCountMoreThan",
+            "countNumber": 10
+          },
+          "action": {"type": "expire"}
+        },
+        {
+          "rulePriority": 2,
+          "description": "Delete untagged images after 1 day",
+          "selection": {
+            "tagStatus": "untagged",
+            "countType": "sinceImagePushed",
+            "countUnit": "days",
+            "countNumber": 1
+          },
+          "action": {"type": "expire"}
+        }
+      ]
+    }'</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">05</div><div class="pmeta"><h3>Docker Networking Deep Dive</h3><p>Master Docker's networking model. Bridge, host, and overlay networks. DNS resolution between containers. Debug network issues. Custom networks for service isolation.</p><div class="pmeta-foot"><span class="ptag t">Docker Networks</span><span class="ptag o">DNS</span><span class="ptag n">tcpdump</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Network Types and When to Use Each</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Working with Docker networks</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># See existing networks</span>
+docker network ls
+<span class="cm"># bridge  — default, containers can reach each other by IP only</span>
+<span class="cm"># host    — container uses host network directly (no isolation)</span>
+<span class="cm"># none    — no network access at all</span>
+
+<span class="cm"># Create a user-defined bridge (containers can reach each other by NAME)</span>
+docker network create --driver bridge mynet
+
+<span class="cm"># Run containers on the same network</span>
+docker run -d --name db --network mynet postgres:15
+docker run -d --name api --network mynet myapp:1.0
+
+<span class="cm"># From inside 'api' container, connect to 'db' by name:</span>
+docker exec -it api bash
+<span class="cm"># Inside: ping db          ← works! Docker's built-in DNS resolves 'db' → container IP</span>
+<span class="cm"># Inside: psql -h db       ← connects to postgres by container name</span>
+
+<span class="cm"># Connect a container to multiple networks</span>
+docker network create frontend-net
+docker network create backend-net
+docker run -d --name nginx --network frontend-net nginx
+docker network connect backend-net nginx   <span class="cm"># nginx now on BOTH networks</span>
+
+<span class="cm"># Inspect a network — see which containers are connected</span>
+docker network inspect mynet</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Network Isolation Pattern — Frontend/Backend Separation</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — docker-compose.yml with network isolation</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">services:
+  nginx:
+    image: nginx:alpine
+    networks: [frontend]         <span class="cm"># only on frontend network</span>
+    ports: ["80:80"]
+
+  api:
+    build: ./api
+    networks: [frontend, backend]  <span class="cm"># bridge between networks</span>
+
+  postgres:
+    image: postgres:15
+    networks: [backend]          <span class="cm"># only on backend — nginx CANNOT reach it</span>
+
+  redis:
+    image: redis:7
+    networks: [backend]          <span class="cm"># only api can reach redis</span>
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    internal: true   <span class="cm"># no external internet access for backend containers</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /proj-list tab-all showing P1-P5 -->
+  <div class="note tip" style="margin-top:20px;"><div class="note-i">💡</div><p>Projects P6–P20 are in the dedicated tabs above (P6–P10 CI/CD, P11–P15 Ansible, P16–P20 Python). All have full code walkthroughs.</p></div>
+</div>
+
+<!-- ══════════ P1-P5 ══════════ -->
+<div id="tab-p1p5" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 1–5 · Docker</div><h2>Docker Mastery</h2><p>Full walkthroughs in the <strong>All 20 Projects</strong> tab. Below is a reference summary and the key Docker patterns to memorise.</p></div>
+  <div class="concept"><h3>P1–P5 Docker Patterns to Know Cold</h3>
+  <p><strong>P1 — Docker basics:</strong> <code>docker run -d -p host:container --name x image:tag</code>. Layers are cached — order matters. <code>docker exec -it container bash</code> to debug.</p>
+  <p><strong>P2 — Multi-stage:</strong> <code>FROM base AS builder</code> then <code>FROM scratch</code> / <code>FROM slim</code>. <code>COPY --from=builder /build/binary /binary</code>. Always run as non-root with <code>USER appuser</code>. Trivy scan before push.</p>
+  <p><strong>P3 — Compose:</strong> Services communicate by service name. Always set <code>depends_on</code> with <code>condition: service_healthy</code> for databases. Use <code>.env</code> files for secrets. <code>docker compose up -d --build</code> to rebuild and start.</p>
+  <p><strong>P4 — Registry:</strong> ECR auth with <code>aws ecr get-login-password | docker login</code>. Tag with semver + latest. Lifecycle policies prevent infinite image accumulation.</p>
+  <p><strong>P5 — Networking:</strong> User-defined networks allow DNS by container name. Use separate frontend/backend networks for security. <code>internal: true</code> blocks internet for backend network.</p></div>
+</div>
+
+<!-- ══════════ P6-P10 ══════════ -->
+<div id="tab-p6p10" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 6–10 · CI/CD</div><h2>Pipelines that Deploy Your Code</h2><p>Every project builds on the Docker foundation. By P10 you'll have a pipeline that tests, scans, builds, pushes, and deploys — fully automated.</p></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">06</div><div class="pmeta"><h3>First CI/CD Pipeline — GitHub Actions End-to-End</h3><p>Build a complete pipeline: lint → test → build Docker image → Trivy scan → push to ECR → SSH deploy to server. Triggers on push to main and pull requests.</p><div class="pmeta-foot"><span class="ptag t">GitHub Actions</span><span class="ptag o">ECR</span><span class="ptag g">SSH Deploy</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — .github/workflows/ci-cd.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  IMAGE_NAME: myapp
+
+jobs:
+  <span class="cm"># ── Job 1: Test ─────────────────────────────────────</span>
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint with flake8
+        run: flake8 . --max-line-length=100
+
+      - name: Run tests
+        run: pytest tests/ -v --cov=app --cov-report=xml
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+
+  <span class="cm"># ── Job 2: Build & Push (only on main) ─────────────</span>
+  build-push:
+    name: Build and Push
+    needs: test       <span class="cm"># only runs if test job passes</span>
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+          format: 'sarif'
+          exit-code: '1'       <span class="cm"># fail pipeline on CRITICAL vulns</span>
+          severity: 'CRITICAL'
+
+  <span class="cm"># ── Job 3: Deploy ───────────────────────────────────</span>
+  deploy:
+    name: Deploy to Production
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: production    <span class="cm"># requires manual approval in GitHub settings</span>
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: devops
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd /opt/myapp
+            
+            # Pull latest image
+            aws ecr get-login-password --region us-east-1 | \
+              docker login --username AWS --password-stdin ${{ env.REGISTRY }}
+            
+            # Rolling update — zero downtime
+            docker compose pull
+            docker compose up -d --no-deps --build api
+            
+            # Health check
+            sleep 10
+            curl -f http://localhost:8000/health || {
+              echo "Health check failed — rolling back"
+              docker compose rollback
+              exit 1
+            }
+            
+            echo "Deployment successful: ${{ needs.build-push.outputs.image-tag }}"</pre></div>
+        <div class="note warn"><div class="note-i">⚠️</div><p>Add these secrets in GitHub Settings → Secrets: <code>AWS_ACCOUNT_ID</code>, <code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code>, <code>PROD_SERVER_IP</code>, <code>PROD_SSH_KEY</code>. Never hardcode credentials.</p></div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">07</div><div class="pmeta"><h3>GitLab CI/CD Pipeline — Same Pipeline, Different Platform</h3><p>Replicate the GitHub Actions pipeline in GitLab CI. Stages, jobs, artifacts, caching, environments, and manual gates. Critical skill — many enterprises run GitLab.</p><div class="pmeta-foot"><span class="ptag t">GitLab CI</span><span class="ptag o">Stages</span><span class="ptag g">Artifacts</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — .gitlab-ci.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">image: python:3.12-slim
+
+<span class="cm"># Stages run in order. Jobs within a stage run in parallel.</span>
+stages:
+  - test
+  - build
+  - scan
+  - deploy
+
+variables:
+  REGISTRY: $CI_REGISTRY   <span class="cm"># GitLab's built-in registry</span>
+  IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+
+<span class="cm"># Cache pip dependencies across jobs</span>
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip
+
+<span class="cm"># ── TEST STAGE ───────────────────────────────────────</span>
+test:unit:
+  stage: test
+  before_script:
+    - pip install -r requirements.txt -r requirements-dev.txt
+  script:
+    - pytest tests/unit/ -v --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml     <span class="cm"># GitLab shows test results in MR interface</span>
+    expire_in: 1 week
+
+test:lint:
+  stage: test
+  before_script:
+    - pip install flake8
+  script:
+    - flake8 . --max-line-length=100
+
+<span class="cm"># ── BUILD STAGE ──────────────────────────────────────</span>
+build:image:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind   <span class="cm"># Docker-in-Docker</span>
+  only:
+    - main
+    - tags
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $IMAGE .
+    - docker push $IMAGE
+    - docker tag $IMAGE $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+
+<span class="cm"># ── SCAN STAGE ───────────────────────────────────────</span>
+scan:trivy:
+  stage: scan
+  image: aquasec/trivy:latest
+  only: [main]
+  script:
+    - trivy image --exit-code 1 --severity CRITICAL $IMAGE
+  allow_failure: false
+
+<span class="cm"># ── DEPLOY STAGING ───────────────────────────────────</span>
+deploy:staging:
+  stage: deploy
+  only: [main]
+  environment:
+    name: staging
+    url: https://staging.myapp.com
+  script:
+    - echo "Deploying $IMAGE to staging"
+    - ssh devops@$STAGING_IP "cd /opt/myapp && docker compose pull && docker compose up -d"
+
+<span class="cm"># ── DEPLOY PRODUCTION (manual gate) ─────────────────</span>
+deploy:production:
+  stage: deploy
+  only: [tags]          <span class="cm"># only on tagged releases (e.g. v1.2.3)</span>
+  when: manual          <span class="cm"># requires human to click "play" in GitLab UI</span>
+  environment:
+    name: production
+    url: https://myapp.com
+  script:
+    - echo "Deploying $IMAGE to production"
+    - ssh devops@$PROD_IP "cd /opt/myapp && docker compose pull && docker compose up -d"</pre></div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">08</div><div class="pmeta"><h3>Environment Promotion — Dev → Staging → Production</h3><p>Implement a proper multi-environment pipeline. Per-environment configs, promotion through Git tagging, approval gates before production, environment-specific secrets.</p><div class="pmeta-foot"><span class="ptag t">Environments</span><span class="ptag o">Promotion</span><span class="ptag g">Approval Gates</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Environment-Specific Compose Overrides</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Directory structure</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">deploy/
+├── docker-compose.base.yml     <span class="cm"># shared config</span>
+├── docker-compose.dev.yml      <span class="cm"># dev overrides</span>
+├── docker-compose.staging.yml  <span class="cm"># staging overrides</span>
+├── docker-compose.prod.yml     <span class="cm"># prod overrides</span>
+├── .env.dev
+├── .env.staging
+└── .env.prod                   <span class="cm"># never in git!</span></pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — docker-compose.prod.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">services:
+  api:
+    image: ${REGISTRY}/myapp:${VERSION}   <span class="cm"># prod uses pre-built image</span>
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /myapp/api
+        awslogs-region: us-east-1
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+
+secrets:
+  db_password:
+    external: true   <span class="cm"># loaded from Docker secrets or env</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Promotion Script — Tag and Deploy</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — promote.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">ENV</span>=<span class="str">"$1"</span>        <span class="cm"># staging | production</span>
+<span class="var">VERSION</span>=<span class="str">"$2"</span>    <span class="cm"># e.g. v1.2.3</span>
+
+echo <span class="str">"Promoting $VERSION to $ENV"</span>
+
+<span class="kw">case</span> <span class="str">"$ENV"</span> <span class="kw">in</span>
+  staging)
+    <span class="var">SERVER</span>=<span class="str">"$STAGING_IP"</span>
+    <span class="var">COMPOSE</span>=<span class="str">"docker-compose.staging.yml"</span>
+    ;;
+  production)
+    echo <span class="str">"⚠️  Deploying to PRODUCTION. Are you sure? [y/N]"</span>
+    read -r confirm
+    [ <span class="str">"$confirm"</span> = <span class="str">"y"</span> ] || { echo <span class="str">"Aborted."</span>; exit 1; }
+    <span class="var">SERVER</span>=<span class="str">"$PROD_IP"</span>
+    <span class="var">COMPOSE</span>=<span class="str">"docker-compose.prod.yml"</span>
+    ;;
+  *) echo <span class="str">"Unknown environment: $ENV"</span>; exit 1 ;;
+<span class="kw">esac</span>
+
+<span class="cm"># Tag in git so we have a traceable audit trail</span>
+git tag <span class="str">"deploy-${ENV}-${VERSION}"</span>
+git push origin <span class="str">"deploy-${ENV}-${VERSION}"</span>
+
+<span class="cm"># Deploy</span>
+ssh devops@<span class="str">"$SERVER"</span> <span class="str">"
+  export VERSION=$VERSION
+  cd /opt/myapp
+  docker compose -f $COMPOSE pull
+  docker compose -f $COMPOSE up -d
+"</span>
+
+echo <span class="str">"✅ $VERSION deployed to $ENV"</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">09</div><div class="pmeta"><h3>Zero-Downtime Deployments — Blue/Green and Rolling</h3><p>Deploy without dropping a single request. Blue/green deployment for instant switchover with instant rollback. Rolling updates for gradual replacement. Health checks and automatic rollback on failure.</p><div class="ptag t">Blue/Green</span><span class="ptag o">Rolling</span><span class="ptag g">Health Checks</span><span class="ptag n">Nginx</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Blue/Green Deployment with Nginx</h4>
+            <p>Run two identical environments — blue (current) and green (new). Deploy to green, test it, then switch Nginx upstream in milliseconds. Rollback = switch back to blue.</p>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — blue-green-deploy.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">NEW_IMAGE</span>=<span class="str">"$1"</span>   <span class="cm"># e.g. myregistry/myapp:v1.2.3</span>
+<span class="var">HEALTH_URL</span>=<span class="str">"http://localhost"</span>
+<span class="var">HEALTH_PATH</span>=<span class="str">"/health"</span>
+
+<span class="cm"># Detect which color is currently active</span>
+<span class="var">ACTIVE</span>=$(docker compose -f compose.blue.yml ps -q api 2>/dev/null | xargs docker inspect --format '{{.Name}}' | grep -q blue && echo blue || echo green)
+<span class="var">INACTIVE</span>=$( [ <span class="str">"$ACTIVE"</span> = blue ] && echo green || echo blue )
+
+echo <span class="str">"Active: $ACTIVE | Deploying to: $INACTIVE"</span>
+
+<span class="cm"># Start the inactive color with the new image</span>
+<span class="var">IMAGE</span>=<span class="str">"$NEW_IMAGE"</span> docker compose -f <span class="str">"compose.${INACTIVE}.yml"</span> up -d --build
+
+<span class="cm"># Wait for new deployment to be healthy</span>
+echo <span class="str">"Waiting for $INACTIVE to be healthy..."</span>
+<span class="var">MAX_RETRIES</span>=30
+<span class="kw">for</span> i in $(seq 1 <span class="str">"$MAX_RETRIES"</span>); <span class="kw">do</span>
+  <span class="kw">if</span> curl -sf <span class="str">"${HEALTH_URL}:$(docker compose -f compose.${INACTIVE}.yml port api 8000 | cut -d: -f2)${HEALTH_PATH}"</span>; <span class="kw">then</span>
+    echo <span class="str">"✅ $INACTIVE is healthy after ${i}s"</span>
+    break
+  <span class="kw">fi</span>
+  [ <span class="str">"$i"</span> -eq <span class="str">"$MAX_RETRIES"</span> ] && { echo <span class="str">"❌ Health check failed — aborting"</span>; docker compose -f <span class="str">"compose.${INACTIVE}.yml"</span> down; exit 1; }
+  sleep 1
+<span class="kw">done</span>
+
+<span class="cm"># Switch Nginx upstream to the new color</span>
+sed -i <span class="str">"s/upstream_${ACTIVE}/upstream_${INACTIVE}/g"</span> /etc/nginx/conf.d/myapp.conf
+nginx -t && nginx -s reload
+
+echo <span class="str">"✅ Switched to $INACTIVE. Old $ACTIVE still running (for rollback)."</span>
+echo <span class="str">"   Rollback: run this script with current image pointing back to $ACTIVE"</span>
+echo <span class="str">"   Clean up: docker compose -f compose.${ACTIVE}.yml down"</span></pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">10</div><div class="pmeta"><h3>Testing in CI Pipelines — Quality Gates</h3><p>Unit tests, integration tests with Docker services, smoke tests post-deploy. Test coverage gates. Contract testing between services. The testing strategy that catches bugs before users do.</p><div class="pmeta-foot"><span class="ptag t">pytest</span><span class="ptag o">Integration Tests</span><span class="ptag g">Coverage Gates</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Integration Tests with Docker Services in CI</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — GitHub Actions: integration tests with real Postgres</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">test:integration:
+  runs-on: ubuntu-latest
+  services:
+    postgres:
+      image: postgres:15
+      env:
+        POSTGRES_USER: testuser
+        POSTGRES_PASSWORD: testpass
+        POSTGRES_DB: testdb
+      options: >-
+        --health-cmd pg_isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+    redis:
+      image: redis:7
+      options: >-
+        --health-cmd "redis-cli ping"
+        --health-interval 5s
+
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with: {python-version: '3.12'}
+
+    - run: pip install -r requirements.txt -r requirements-dev.txt
+
+    - name: Run integration tests
+      env:
+        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        REDIS_URL: redis://localhost:6379
+      run: |
+        pytest tests/integration/ -v \
+          --cov=app --cov-report=xml \
+          --cov-fail-under=80   <span class="cm"># fail if coverage drops below 80%</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Smoke Test Script — Run After Every Deploy</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — smoke-test.sh</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/bin/bash
+<span class="kw">set</span> -euo pipefail
+
+<span class="var">BASE_URL</span>=<span class="str">"${1:-http://localhost}"</span>
+<span class="var">PASS</span>=0
+<span class="var">FAIL</span>=0
+
+<span class="fn">check</span>() {
+  <span class="kw">local</span> <span class="var">desc</span>=<span class="str">"$1"</span> <span class="var">url</span>=<span class="str">"$2"</span> <span class="var">expected</span>=<span class="str">"${3:-200}"</span>
+  <span class="kw">local</span> <span class="var">code</span>
+  <span class="var">code</span>=$(curl -s -o /dev/null -w <span class="str">"%{http_code}"</span> --max-time 10 <span class="str">"$url"</span>)
+  <span class="kw">if</span> [ <span class="str">"$code"</span> = <span class="str">"$expected"</span> ]; <span class="kw">then</span>
+    echo <span class="str">"  ✅ $desc ($code)"</span>; (( PASS++ ))
+  <span class="kw">else</span>
+    echo <span class="str">"  ❌ $desc — expected $expected, got $code"</span>; (( FAIL++ ))
+  <span class="kw">fi</span>
+}
+
+echo <span class="str">"Smoke tests: $BASE_URL"</span>
+check <span class="str">"Health endpoint"</span>     <span class="str">"$BASE_URL/health"</span>
+check <span class="str">"Home page"</span>           <span class="str">"$BASE_URL/"</span>
+check <span class="str">"API status"</span>          <span class="str">"$BASE_URL/api/status"</span>
+check <span class="str">"404 returns 404"</span>     <span class="str">"$BASE_URL/nonexistent"</span> 404
+check <span class="str">"Metrics endpoint"</span>    <span class="str">"$BASE_URL/metrics"</span>
+
+echo <span class="str">""</span>
+echo <span class="str">"Results: $PASS passed, $FAIL failed"</span>
+[ <span class="str">"$FAIL"</span> -eq 0 ] || exit 1</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ P11-P15 Ansible ══════════ -->
+<div id="tab-p11p15" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 11–15 · Ansible</div><h2>Configuration Management at Scale</h2></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">11</div><div class="pmeta"><h3>Ansible from Zero — Inventory, Ad-Hoc, First Playbook</h3><p>Install Ansible, configure inventory, run ad-hoc commands against your Phase 1 VM, then write your first real playbook. Idempotency demonstrated hands-on.</p><div class="pmeta-foot"><span class="ptag g">Ansible</span><span class="ptag t">Inventory</span><span class="ptag n">Playbooks</span><span class="diff easy">Beginner</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Install Ansible and Configure Inventory</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install Ansible</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Install on your control node (your laptop or a dedicated VM)</span>
+pip3 install ansible --user
+
+<span class="cm"># Verify</span>
+ansible --version</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">ini</span> — inventory/hosts.ini</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Static inventory — your servers</span>
+[webservers]
+web1 ansible_host=192.168.1.50 ansible_user=devops
+web2 ansible_host=192.168.1.51 ansible_user=devops
+
+[databases]
+db1 ansible_host=192.168.1.60 ansible_user=devops
+
+[production:children]
+webservers
+databases
+
+[all:vars]
+ansible_ssh_private_key_file=~/.ssh/id_ed25519
+ansible_python_interpreter=/usr/bin/python3</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Ad-hoc commands — run one task across all servers</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Test connectivity (ping module)</span>
+ansible all -i inventory/hosts.ini -m ping
+
+<span class="cm"># Run a shell command</span>
+ansible webservers -i inventory/ -m shell -a "uptime"
+
+<span class="cm"># Install a package</span>
+ansible webservers -i inventory/ -m dnf -a "name=nginx state=present" --become
+
+<span class="cm"># Copy a file</span>
+ansible all -i inventory/ -m copy -a "src=./motd dest=/etc/motd" --become
+
+<span class="cm"># Gather facts about servers (huge dict of system info)</span>
+ansible web1 -i inventory/ -m setup | head -50</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Your First Playbook</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — playbooks/setup-webserver.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">---
+- name: Configure web servers
+  hosts: webservers
+  become: true      <span class="cm"># run tasks as sudo</span>
+  vars:
+    nginx_port: 80
+    app_user: appuser
+
+  tasks:
+    - name: Update all packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+
+    - name: Install required packages
+      ansible.builtin.dnf:
+        name:
+          - nginx
+          - git
+          - curl
+          - vim
+        state: present
+
+    - name: Create application user
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: Deploy Nginx config from template
+      ansible.builtin.template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload nginx       <span class="cm"># trigger handler on change</span>
+
+    - name: Start and enable Nginx
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Open firewall for HTTP
+      ansible.posix.firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: true
+
+  handlers:
+    - name: reload nginx         <span class="cm"># only runs if notified AND something changed</span>
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Run the playbook</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Dry run — see what WOULD change without changing anything</span>
+ansible-playbook -i inventory/ playbooks/setup-webserver.yml --check --diff
+
+<span class="cm"># Actually run it</span>
+ansible-playbook -i inventory/ playbooks/setup-webserver.yml
+
+<span class="cm"># Run again — observe idempotency (nothing changes second time)</span>
+ansible-playbook -i inventory/ playbooks/setup-webserver.yml
+<span class="cm"># Every task: "ok" (unchanged) instead of "changed"</span>
+
+<span class="cm"># Run with verbose output</span>
+ansible-playbook -i inventory/ playbooks/setup-webserver.yml -v
+
+<span class="cm"># Limit to a specific host</span>
+ansible-playbook -i inventory/ playbooks/setup-webserver.yml --limit web1
+
+<span class="cm"># Tags — only run certain tasks</span>
+ansible-playbook -i inventory/ playbooks/setup-webserver.yml --tags nginx</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">12</div><div class="pmeta"><h3>Ansible Roles — Reusable, Structured Automation</h3><p>Stop writing monolithic playbooks. Structure automation into reusable roles. Build an Nginx role, PostgreSQL role, and Docker role. Use Ansible Galaxy for community roles.</p><div class="pmeta-foot"><span class="ptag g">Roles</span><span class="ptag t">Galaxy</span><span class="ptag o">Templates</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 4 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Role Structure</h4>
+            <div class="ftree">
+<span class="dir">roles/nginx/</span>
+├── <span class="dir">tasks/</span>
+│   └── <span class="file">main.yml</span>          <span class="cmt"># task list</span>
+├── <span class="dir">handlers/</span>
+│   └── <span class="file">main.yml</span>          <span class="cmt"># handlers (reload, restart)</span>
+├── <span class="dir">templates/</span>
+│   └── <span class="file">nginx.conf.j2</span>     <span class="cmt"># Jinja2 templates</span>
+├── <span class="dir">files/</span>
+│   └── <span class="file">index.html</span>        <span class="cmt"># static files to copy</span>
+├── <span class="dir">vars/</span>
+│   └── <span class="file">main.yml</span>          <span class="cmt"># role variables</span>
+├── <span class="dir">defaults/</span>
+│   └── <span class="file">main.yml</span>          <span class="cmt"># default variable values (overridable)</span>
+└── <span class="file">meta/main.yml</span>         <span class="cmt"># role metadata + dependencies</span></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Create role scaffold</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">ansible-galaxy role init roles/nginx
+ansible-galaxy role init roles/postgresql
+ansible-galaxy role init roles/docker</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>Jinja2 Templates — Dynamic Config Files</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">jinja2</span> — roles/nginx/templates/nginx.conf.j2</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">user nginx;
+worker_processes {{ ansible_processor_vcpus }};  {# auto-detect CPU count #}
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    
+    server_tokens off;  {# hide nginx version #}
+
+    {% for domain in nginx_virtual_hosts %}
+    server {
+        listen {{ nginx_port | default(80) }};
+        server_name {{ domain.name }};
+        root {{ domain.root | default('/var/www/html') }};
+        
+        {% if domain.ssl is defined and domain.ssl %}
+        listen 443 ssl;
+        ssl_certificate     {{ domain.ssl_cert }};
+        ssl_certificate_key {{ domain.ssl_key }};
+        {% endif %}
+    }
+    {% endfor %}
+}</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Use Roles in a Playbook</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — site.yml — master playbook</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">---
+- name: Configure web servers
+  hosts: webservers
+  become: true
+  vars:
+    nginx_port: 80
+    nginx_virtual_hosts:
+      - name: myapp.example.com
+        root: /var/www/myapp
+  roles:
+    - role: nginx
+    - role: docker
+
+- name: Configure database servers
+  hosts: databases
+  become: true
+  vars:
+    postgresql_version: 15
+    postgresql_databases:
+      - name: myapp_production
+        owner: appuser
+    postgresql_users:
+      - name: appuser
+        password: "{{ vault_db_password }}"
+  roles:
+    - role: postgresql</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">13</div><div class="pmeta"><h3>Ansible Vault — Encrypt Secrets in Git</h3><p>Never store plaintext passwords in Git. Ansible Vault encrypts secrets at rest. Integrate with CI/CD pipelines. Vault password management strategies for teams.</p><div class="pmeta-foot"><span class="ptag g">Vault</span><span class="ptag t">Encryption</span><span class="ptag o">CI Integration</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Encrypting Secrets with Ansible Vault</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Vault commands</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># Create an encrypted variables file</span>
+ansible-vault create group_vars/all/vault.yml
+<span class="cm"># Opens your editor — type your secrets:</span>
+<span class="cm"># vault_db_password: "supersecret123"</span>
+<span class="cm"># vault_api_key: "abc123secretkey"</span>
+
+<span class="cm"># View encrypted file</span>
+ansible-vault view group_vars/all/vault.yml
+
+<span class="cm"># Edit encrypted file</span>
+ansible-vault edit group_vars/all/vault.yml
+
+<span class="cm"># Encrypt an existing file</span>
+ansible-vault encrypt group_vars/all/secrets.yml
+
+<span class="cm"># Encrypt a single string (inline in YAML)</span>
+ansible-vault encrypt_string 'mysecretpassword' --name 'db_password'
+<span class="cm"># Outputs YAML you can paste directly into your vars:</span>
+<span class="cm"># db_password: !vault |</span>
+<span class="cm">#   $ANSIBLE_VAULT;1.1;AES256</span>
+<span class="cm">#   62616663...</span>
+
+<span class="cm"># Run playbook with vault password</span>
+ansible-playbook site.yml --ask-vault-pass
+
+<span class="cm"># Or use a vault password file (for automation)</span>
+echo "myvaultpassword" > ~/.vault_pass
+chmod 600 ~/.vault_pass
+ansible-playbook site.yml --vault-password-file ~/.vault_pass
+
+<span class="cm"># Better: use environment variable for CI</span>
+export ANSIBLE_VAULT_PASSWORD_FILE=~/.vault_pass</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">14</div><div class="pmeta"><h3>Dynamic Inventory — Auto-Discover AWS EC2</h3><p>Stop maintaining static host files. Query AWS at runtime to discover all EC2 instances. Target by tag, by region, by instance type. The foundation of scalable Ansible at cloud scale.</p><div class="pmeta-foot"><span class="ptag g">Dynamic Inventory</span><span class="ptag t">AWS EC2</span><span class="ptag o">Tags</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 3 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Configure AWS Dynamic Inventory</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Install AWS inventory plugin</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">pip install boto3 botocore
+ansible-galaxy collection install amazon.aws</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — inventory/aws_ec2.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+  - eu-west-1
+
+<span class="cm"># Only include running instances</span>
+filters:
+  instance-state-name: running
+
+<span class="cm"># Group instances by their tags</span>
+keyed_groups:
+  - key: tags.Environment    <span class="cm"># group: tag_Environment_production</span>
+    prefix: env
+  - key: tags.Role           <span class="cm"># group: tag_Role_webserver</span>
+    prefix: role
+  - key: instance_type       <span class="cm"># group: t3_medium</span>
+    prefix: type
+
+<span class="cm"># What to use as the hostname (private IP for internal access)</span>
+hostnames:
+  - private-ip-address
+
+compose:
+  ansible_host: private_ip_address
+  ansible_user: "'ec2-user' if 'amazon' in tags.get('OS', '') else 'devops'"</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Use dynamic inventory</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># List all discovered hosts and groups</span>
+ansible-inventory -i inventory/aws_ec2.yml --list | python3 -m json.tool
+
+<span class="cm"># Ping all webservers (tagged Role=webserver)</span>
+ansible tag_Role_webserver -i inventory/aws_ec2.yml -m ping
+
+<span class="cm"># Run playbook against production webservers only</span>
+ansible-playbook -i inventory/aws_ec2.yml site.yml \
+    --limit env_production:&amp;role_webserver</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">15</div><div class="pmeta"><h3>AWX — Web UI for Ansible at Scale</h3><p>Deploy AWX (the open-source Ansible Tower) on your homelab. Job templates, schedules, RBAC so teams can run Ansible without SSH access, full audit logs of every run.</p><div class="pmeta-foot"><span class="ptag g">AWX</span><span class="ptag t">Job Templates</span><span class="ptag o">RBAC</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Deploy AWX with Docker Compose</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — AWX quickstart</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre"><span class="cm"># AWX requires Kubernetes or Docker Compose</span>
+<span class="cm"># We'll use the AWX Operator with k3s (lightweight K8s)</span>
+
+<span class="cm"># Install k3s</span>
+curl -sfL https://get.k3s.io | sh -
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+<span class="cm"># Install AWX Operator</span>
+kubectl apply -k github.com/ansible/awx-operator/config/default?ref=2.12.0
+
+<span class="cm"># Create AWX instance</span>
+cat <<EOF | kubectl apply -f -
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+spec:
+  service_type: nodeport
+  nodeport_port: 30080
+EOF
+
+<span class="cm"># Wait for deployment (~5 minutes)</span>
+kubectl get pods -w
+
+<span class="cm"># Get admin password</span>
+kubectl get secret awx-admin-password -o jsonpath="{.data.password}" | base64 --decode
+<span class="cm"># Access AWX at: http://YOUR_IP:30080</span></pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>AWX Configuration — Job Templates</h4>
+            <p>After logging in to the web UI, configure these in order:</p>
+            <div class="two-col">
+              <div class="mini-panel"><h5>1. Credentials</h5><p>Add your SSH private key, AWS credentials, and Vault password as AWX credential types. AWX encrypts and stores them securely — operators never see the raw secrets.</p></div>
+              <div class="mini-panel"><h5>2. Project</h5><p>Point AWX to your Git repository containing playbooks. AWX auto-syncs on a schedule so the latest playbooks are always available without manual updates.</p></div>
+              <div class="mini-panel"><h5>3. Inventory</h5><p>Create an AWS EC2 dynamic inventory source. AWX syncs it on a schedule. Now all your EC2 instances appear automatically in the inventory.</p></div>
+              <div class="mini-panel"><h5>4. Job Template</h5><p>Link a playbook + inventory + credentials. Set survey variables for user input. Enable "Ask for limit at launch" for flexibility. Schedule for automatic runs.</p></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ P16-P20 Python ══════════ -->
+<div id="tab-p16p20" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Projects 16–20 · Python Automation</div><h2>Python That Runs Your Infrastructure</h2><p>The deepest Python automation in the course. Real tools that your team will actually use every day.</p></div>
+
+  <div class="proj-list">
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">16</div><div class="pmeta"><h3>Python AWS Automation with boto3 — Replace Console Workflows</h3><p>A toolkit of Python scripts that replaces 20-click console workflows: EC2 lifecycle management, S3 operations, RDS snapshots, CloudWatch queries. Build a reusable AWS helper library.</p><div class="pmeta-foot"><span class="ptag v">boto3</span><span class="ptag t">AWS SDK</span><span class="ptag o">EC2</span><span class="ptag g">S3</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>AWS Helper Library — aws_helper.py</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — lib/aws_helper.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/usr/bin/env python3
+<span class="str">"""
+Reusable AWS helper library.
+Usage: import from your automation scripts.
+"""</span>
+<span class="kw">import</span> boto3
+<span class="kw">import</span> logging
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">from</span> functools <span class="kw">import</span> wraps
+<span class="kw">import</span> time
+
+logging.basicConfig(level=logging.INFO, format=<span class="str">'%(asctime)s %(levelname)s %(message)s'</span>)
+log = logging.getLogger(__name__)
+
+
+<span class="kw">def</span> <span class="fn">retry</span>(max_attempts=3, delay=2, exceptions=(Exception,)):
+    <span class="str">"""Decorator: retry a function on exception."""</span>
+    <span class="kw">def</span> <span class="fn">decorator</span>(func):
+        @wraps(func)
+        <span class="kw">def</span> <span class="fn">wrapper</span>(*args, **kwargs):
+            <span class="kw">for</span> attempt <span class="kw">in</span> range(max_attempts):
+                <span class="kw">try</span>:
+                    <span class="kw">return</span> func(*args, **kwargs)
+                <span class="kw">except</span> exceptions <span class="kw">as</span> e:
+                    <span class="kw">if</span> attempt == max_attempts - 1:
+                        <span class="kw">raise</span>
+                    log.warning(f<span class="str">"Attempt {attempt+1} failed: {e}. Retrying in {delay}s..."</span>)
+                    time.sleep(delay)
+        <span class="kw">return</span> wrapper
+    <span class="kw">return</span> decorator
+
+
+<span class="kw">class</span> <span class="fn">EC2Manager</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, region=<span class="str">"us-east-1"</span>, profile=<span class="kw">None</span>):
+        session = boto3.Session(profile_name=profile, region_name=region)
+        self.ec2 = session.client(<span class="str">"ec2"</span>)
+        self.ec2r = session.resource(<span class="str">"ec2"</span>)
+        self.region = region
+
+    <span class="kw">def</span> <span class="fn">get_instances</span>(self, filters=<span class="kw">None</span>, states=<span class="kw">None</span>):
+        <span class="str">"""Get EC2 instances, optionally filtered."""</span>
+        f = filters <span class="kw">or</span> []
+        <span class="kw">if</span> states:
+            f.append({<span class="str">"Name"</span>: <span class="str">"instance-state-name"</span>, <span class="str">"Values"</span>: states})
+        
+        paginator = self.ec2.get_paginator(<span class="str">"describe_instances"</span>)
+        instances = []
+        <span class="kw">for</span> page <span class="kw">in</span> paginator.paginate(Filters=f):
+            <span class="kw">for</span> r <span class="kw">in</span> page[<span class="str">"Reservations"</span>]:
+                instances.extend(r[<span class="str">"Instances"</span>])
+        <span class="kw">return</span> instances
+
+    <span class="kw">def</span> <span class="fn">get_tag</span>(self, instance, key, default=<span class="str">""</span>):
+        <span class="str">"""Safely get a tag value from an instance."""</span>
+        <span class="kw">return</span> next(
+            (t[<span class="str">"Value"</span>] <span class="kw">for</span> t <span class="kw">in</span> instance.get(<span class="str">"Tags"</span>, []) <span class="kw">if</span> t[<span class="str">"Key"</span>] == key),
+            default
+        )
+
+    <span class="kw">def</span> <span class="fn">list_instances</span>(self, environment=<span class="kw">None</span>):
+        <span class="str">"""Print a formatted table of instances."""</span>
+        filters = []
+        <span class="kw">if</span> environment:
+            filters.append({<span class="str">"Name"</span>: <span class="str">"tag:Environment"</span>, <span class="str">"Values"</span>: [environment]})
+        
+        instances = self.get_instances(filters=filters, states=[<span class="str">"running"</span>, <span class="str">"stopped"</span>])
+        
+        print(f<span class="str">"\n{'Name':<30} {'ID':<20} {'Type':<14} {'State':<10} {'Private IP':<16} {'Environment'}"</span>)
+        print(<span class="str">"-"</span> * 110)
+        <span class="kw">for</span> i <span class="kw">in</span> sorted(instances, key=<span class="kw">lambda</span> x: self.get_tag(x, <span class="str">"Name"</span>)):
+            print(f<span class="str">"{self.get_tag(i,'Name'):<30} {i['InstanceId']:<20} {i['InstanceType']:<14} "
+                  f"{i['State']['Name']:<10} {i.get('PrivateIpAddress','N/A'):<16} "
+                  f"{self.get_tag(i,'Environment','—')}"</span>)
+        print(f<span class="str">"\nTotal: {len(instances)} instances"</span>)
+
+    @retry(max_attempts=3, delay=5)
+    <span class="kw">def</span> <span class="fn">stop_instances_by_tag</span>(self, tag_key, tag_value, dry_run=<span class="kw">True</span>):
+        <span class="str">"""Stop all instances with a specific tag."""</span>
+        instances = self.get_instances(
+            filters=[{<span class="str">"Name"</span>: f<span class="str">"tag:{tag_key}"</span>, <span class="str">"Values"</span>: [tag_value]}],
+            states=[<span class="str">"running"</span>]
+        )
+        ids = [i[<span class="str">"InstanceId"</span>] <span class="kw">for</span> i <span class="kw">in</span> instances]
+        <span class="kw">if</span> <span class="kw">not</span> ids:
+            log.info(<span class="str">"No running instances found with that tag"</span>)
+            <span class="kw">return</span>
+        
+        log.info(f<span class="str">"{'[DRY RUN] ' if dry_run else ''}Stopping {len(ids)} instances: {ids}"</span>)
+        <span class="kw">if</span> <span class="kw">not</span> dry_run:
+            self.ec2.stop_instances(InstanceIds=ids)
+
+
+<span class="kw">class</span> <span class="fn">S3Manager</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, region=<span class="str">"us-east-1"</span>):
+        self.s3 = boto3.client(<span class="str">"s3"</span>, region_name=region)
+        self.region = region
+
+    <span class="kw">def</span> <span class="fn">upload_file</span>(self, local_path, bucket, s3_key=<span class="kw">None</span>, encrypt=<span class="kw">True</span>):
+        <span class="str">"""Upload a file with server-side encryption."""</span>
+        <span class="kw">from</span> pathlib <span class="kw">import</span> Path
+        key = s3_key <span class="kw">or</span> Path(local_path).name
+        extra_args = {<span class="str">"ServerSideEncryption"</span>: <span class="str">"AES256"</span>} <span class="kw">if</span> encrypt <span class="kw">else</span> {}
+        
+        self.s3.upload_file(local_path, bucket, key, ExtraArgs=extra_args)
+        log.info(f<span class="str">"Uploaded {local_path} → s3://{bucket}/{key}"</span>)
+
+    <span class="kw">def</span> <span class="fn">bucket_size</span>(self, bucket_name):
+        <span class="str">"""Calculate total size of an S3 bucket using CloudWatch."""</span>
+        cw = boto3.client(<span class="str">"cloudwatch"</span>, region_name=self.region)
+        response = cw.get_metric_statistics(
+            Namespace=<span class="str">"AWS/S3"</span>,
+            MetricName=<span class="str">"BucketSizeBytes"</span>,
+            Dimensions=[
+                {<span class="str">"Name"</span>: <span class="str">"BucketName"</span>, <span class="str">"Value"</span>: bucket_name},
+                {<span class="str">"Name"</span>: <span class="str">"StorageType"</span>, <span class="str">"Value"</span>: <span class="str">"StandardStorage"</span>}
+            ],
+            StartTime=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            EndTime=datetime.now(tz=timezone.utc),
+            Period=86400,
+            Statistics=[<span class="str">"Average"</span>]
+        )
+        <span class="kw">if</span> response[<span class="str">"Datapoints"</span>]:
+            bytes_size = max(response[<span class="str">"Datapoints"</span>], key=<span class="kw">lambda</span> x: x[<span class="str">"Timestamp"</span>])[<span class="str">"Average"</span>]
+            <span class="kw">return</span> bytes_size / (1024**3)  <span class="cm"># convert to GB</span>
+        <span class="kw">return</span> 0</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">17</div><div class="pmeta"><h3>Python Slack Bot — Real-Time Operational Alerts</h3><p>Build a Slack bot that your whole team uses: deployment notifications, error alerts, cost warnings, and an interactive chatbot that answers "what's running in production?" questions.</p><div class="pmeta-foot"><span class="ptag v">Slack SDK</span><span class="ptag t">webhooks</span><span class="ptag o">Bot API</span><span class="ptag g">FastAPI</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Deployment Notification Bot</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — notifications/slack_notifier.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/usr/bin/env python3
+<span class="str">"""Send rich Slack notifications for deployments, alerts, and reports."""</span>
+<span class="kw">import</span> os
+<span class="kw">import</span> json
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">from</span> slack_sdk <span class="kw">import</span> WebClient
+<span class="kw">from</span> slack_sdk.errors <span class="kw">import</span> SlackApiError
+
+<span class="kw">class</span> <span class="fn">SlackNotifier</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, token: str, default_channel: str = <span class="str">"#deployments"</span>):
+        self.client = WebClient(token=token)
+        self.channel = default_channel
+
+    <span class="kw">def</span> <span class="fn">notify_deployment</span>(self, env: str, version: str, author: str,
+                            status: str, commit_url: str = <span class="str">""</span>):
+        <span class="str">"""Post a rich deployment notification with status indicator."""</span>
+        colour = {<span class="str">"success"</span>: <span class="str">"#2eb886"</span>, <span class="str">"failure"</span>: <span class="str">"#e01e5a"</span>, <span class="str">"started"</span>: <span class="str">"#ecb22e"</span>}.get(status, <span class="str">"#aaa"</span>)
+        emoji = {<span class="str">"success"</span>: <span class="str">"✅"</span>, <span class="str">"failure"</span>: <span class="str">"❌"</span>, <span class="str">"started"</span>: <span class="str">"🚀"</span>}.get(status, <span class="str">"ℹ️"</span>)
+
+        blocks = [
+            {
+                <span class="str">"type"</span>: <span class="str">"header"</span>,
+                <span class="str">"text"</span>: {<span class="str">"type"</span>: <span class="str">"plain_text"</span>, <span class="str">"text"</span>: f<span class="str">"{emoji} Deployment {status.title()} — {env.upper()}"</span>}
+            },
+            {
+                <span class="str">"type"</span>: <span class="str">"section"</span>,
+                <span class="str">"fields"</span>: [
+                    {<span class="str">"type"</span>: <span class="str">"mrkdwn"</span>, <span class="str">"text"</span>: f<span class="str">"*Version:*\n`{version}`"</span>},
+                    {<span class="str">"type"</span>: <span class="str">"mrkdwn"</span>, <span class="str">"text"</span>: f<span class="str">"*Author:*\n{author}"</span>},
+                    {<span class="str">"type"</span>: <span class="str">"mrkdwn"</span>, <span class="str">"text"</span>: f<span class="str">"*Environment:*\n{env}"</span>},
+                    {<span class="str">"type"</span>: <span class="str">"mrkdwn"</span>, <span class="str">"text"</span>: f<span class="str">"*Time:*\n{datetime.now().strftime('%Y-%m-%d %H:%M UTC')}"</span>}
+                ]
+            }
+        ]
+        <span class="kw">if</span> commit_url:
+            blocks.append({
+                <span class="str">"type"</span>: <span class="str">"actions"</span>,
+                <span class="str">"elements"</span>: [{<span class="str">"type"</span>: <span class="str">"button"</span>, <span class="str">"text"</span>: {<span class="str">"type"</span>: <span class="str">"plain_text"</span>, <span class="str">"text"</span>: <span class="str">"View Commit"</span>}, <span class="str">"url"</span>: commit_url}]
+            })
+
+        <span class="kw">try</span>:
+            self.client.chat_postMessage(
+                channel=self.channel,
+                blocks=blocks,
+                attachments=[{<span class="str">"color"</span>: colour}]
+            )
+        <span class="kw">except</span> SlackApiError <span class="kw">as</span> e:
+            print(f<span class="str">"Slack error: {e.response['error']}"</span>)
+
+    <span class="kw">def</span> <span class="fn">alert_high_cost</span>(self, service: str, cost: float, budget: float, channel: str = <span class="str">"#alerts"</span>):
+        <span class="str">"""Post a cost overage alert."""</span>
+        pct = (cost / budget) * 100
+        self.client.chat_postMessage(
+            channel=channel,
+            text=f<span class="str">"⚠️ *Cost Alert* — {service} is at ${cost:.2f} ({pct:.0f}% of ${budget:.0f} budget)"</span>
+        )
+
+
+<span class="cm"># ── Use from the command line ──────────────────────────</span>
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    <span class="kw">import</span> argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(<span class="str">"--env"</span>, required=<span class="kw">True</span>)
+    parser.add_argument(<span class="str">"--version"</span>, required=<span class="kw">True</span>)
+    parser.add_argument(<span class="str">"--author"</span>, default=<span class="str">"CI/CD"</span>)
+    parser.add_argument(<span class="str">"--status"</span>, choices=[<span class="str">"started"</span>, <span class="str">"success"</span>, <span class="str">"failure"</span>], default=<span class="str">"success"</span>)
+    args = parser.parse_args()
+
+    notifier = SlackNotifier(token=os.environ[<span class="str">"SLACK_BOT_TOKEN"</span>])
+    notifier.notify_deployment(args.env, args.version, args.author, args.status)</pre></div>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — Add to GitHub Actions pipeline</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">      - name: Notify Slack — deploy started
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          python notifications/slack_notifier.py \
+            --env production \
+            --version ${{ steps.meta.outputs.version }} \
+            --author "${{ github.actor }}" \
+            --status started
+
+      # ... deploy steps ...
+
+      - name: Notify Slack — deploy result
+        if: always()
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: |
+          python notifications/slack_notifier.py \
+            --env production \
+            --version ${{ steps.meta.outputs.version }} \
+            --author "${{ github.actor }}" \
+            --status ${{ job.status == 'success' && 'success' || 'failure' }}</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">18</div><div class="pmeta"><h3>AWS Cost Report Automation — Daily Email Digest</h3><p>Build a Python script that queries AWS Cost Explorer, calculates per-service and per-environment costs, spots anomalies, and emails a formatted HTML report to your team every morning.</p><div class="pmeta-foot"><span class="ptag v">Cost Explorer</span><span class="ptag t">boto3</span><span class="ptag o">HTML Email</span><span class="ptag g">Lambda</span><span class="diff med">Intermediate</span><span class="ptime">⏱ 5 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Cost Explorer Query + HTML Report</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — cost_report.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/usr/bin/env python3
+<span class="str">"""Generate and email a daily AWS cost report."""</span>
+<span class="kw">import</span> boto3
+<span class="kw">import</span> smtplib
+<span class="kw">from</span> email.mime.multipart <span class="kw">import</span> MIMEMultipart
+<span class="kw">from</span> email.mime.text <span class="kw">import</span> MIMEText
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta, date
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> List
+<span class="kw">import</span> os
+
+
+@dataclass
+<span class="kw">class</span> <span class="fn">ServiceCost</span>:
+    service: str
+    cost: float
+    prev_cost: float
+
+    @property
+    <span class="kw">def</span> <span class="fn">change_pct</span>(self) -> float:
+        <span class="kw">if</span> self.prev_cost == 0:
+            <span class="kw">return</span> 100.0
+        <span class="kw">return</span> ((self.cost - self.prev_cost) / self.prev_cost) * 100
+
+    @property
+    <span class="kw">def</span> <span class="fn">is_anomaly</span>(self) -> bool:
+        <span class="kw">return</span> abs(self.change_pct) > 25 <span class="kw">and</span> self.cost > 5
+
+
+<span class="kw">def</span> <span class="fn">get_costs_by_service</span>(start: str, end: str) -> List[ServiceCost]:
+    <span class="str">"""Query AWS Cost Explorer for per-service costs."""</span>
+    ce = boto3.client(<span class="str">"ce"</span>, region_name=<span class="str">"us-east-1"</span>)
+    response = ce.get_cost_and_usage(
+        TimePeriod={<span class="str">"Start"</span>: start, <span class="str">"End"</span>: end},
+        Granularity=<span class="str">"MONTHLY"</span>,
+        Metrics=[<span class="str">"UnblendedCost"</span>],
+        GroupBy=[{<span class="str">"Type"</span>: <span class="str">"DIMENSION"</span>, <span class="str">"Key"</span>: <span class="str">"SERVICE"</span>}]
+    )
+    <span class="kw">return</span> {
+        g[<span class="str">"Keys"</span>][0]: float(g[<span class="str">"Metrics"</span>][<span class="str">"UnblendedCost"</span>][<span class="str">"Amount"</span>])
+        <span class="kw">for</span> r <span class="kw">in</span> response[<span class="str">"ResultsByTime"</span>]
+        <span class="kw">for</span> g <span class="kw">in</span> r[<span class="str">"Groups"</span>]
+    }
+
+
+<span class="kw">def</span> <span class="fn">build_html_report</span>(today_costs: dict, prev_costs: dict) -> str:
+    <span class="str">"""Build an HTML email report."""</span>
+    services = []
+    <span class="kw">for</span> service, cost <span class="kw">in</span> sorted(today_costs.items(), key=<span class="kw">lambda</span> x: -x[1]):
+        <span class="kw">if</span> cost < 0.01:
+            <span class="kw">continue</span>
+        services.append(ServiceCost(
+            service=service,
+            cost=cost,
+            prev_cost=prev_costs.get(service, 0)
+        ))
+
+    total = sum(s.cost <span class="kw">for</span> s <span class="kw">in</span> services)
+    prev_total = sum(s.prev_cost <span class="kw">for</span> s <span class="kw">in</span> services)
+    anomalies = [s <span class="kw">for</span> s <span class="kw">in</span> services <span class="kw">if</span> s.is_anomaly]
+
+    rows = <span class="str">""</span>
+    <span class="kw">for</span> s <span class="kw">in</span> services[:20]:  <span class="cm"># top 20 services</span>
+        trend = <span class="str">"🔺"</span> <span class="kw">if</span> s.change_pct > 5 <span class="kw">else</span> (<span class="str">"🔻"</span> <span class="kw">if</span> s.change_pct < -5 <span class="kw">else</span> <span class="str">"→"</span>)
+        anomaly_style = <span class="str">"background:#2d1b1b;"</span> <span class="kw">if</span> s.is_anomaly <span class="kw">else</span> <span class="str">""</span>
+        rows += f<span class="str">"""
+        <tr style="{anomaly_style}">
+          <td style="padding:8px 12px;color:#e2e8f0;">{s.service}</td>
+          <td style="padding:8px 12px;text-align:right;font-weight:600;color:#14b8a6;">${s.cost:.2f}</td>
+          <td style="padding:8px 12px;text-align:right;color:#64748b;">${s.prev_cost:.2f}</td>
+          <td style="padding:8px 12px;text-align:right;color:{'#f87171' if s.change_pct > 0 else '#4ade80'};">
+            {trend} {abs(s.change_pct):.0f}%
+          </td>
+        </tr>"""</span>
+
+    <span class="kw">return</span> f<span class="str">"""
+    <html><body style="background:#0f172a;color:#e2e8f0;font-family:monospace;padding:24px;">
+      <h1 style="color:#14b8a6;">AWS Cost Report — {date.today()}</h1>
+      <p>Total this month: <strong style="color:#14b8a6;font-size:24px;">${total:.2f}</strong>
+         vs last month: ${prev_total:.2f}
+         ({'+' if total>prev_total else ''}{((total-prev_total)/max(prev_total,1)*100):.0f}% change)</p>
+      {"<p style='color:#f87171;'>⚠️ Anomalies detected: " + ", ".join(a.service for a in anomalies) + "</p>" if anomalies else ""}
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+        <tr style="border-bottom:1px solid #334155;">
+          <th style="padding:8px 12px;text-align:left;color:#64748b;">Service</th>
+          <th style="padding:8px 12px;text-align:right;color:#64748b;">This Month</th>
+          <th style="padding:8px 12px;text-align:right;color:#64748b;">Last Month</th>
+          <th style="padding:8px 12px;text-align:right;color:#64748b;">Change</th>
+        </tr>
+        {rows}
+      </table>
+    </body></html>"""</span>
+
+
+<span class="kw">def</span> <span class="fn">send_email</span>(html: str, subject: str, to_addrs: List[str]):
+    <span class="str">"""Send HTML email via SES or SMTP."""</span>
+    ses = boto3.client(<span class="str">"ses"</span>, region_name=<span class="str">"us-east-1"</span>)
+    ses.send_email(
+        Source=os.environ[<span class="str">"FROM_EMAIL"</span>],
+        Destination={<span class="str">"ToAddresses"</span>: to_addrs},
+        Message={
+            <span class="str">"Subject"</span>: {<span class="str">"Data"</span>: subject},
+            <span class="str">"Body"</span>: {<span class="str">"Html"</span>: {<span class="str">"Data"</span>: html}}
+        }
+    )
+
+
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    today = date.today()
+    first_of_month = today.replace(day=1)
+    last_month_start = (first_of_month - timedelta(days=1)).replace(day=1)
+
+    today_costs = get_costs_by_service(str(first_of_month), str(today))
+    prev_costs = get_costs_by_service(str(last_month_start), str(first_of_month))
+
+    html = build_html_report(today_costs, prev_costs)
+    subject = f<span class="str">"AWS Cost Report — {today} — ${sum(today_costs.values()):.2f}"</span>
+    send_email(html, subject, [<span class="str">"team@company.com"</span>])
+    print(<span class="str">"Report sent!"</span>)</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">19</div><div class="pmeta"><h3>Auto-Remediation — Python That Fixes Problems Automatically</h3><p>Build a self-healing infrastructure system: monitor services, detect failures, automatically remediate common issues. From simple service restarts to complex multi-step recovery workflows.</p><div class="pmeta-foot"><span class="ptag v">Auto-remediation</span><span class="ptag t">boto3</span><span class="ptag o">Lambda</span><span class="ptag g">EventBridge</span><span class="diff hard">Advanced</span><span class="ptime">⏱ 6 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Auto-Remediation Framework</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">python</span> — remediation/engine.py</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">#!/usr/bin/env python3
+<span class="str">"""
+Auto-remediation engine.
+Detects problems and applies fixes automatically.
+Designed to run as a Lambda function or scheduled script.
+"""</span>
+<span class="kw">import</span> boto3
+<span class="kw">import</span> logging
+<span class="kw">import</span> subprocess
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Callable, List, Optional
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+<span class="kw">import</span> json
+
+log = logging.getLogger(__name__)
+
+
+@dataclass
+<span class="kw">class</span> <span class="fn">RemediationResult</span>:
+    issue: str
+    action: str
+    success: bool
+    details: str
+    timestamp: str = datetime.now(tz=timezone.utc).isoformat()
+
+
+<span class="kw">class</span> <span class="fn">RemediationEngine</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, dry_run=<span class="kw">False</span>, slack_notifier=<span class="kw">None</span>):
+        self.dry_run = dry_run
+        self.notifier = slack_notifier
+        self.results: List[RemediationResult] = []
+        self.ec2 = boto3.client(<span class="str">"ec2"</span>)
+        self.elbv2 = boto3.client(<span class="str">"elbv2"</span>)
+
+    <span class="kw">def</span> <span class="fn">_execute</span>(self, issue: str, action: str, fn: Callable, *args, **kwargs) -> <span class="kw">bool</span>:
+        <span class="str">"""Execute a remediation action with logging."""</span>
+        log.info(f<span class="str">"{'[DRY RUN] ' if self.dry_run else ''}Remediating: {issue} → {action}"</span>)
+        <span class="kw">if</span> self.dry_run:
+            self.results.append(RemediationResult(issue, action, <span class="kw">True</span>, <span class="str">"dry run"</span>))
+            <span class="kw">return</span> <span class="kw">True</span>
+        <span class="kw">try</span>:
+            result = fn(*args, **kwargs)
+            self.results.append(RemediationResult(issue, action, <span class="kw">True</span>, str(result)))
+            <span class="kw">if</span> self.notifier:
+                self.notifier.alert(f<span class="str">"✅ Auto-remediated: {issue} → {action}"</span>)
+            <span class="kw">return</span> <span class="kw">True</span>
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            self.results.append(RemediationResult(issue, action, <span class="kw">False</span>, str(e)))
+            <span class="kw">if</span> self.notifier:
+                self.notifier.alert(f<span class="str">"❌ Remediation FAILED: {issue} → {action}: {e}"</span>, severity=<span class="str">"critical"</span>)
+            <span class="kw">return</span> <span class="kw">False</span>
+
+    <span class="kw">def</span> <span class="fn">fix_unhealthy_instances</span>(self, target_group_arn: str):
+        <span class="str">"""Replace EC2 instances that are unhealthy in a target group."""</span>
+        response = self.elbv2.describe_target_health(TargetGroupArn=target_group_arn)
+        unhealthy = [
+            t[<span class="str">"Target"</span>][<span class="str">"Id"</span>]
+            <span class="kw">for</span> t <span class="kw">in</span> response[<span class="str">"TargetHealthDescriptions"</span>]
+            <span class="kw">if</span> t[<span class="str">"TargetHealth"</span>][<span class="str">"State"</span>] == <span class="str">"unhealthy"</span>
+        ]
+        <span class="kw">if</span> <span class="kw">not</span> unhealthy:
+            log.info(<span class="str">"All instances healthy ✅"</span>)
+            <span class="kw">return</span>
+        log.warning(f<span class="str">"Unhealthy instances: {unhealthy}"</span>)
+        self._execute(
+            f<span class="str">"Unhealthy instances in {target_group_arn[:40]}..."</span>,
+            f<span class="str">"Terminate {len(unhealthy)} instances (ASG will replace)"</span>,
+            self.ec2.terminate_instances,
+            InstanceIds=unhealthy
+        )
+
+    <span class="kw">def</span> <span class="fn">clean_old_snapshots</span>(self, max_age_days=30, dry_run_override=<span class="kw">None</span>):
+        <span class="str">"""Delete EBS snapshots older than max_age_days to control costs."""</span>
+        account_id = boto3.client(<span class="str">"sts"</span>).get_caller_identity()[<span class="str">"Account"</span>]
+        snapshots = self.ec2.describe_snapshots(OwnerIds=[account_id])[<span class="str">"Snapshots"</span>]
+        now = datetime.now(tz=timezone.utc)
+        old_snaps = [
+            s <span class="kw">for</span> s <span class="kw">in</span> snapshots
+            <span class="kw">if</span> (now - s[<span class="str">"StartTime"</span>]).days > max_age_days
+            <span class="kw">and</span> s.get(<span class="str">"State"</span>) == <span class="str">"completed"</span>
+        ]
+        log.info(f<span class="str">"Found {len(old_snaps)} snapshots older than {max_age_days} days"</span>)
+        <span class="kw">for</span> snap <span class="kw">in</span> old_snaps:
+            self._execute(
+                f<span class="str">"Old snapshot {snap['SnapshotId']} ({(now - snap['StartTime']).days}d old)"</span>,
+                <span class="str">"Delete snapshot"</span>,
+                self.ec2.delete_snapshot,
+                SnapshotId=snap[<span class="str">"SnapshotId"</span>]
+            )
+
+    <span class="kw">def</span> <span class="fn">restart_failed_services</span>(self, host: str, services: List[str]):
+        <span class="str">"""SSH to a host and restart any failed systemd services."""</span>
+        <span class="kw">for</span> service <span class="kw">in</span> services:
+            check = subprocess.run(
+                [<span class="str">"ssh"</span>, f<span class="str">"devops@{host}"</span>, <span class="str">"systemctl"</span>, <span class="str">"is-active"</span>, service],
+                capture_output=<span class="kw">True</span>, text=<span class="kw">True</span>
+            )
+            <span class="kw">if</span> check.stdout.strip() != <span class="str">"active"</span>:
+                self._execute(
+                    f<span class="str">"{service} is {check.stdout.strip()} on {host}"</span>,
+                    f<span class="str">"Restart {service}"</span>,
+                    subprocess.run,
+                    [<span class="str">"ssh"</span>, f<span class="str">"devops@{host}"</span>, <span class="str">"sudo"</span>, <span class="str">"systemctl"</span>, <span class="str">"restart"</span>, service],
+                    check=<span class="kw">True</span>
+                )
+
+    <span class="kw">def</span> <span class="fn">summary</span>(self):
+        <span class="str">"""Print remediation summary."""</span>
+        passed = sum(1 <span class="kw">for</span> r <span class="kw">in</span> self.results <span class="kw">if</span> r.success)
+        failed = len(self.results) - passed
+        print(f<span class="str">"\n{'='*60}"</span>)
+        print(f<span class="str">"Remediation Summary: {passed} succeeded, {failed} failed"</span>)
+        <span class="kw">for</span> r <span class="kw">in</span> self.results:
+            status = <span class="str">"✅"</span> <span class="kw">if</span> r.success <span class="kw">else</span> <span class="str">"❌"</span>
+            print(f<span class="str">"  {status} {r.issue} → {r.action}"</span>)
+        <span class="kw">return</span> failed == 0</pre></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pc" onclick="tp(this)">
+      <div class="pc-head"><div class="pnum">20</div><div class="pmeta"><h3>🏗️ Phase 2 Capstone — Full Production Pipeline</h3><p>Unite everything: containerised application → GitHub Actions CI/CD → Trivy scan → ECR push → Ansible deploy to staging → approval gate → Ansible deploy to production → Python Slack bot announces every step. The complete DevOps pipeline from commit to production.</p><div class="pmeta-foot"><span class="ptag t">Full Capstone</span><span class="ptag o">All Tools</span><span class="ptag g">E2E Pipeline</span><span class="diff cap">Capstone</span><span class="ptime">⏱ 8–10 hrs</span></div></div><div class="parrow">▶</div></div>
+      <div class="pc-body">
+        <div class="note info"><div class="note-i">🎯</div><p><strong>Goal:</strong> A single <code>git push</code> to main triggers a pipeline that: runs all tests, builds a hardened Docker image, scans for vulnerabilities, pushes to ECR, uses Ansible to deploy to staging, runs smoke tests, posts a Slack notification, waits for approval, deploys to production, and posts a final deployment confirmation. Every step logged, every failure notified.</p></div>
+
+        <div class="steps">
+          <div class="step"><div class="sn">1</div><div class="sb">
+            <h4>Capstone Architecture</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">bash</span> — Repository structure</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">devops-phase2-capstone/
+├── <span class="cm"># Application</span>
+├── src/                   app code
+├── tests/                 unit + integration tests
+├── Dockerfile             multi-stage, hardened
+├── docker-compose.yml     local dev
+│
+├── <span class="cm"># CI/CD</span>
+├── .github/workflows/
+│   └── ci-cd.yml          main pipeline (P06 enhanced)
+│
+├── <span class="cm"># Ansible</span>
+├── ansible/
+│   ├── inventory/
+│   │   └── aws_ec2.yml    dynamic EC2 inventory
+│   ├── roles/
+│   │   ├── nginx/
+│   │   ├── docker/
+│   │   └── myapp/         deploy the app
+│   ├── playbooks/
+│   │   ├── deploy-staging.yml
+│   │   └── deploy-prod.yml
+│   └── group_vars/
+│       └── all/vault.yml  encrypted secrets
+│
+├── <span class="cm"># Python automation</span>
+├── automation/
+│   ├── notifications/
+│   │   └── slack_notifier.py
+│   ├── cost_report.py
+│   └── remediation/
+│       └── engine.py
+│
+└── <span class="cm"># Smoke tests</span>
+    └── smoke-test.sh</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">2</div><div class="sb">
+            <h4>The Ansible Deploy Role — myapp</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — ansible/roles/myapp/tasks/main.yml</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">---
+- name: Authenticate to ECR
+  shell: |
+    aws ecr get-login-password --region {{ aws_region }} | \
+    docker login --username AWS --password-stdin {{ ecr_registry }}
+  no_log: true   <span class="cm"># don't log credentials</span>
+
+- name: Pull new image
+  community.docker.docker_image:
+    name: "{{ ecr_registry }}/myapp:{{ app_version }}"
+    source: pull
+    force_source: true
+
+- name: Deploy with zero downtime
+  community.docker.docker_compose_v2:
+    project_src: /opt/myapp
+    state: present
+    recreate: smart   <span class="cm"># only recreate containers whose config changed</span>
+  environment:
+    IMAGE_TAG: "{{ app_version }}"
+    ECR_REGISTRY: "{{ ecr_registry }}"
+
+- name: Wait for app to be healthy
+  uri:
+    url: "http://localhost:{{ app_port }}/health"
+    status_code: 200
+  register: health_result
+  until: health_result.status == 200
+  retries: 12
+  delay: 5
+
+- name: Run smoke tests
+  script: /opt/myapp/smoke-test.sh
+  register: smoke_result
+
+- name: Fail if smoke tests failed
+  fail:
+    msg: "Smoke tests failed! Rolling back..."
+  when: smoke_result.rc != 0</pre></div>
+          </div></div>
+
+          <div class="step"><div class="sn">3</div><div class="sb">
+            <h4>Complete Pipeline YAML with All Integrations</h4>
+            <div class="cb"><div class="cb-top"><span class="cb-lang"><span class="hl">yaml</span> — .github/workflows/ci-cd.yml (capstone version)</span><button class="cpbtn" onclick="cp(this)">copy</button></div>
+<pre">name: 🚀 Full Production Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy to environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres: {image: postgres:15, env: {POSTGRES_PASSWORD: test}, options: --health-cmd pg_isready}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: pytest tests/ -v --cov=src --cov-fail-under=80
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate image tag
+        id: tag
+        run: echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      - name: Configure AWS & login ECR
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - run: aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+      - name: Build and push
+        run: |
+          docker build -t ${{ secrets.ECR_REGISTRY }}/myapp:${{ steps.tag.outputs.tag }} .
+          docker push ${{ secrets.ECR_REGISTRY }}/myapp:${{ steps.tag.outputs.tag }}
+      - name: Trivy scan (block on CRITICAL)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.ECR_REGISTRY }}/myapp:${{ steps.tag.outputs.tag }}
+          exit-code: '1'
+          severity: CRITICAL
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notify Slack — staging deploy started
+        run: python automation/notifications/slack_notifier.py --env staging --version ${{ needs.build.outputs.image-tag }} --status started
+        env: {SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}}
+      - name: Deploy to staging via Ansible
+        run: |
+          pip install ansible boto3
+          ansible-playbook ansible/playbooks/deploy-staging.yml \
+            -i ansible/inventory/aws_ec2.yml \
+            -e "app_version=${{ needs.build.outputs.image-tag }}" \
+            --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+      - name: Notify Slack — staging result
+        if: always()
+        run: python automation/notifications/slack_notifier.py --env staging --version ${{ needs.build.outputs.image-tag }} --status ${{ job.status == 'success' && 'success' || 'failure' }}
+        env: {SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}}
+
+  deploy-production:
+    needs: [build, deploy-staging]
+    runs-on: ubuntu-latest
+    environment: production   <span class="cm"># requires manual approval in GitHub</span>
+    steps:
+      - uses: actions/checkout@v4
+      - name: Notify Slack — production deploy started
+        run: python automation/notifications/slack_notifier.py --env production --version ${{ needs.build.outputs.image-tag }} --status started
+        env: {SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}}
+      - name: Deploy to production via Ansible
+        run: |
+          pip install ansible boto3
+          ansible-playbook ansible/playbooks/deploy-prod.yml \
+            -i ansible/inventory/aws_ec2.yml \
+            -e "app_version=${{ needs.build.outputs.image-tag }}" \
+            --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}")
+      - name: Notify Slack — production result
+        if: always()
+        run: python automation/notifications/slack_notifier.py --env production --version ${{ needs.build.outputs.image-tag }} --status ${{ job.status == 'success' && 'success' || 'failure' }}
+        env: {SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}}</pre></div>
+            <div class="note ok"><div class="note-i">✅</div><p><strong>Phase 2 Complete.</strong> You've built a complete production pipeline that every professional DevOps team would be proud of. Docker containers, automated CI/CD with quality gates, Ansible configuration management at scale, and Python automation that makes your infrastructure self-aware. Every skill in this phase feeds directly into Phase 3 (AWS + Terraform) and Phase 4 (Kubernetes).</p></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════ CHEAT SHEET ══════════ -->
+<div id="tab-cheatsheet" class="tab-pane">
+  <div class="sh"><div class="sh-eye">Quick Reference</div><h2>Phase 2 Command Reference</h2></div>
+
+  <div class="cs-grid">
+    <div class="cs-card"><h5>🐳 Docker Essentials</h5>
+      <div class="cs-row"><span class="cs-cmd">docker build -t name:tag .</span><span class="cs-desc">build image</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker run -d -p 80:8000 img</span><span class="cs-desc">run detached with port mapping</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker exec -it name bash</span><span class="cs-desc">shell into running container</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker logs -f name</span><span class="cs-desc">follow container logs</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker system prune -af</span><span class="cs-desc">clean everything unused</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker stats</span><span class="cs-desc">live resource usage</span></div>
+    </div>
+    <div class="cs-card"><h5>🧩 Docker Compose</h5>
+      <div class="cs-row"><span class="cs-cmd">docker compose up -d --build</span><span class="cs-desc">build and start all</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker compose down -v</span><span class="cs-desc">stop and delete volumes</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker compose logs -f svc</span><span class="cs-desc">follow service logs</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker compose ps</span><span class="cs-desc">service status</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker compose exec svc bash</span><span class="cs-desc">shell into service</span></div>
+      <div class="cs-row"><span class="cs-cmd">docker compose scale svc=3</span><span class="cs-desc">run 3 instances</span></div>
+    </div>
+    <div class="cs-card"><h5>🔍 Trivy Scanning</h5>
+      <div class="cs-row"><span class="cs-cmd">trivy image myapp:latest</span><span class="cs-desc">scan image</span></div>
+      <div class="cs-row"><span class="cs-cmd">trivy image --severity HIGH,CRITICAL img</span><span class="cs-desc">filter severity</span></div>
+      <div class="cs-row"><span class="cs-cmd">trivy image --exit-code 1 img</span><span class="cs-desc">fail if vulns found</span></div>
+      <div class="cs-row"><span class="cs-cmd">trivy fs .</span><span class="cs-desc">scan filesystem</span></div>
+      <div class="cs-row"><span class="cs-cmd">trivy config .</span><span class="cs-desc">scan IaC configs</span></div>
+    </div>
+    <div class="cs-card"><h5>🤖 Ansible</h5>
+      <div class="cs-row"><span class="cs-cmd">ansible all -m ping</span><span class="cs-desc">test connectivity</span></div>
+      <div class="cs-row"><span class="cs-cmd">ansible-playbook site.yml --check</span><span class="cs-desc">dry run</span></div>
+      <div class="cs-row"><span class="cs-cmd">ansible-playbook site.yml --diff</span><span class="cs-desc">show what changes</span></div>
+      <div class="cs-row"><span class="cs-cmd">ansible-playbook site.yml --tags x</span><span class="cs-desc">run tagged tasks only</span></div>
+      <div class="cs-row"><span class="cs-cmd">ansible-vault encrypt file.yml</span><span class="cs-desc">encrypt a file</span></div>
+      <div class="cs-row"><span class="cs-cmd">ansible-galaxy role init myrole</span><span class="cs-desc">scaffold a role</span></div>
+    </div>
+    <div class="cs-card"><h5>🐍 boto3 Patterns</h5>
+      <div class="cs-row"><span class="cs-cmd">boto3.client('ec2')</span><span class="cs-desc">low-level client</span></div>
+      <div class="cs-row"><span class="cs-cmd">boto3.resource('s3')</span><span class="cs-desc">high-level resource</span></div>
+      <div class="cs-row"><span class="cs-cmd">client.get_paginator('op')</span><span class="cs-desc">paginate large results</span></div>
+      <div class="cs-row"><span class="cs-cmd">boto3.Session(profile='dev')</span><span class="cs-desc">named profile</span></div>
+      <div class="cs-row"><span class="cs-cmd">response.raise_for_status()</span><span class="cs-desc">raise on API error</span></div>
+    </div>
+    <div class="cs-card"><h5>☁️ ECR Commands</h5>
+      <div class="cs-row"><span class="cs-cmd">aws ecr get-login-password ...</span><span class="cs-desc">authenticate docker</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ecr create-repository --name x</span><span class="cs-desc">create repo</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ecr list-images --repository-name x</span><span class="cs-desc">list images</span></div>
+      <div class="cs-row"><span class="cs-cmd">aws ecr describe-image-scan-findings</span><span class="cs-desc">view scan results</span></div>
+    </div>
+    <div class="cs-card"><h5>⚡ GitHub Actions</h5>
+      <div class="cs-row"><span class="cs-cmd">uses: actions/checkout@v4</span><span class="cs-desc">checkout code</span></div>
+      <div class="cs-row"><span class="cs-cmd">needs: test</span><span class="cs-desc">job dependency</span></div>
+      <div class="cs-row"><span class="cs-cmd">if: github.ref == 'refs/heads/main'</span><span class="cs-desc">main branch only</span></div>
+      <div class="cs-row"><span class="cs-cmd">when: manual</span><span class="cs-desc">manual approval gate</span></div>
+      <div class="cs-row"><span class="cs-cmd">environment: production</span><span class="cs-desc">env with protection rules</span></div>
+    </div>
+    <div class="cs-card"><h5>💡 Key Principles</h5>
+      <div class="cs-row"><span class="cs-cmd">Build once, promote</span><span class="cs-desc">same image dev→prod</span></div>
+      <div class="cs-row"><span class="cs-cmd">Fail fast</span><span class="cs-desc">tests first, deploy last</span></div>
+      <div class="cs-row"><span class="cs-cmd">Idempotency</span><span class="cs-desc">safe to run N times</span></div>
+      <div class="cs-row"><span class="cs-cmd">Never latest in prod</span><span class="cs-desc">pin exact versions</span></div>
+      <div class="cs-row"><span class="cs-cmd">No root in containers</span><span class="cs-desc">USER appuser always</span></div>
+    </div>
+  </div>
+
+  <div class="concept" style="margin-top:28px;">
+    <h3>🎓 What's Next — Phase 3</h3>
+    <p>Phase 2 is complete. You now ship code professionally. <strong>Phase 3 (AWS Core + Terraform)</strong> takes everything here and deploys it to real AWS infrastructure — VPCs, EC2 Auto Scaling Groups, RDS, ALBs, S3, all defined as Terraform code. Your Docker images go from a single VM to a horizontally-scaled production environment. The CI/CD pipeline from Phase 2 deploys the Terraform from Phase 3. It all compounds.</p>
+  </div>
+</div>
+
+</div>
+</div>
+
+<footer>
+<div class="wrap">
+  DevOps Mastery · <span>Phase 2 of 6</span> · Docker · CI/CD · Ansible · Python Automation · 20 Projects
+</div>
+</footer>
+
+<script>
+function st(id, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function tp(card) {
+  const wasOpen = card.classList.contains('open');
+  card.closest('.proj-list').querySelectorAll('.pc').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) {
+    card.classList.add('open');
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  }
+}
+function cp(btn) {
+  const code = btn.closest('.cb').querySelector('pre').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2200);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const first = document.querySelector('#tab-all .pc');
+  if (first) first.classList.add('open');
+});
+</script>
+</body>
+</html>
